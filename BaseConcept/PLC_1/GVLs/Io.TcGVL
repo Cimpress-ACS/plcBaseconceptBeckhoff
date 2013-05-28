@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <GVL Name="Io" Id="{c2eadd2a-782d-4876-a2c7-8b2a9c7407cb}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	///input fb instance Cyl_AB position retract normally open
+	In_bolCyl_AB_Retracted_NO: BOOL;
+	///input fb instance Cyl_AB position extend normally closed
+	In_bolCyl_AB_Extended_NC: BOOL;
+	///output fb instance Cyl_AB valve retract
+	Out_bolCyl_AB_Retract: BOOL;
+	///output fb instance Cyl_AB valve extend
+	Out_bolCyl_AB_Extend: BOOL;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

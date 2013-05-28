@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="T_Ctrl_SIf_CYL" Id="{f442344e-b9ca-4c0c-adfb-3930faa454cd}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_CYL_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_CYL_Par;
+	///current values
+	Cur: T_Ctrl_SIf_CYL_Cur;
+	///io input
+	In: T_Ctrl_SIf_CYL_In;
+	///io output
+	Out: T_Ctrl_SIf_CYL_Out;
+	///alarm number used in this controller
+	Alm: ARRAY[1..6] OF T_Ctrl_Alm;
+	///interlock of output/movements
+	Ilk: T_Ctrl_SIf_CYL_Ilk;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

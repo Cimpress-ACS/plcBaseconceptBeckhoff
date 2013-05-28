@@ -1,0 +1,29 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <POU Name="getStrInstanceName" Id="{9dd9dc2b-bfe6-4c59-adad-755a9625dabe}">
+    <Declaration><![CDATA[FUNCTION getStrInstanceName : T_MaxString
+VAR_INPUT
+	///'C:\TwinCAT\Plc\Project01\Data.txt';
+	strPathName: T_MaxString;
+END_VAR
+VAR
+	strDrive: STRING(3);
+	strDir: T_MaxString;
+	strFileName: T_MaxString;
+	strExt: T_MaxString;
+	bolSuccess: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+bolSuccess := F_SplitPathName( sPathName := strPathName,
+                                sDrive := strDrive,
+                                sDir := strDir,
+                                sFileName := strFileName,
+                                sExt := strExt );
+								
+								getStrInstanceName := MID (strExt,TC2_STANDARD.LEN(strExt),2);
+]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="E_AlmCmd" Id="{ef81412c-448f-47a0-afe4-8b7a38637b13}">
+    <Declaration><![CDATA[TYPE E_AlmCmd :
+(
+	DONE := -1,
+	INITIALIZED := 0,
+	RESET_ALL := 2,
+	RESET_RST := 4,
+	RESET_CLR := 6,
+	Max_E_AlmCmd
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

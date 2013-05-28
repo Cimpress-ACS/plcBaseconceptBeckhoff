@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
+	<Project ProjectGUID="{2A8F2039-25F8-4656-8241-9C2004B7979D}" ModifiedGUID="{80325664-64DF-4753-82F0-46258F35EF5C}">
+		<System>
+			<Tasks>
+				<Task Id="2" Priority="5" CycleTime="100000" AmsPort="350">
+					<Name>Task_Fast</Name>
+				</Task>
+				<Task Id="3" Priority="20" CycleTime="1000000" AmsPort="351">
+					<Name>Task_Slow</Name>
+				</Task>
+				<Task Id="4" Priority="10" CycleTime="500000" AmsPort="352">
+					<Name>Task_Middle</Name>
+				</Task>
+			</Tasks>
+		</System>
+		<Plc>
+			<Project GUID="{0BE07A7F-2331-4804-8973-92050309D01B}" Name="PLC_1" PrjFilePath="PLC_1\PLC_1.plcproj" TmcFilePath="PLC_1\PLC_1.tmc" ReloadTmc="true" AmsPort="851">
+				<Instance Id="#x01010010" TcSmClass="TComPlcObjDef">
+					<Name>PLC_1 Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+				</Instance>
+			</Project>
+		</Plc>
+	</Project>
+</TcSmProject>

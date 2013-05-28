@@ -1,0 +1,25 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="E_AlmClass" Id="{51d9ac62-25bf-4f7a-9bdd-30eceb44f741}">
+    <Declaration><![CDATA[TYPE E_AlmClass :
+(
+	///no alarm active
+	NONE := 0,
+	///info
+	INFO,
+	///warning
+	WARNING,
+	///tact stop
+	TSTOP,
+	///stop
+	STOP,
+	///off
+	OFF,
+	///Emergency off
+	EOFF,
+	Max_E_AlmClass
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

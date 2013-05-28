@@ -1,0 +1,27 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="E_Typ_CYL" Id="{3fe67c65-90a4-45a8-90d0-b3870cd921a5}">
+    <Declaration><![CDATA[TYPE E_Typ_CYL :
+(
+	///bistabile and two feedback sensors
+	Valve2_Sensor2 := 0,
+	///bistabile and extended feedback sensors	
+	Valve2_SensorExtended,
+	///bistabile and retracted feedback sensors	
+	Valve2_SensorRetracted,
+	///bistabile and no feedback sensors
+	Valve2_Sensor0,
+	///monostabile and 2 feedback sensors	
+	Valve1_Sensor2,
+	///monostabile and extended feedback sensors	
+	Valve1_SensorExtended,
+	///monostabile and retracted feedback sensor
+	Valve1_SensorRetracted,
+	///monostabile and no feedback sensors
+	Valve1_Sensor0,
+	Max_E_Typ_CYL
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

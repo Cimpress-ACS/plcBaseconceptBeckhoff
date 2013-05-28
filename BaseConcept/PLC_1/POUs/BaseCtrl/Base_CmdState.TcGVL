@@ -1,0 +1,39 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <GVL Name="Base_CmdState" Id="{dd54ffbd-02d2-4aba-be38-788fb8e975b4}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///general commands 2-200 - every command has to be a even number
+	cCMD_DONE: INT := -1;
+	cCMD_INITIALIZED: INT := 0;
+	cCMD_PON: INT := 2;
+	cCMD_EOFF: INT := 4;
+	cCMD_OFF: INT := 6;
+	cCMD_INIT: INT := 8;
+	cCMD_RUN: INT := 10;
+	cCMD_STOP: INT := 12;
+	cCMD_TSTOP: INT := 14;
+	///ctrl states definitions
+	cSTA_DONE: INT := cCMD_DONE;
+	cSTA_INITIALIZED: INT := cCMD_INITIALIZED;
+	cSTA_PONBusy: INT := 1;
+	cSTA_PON: INT := cCMD_PON;
+	cSTA_EOFFBusy: INT := 3;
+	cSTA_EOFF: INT := cCMD_EOFF;
+	cSTA_OFFBusy: INT := 5;
+	cSTA_OFF: INT := cCMD_OFF;
+	cSTA_INITBusy: INT := 7;
+	cSTA_INIT: INT := cCMD_INIT;
+	cSTA_RUNBusy: INT := 9;
+	cSTA_RUN: INT := cCMD_RUN;
+	cSTA_STOPBusy: INT := 11;
+	cSTA_STOP: INT := cCMD_STOP;
+	cSTA_TSTOPBusy: INT := 13;
+	cSTA_TSTOP: INT := cCMD_TSTOP;
+	///special states without corresponding cmd
+	cSTA_ERROR: INT := 150;
+	cSTA_ERRORQuit: INT := 151;
+	cSTA_SINGLE_ANSWER: INT := 152;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

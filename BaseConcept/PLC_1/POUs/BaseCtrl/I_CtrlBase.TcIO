@@ -1,0 +1,21 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <Itf Name="I_CtrlBase" Id="{f33ff886-408d-4d15-bdc3-596cc3f70de4}">
+    <Declaration><![CDATA[INTERFACE I_CtrlBase
+]]></Declaration>
+    <Method Name="iniCtrlArray" Id="{4446fe44-dee4-4d83-99ed-7d6d0073c8b5}">
+      <Declaration><![CDATA[METHOD iniCtrlArray : BOOL
+VAR_INPUT
+	p_pCtrlArray: POINTER TO POINTER TO fb_CtrlBase;
+	intCtrlID: INT;
+END_VAR
+]]></Declaration>
+      <ObjectProperties />
+    </Method>
+    <Method Name="getCtrlCIf" Id="{daad236f-6b83-4f69-bc88-4edd98c0c85a}">
+      <Declaration><![CDATA[METHOD getCtrlCIf : POINTER TO T_Ctrl_CIf
+]]></Declaration>
+      <ObjectProperties />
+    </Method>
+    <ObjectProperties />
+  </Itf>
+</TcPlcObject>

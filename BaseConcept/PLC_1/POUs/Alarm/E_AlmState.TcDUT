@@ -1,0 +1,19 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="E_AlmState" Id="{821cf32a-c3b9-4a0b-a00b-f0902e5f20c7}">
+    <Declaration><![CDATA[TYPE E_AlmState :
+(
+	///no alarm active
+	NONE := 0,
+	///alarm clear entry -> set bit1
+	CLR := 1,
+	///entry resettable alarm ->  set bit2
+	RST := 2,
+	///entry non resettable alarm ->  set bit2 + bit3
+	SET := 3,
+	Max_E_AlmState
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="E_Mode" Id="{77598b47-ca88-4e6f-a945-850131903ce4}">
+    <Declaration><![CDATA[{attribute 'qualified_only' := ''}
+TYPE E_Mode :
+(
+	INITIALIZED := 0,
+	AUTO := 10,
+	SEMI := 11,
+	MANU := 12
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

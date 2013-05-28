@@ -1,0 +1,13 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="E_Typ_MOD" Id="{94aa300c-f5f1-4d7b-97a9-a797c0c0e653}">
+    <Declaration><![CDATA[TYPE E_Typ_MOD :
+(
+	///no usage until yet
+	Default := 0,
+	Max_E_Typ_CYL
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

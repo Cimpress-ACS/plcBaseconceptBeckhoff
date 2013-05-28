@@ -1,0 +1,237 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <POU Name="FB_Alm_Man" Id="{81054333-9eef-4f13-aee6-19866e320b72}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Alm_Man
+VAR_INPUT
+	///max ctrl id in project defined
+	intCtrlIdMax: INT;
+END_VAR
+VAR CONSTANT
+	///config alarm handler
+	c_uinMaxAlmElements: UINT := 99;
+	///0: with history on PLC, auto clr
+	c_uinModeAlarm: UINT := 1;
+	///machine number 1
+	c_udiMachineNr: UDINT := 1;
+END_VAR
+VAR
+	///alarmarray -> UI
+	aAlm: ARRAY[0..c_uinMaxAlmElements] OF T_AlmElement;
+	///command interface for UI
+	eAlmCmd: E_AlmCmd;
+	///real local variables
+	fbGetLocalTime: NT_GetTime;
+	strActTime: STRING;
+	jj: UINT;
+	EmptyAlmElement: T_AlmElement;
+	intState: INT;
+	intTestCtrl: INT := 12;
+	intTestState: INT;
+	udiTestAlarmNr: UDINT;
+	dinTestInfo: DINT;
+	aCtrlAlm: ARRAY[1..6] OF T_Ctrl_Alm;
+	eActiveAlmClass: E_AlmClass;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+The alarm manager sets and clears alarms from the internal array. In the internal array all active 
+alarms of a machine are listed. The list has no order. A new entry will be inserted at the next 
+free place.
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		29.04.2013		AVME/KVO	Start history
+
+
+___________________________________________________________________________________________________*)
+
+// read out actual time
+fbGetLocalTime.NETID := '';
+fbGetLocalTime.START := NOT fbGetLocalTime.START;
+fbGetLocalTime.TMOUT := T#5S;
+fbGetLocalTime();
+strActTime := TC2_UTILITIES.SYSTEMTIME_TO_STRING(fbGetLocalTime.TIMESTR); // yyyymmdd-HH:mm::ss
+
+// interface for UI access
+CASE intState OF
+	
+	0: // reset cmd
+		eAlmCmd := E_AlmCmd.DONE; // Ready for new cmd
+		intState := intState + 1;
+		
+	1: // wait for cmd
+		IF (eAlmCmd=E_AlmCmd.RESET_ALL) OR (eAlmCmd=E_AlmCmd.RESET_CLR) OR  (eAlmCmd=E_AlmCmd.RESET_RST) THEN
+			intState := intState + 1;
+		END_IF
+		
+	2: // reset alarms
+		// reset state=RST, reset state CLR
+		THIS^.clearAlarm(((eAlmCmd=E_AlmCmd.RESET_ALL) OR (eAlmCmd=E_AlmCmd.RESET_RST)), TRUE);
+		intState := intState + 1;
+		
+	3: // reset state machines
+		FOR jj:=0 TO INT_TO_UINT(intCtrlIdMax) BY 1 DO
+			IF (g_a_pCtrlCIf[jj]<>0) THEN // check if entry exist
+				g_a_pCtrlCIf[jj]^.Job.bolAlmReset := TRUE;
+			END_IF
+		END_FOR
+		intState := 0; // done
+
+END_CASE
+
+
+
+//**********************************************************************************************
+// Test manual set/reset/clear alarm
+//**********************************************************************************************
+CASE intTestState OF
+	
+	0: // wait
+		
+	1: //CLR
+		THIS^.setAlarm(intTestCtrl,udiTestAlarmNr,dinTestInfo,ADR(aCtrlAlm),E_AlmState.CLR,eActiveAlmClass);
+		intTestState := 0;
+		
+	2: // RST
+		THIS^.setAlarm(intTestCtrl,udiTestAlarmNr,dinTestInfo,ADR(aCtrlAlm),E_AlmState.RST,eActiveAlmClass);
+		intTestState := 0;
+		
+	3: // SET
+		THIS^.setAlarm(intTestCtrl,udiTestAlarmNr,dinTestInfo,ADR(aCtrlAlm),E_AlmState.SET,eActiveAlmClass);
+		intTestState := 0;
+
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="setAlarm" Id="{3458bf01-aad8-478f-ad9d-37a096ec29f9}">
+      <Declaration><![CDATA[METHOD setAlarm : E_AlmClass
+VAR_INPUT
+	///from controller 
+	intCtrlId: INT;
+	///local alarm number
+	udiAlarmNr: UDINT;
+	///additional information - string???
+	dinInfo: DINT;
+	///corresponding alarm class
+	p_Ctrl_Alm: POINTER TO T_Ctrl_Alm;
+	///clear, resetable
+	intState: E_AlmState;
+END_VAR
+VAR_IN_OUT
+	eMe_ActivAlmClass: E_AlmClass;
+END_VAR
+VAR
+	InAlmElement: T_AlmElement;
+	ii: UINT;
+	uinEmptyIndex: UINT;
+	bolEmptyIndexFound: BOOL;
+	bolIndexUpdate: BOOL;
+	p_LocCtrlAlm: POINTER TO T_Ctrl_Alm;
+	e_LocAlmClass: E_AlmClass;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// entry/delete element
+bolEmptyIndexFound := FALSE;
+
+IF (p_Ctrl_Alm<>0) AND (udiAlarmNr>0) THEN // chack if pointer valid
+	p_LocCtrlAlm := (p_Ctrl_Alm + (udiAlarmNr-1) * SIZEOF(T_Ctrl_Alm));
+	e_LocAlmClass := p_LocCtrlAlm^.eAlmClass;
+ELSE
+	e_LocAlmClass := E_AlmClass.EOFF; // novalid pointer reached!!
+END_IF
+
+
+// check entry element
+InAlmElement.udiMachineNr := c_udiMachineNr;
+InAlmElement.intCtrlId := intCtrlId;
+InAlmElement.udiAlarmNr := udiAlarmNr;
+InAlmElement.udiNr := 100000*InAlmElement.udiMachineNr + INT_TO_UDINT(100*InAlmElement.intCtrlId) + InAlmElement.udiAlarmNr;
+InAlmElement.dinInfo := dinInfo;
+InAlmElement.eClass := e_LocAlmClass;
+InAlmElement.intState := intState;
+InAlmElement.strDTEntry := strActTime;
+
+// loop over whole alarm array
+FOR ii:= 0 TO c_uinMaxAlmElements BY 1 DO
+	
+	IF ((InAlmElement.intState=E_AlmState.SET) OR (InAlmElement.intState=E_AlmState.RST)) THEN 
+		
+		// search next empty element
+		IF (bolEmptyIndexFound=FALSE) AND (aAlm[ii].udiNr=0) THEN
+			uinEmptyIndex := ii;
+			bolEmptyIndexFound := TRUE; // do new alarm element entry
+		ELSIF(InAlmElement.udiNr = aAlm[ii].udiNr) THEN	// existing entry found
+			bolIndexUpdate := TRUE;
+			// refresh state, alarm additional info
+			aAlm[ii].dinInfo := InAlmElement.dinInfo;
+			aAlm[ii].intState := InAlmElement.intState;
+			bolEmptyIndexFound := FALSE; // no new entry needed
+			EXIT; // refresh done
+		END_IF
+		
+	ELSIF (InAlmElement.intState=E_AlmState.CLR) THEN
+		IF(InAlmElement.udiNr = aAlm[ii].udiNr) THEN	// existing entry found
+			IF (c_uinModeAlarm=1) THEN // no history on PLC
+				aAlm[ii] := EmptyAlmElement; // clear entry
+			ELSE
+				aAlm[ii].intState := E_AlmState.CLR; // set clear state -> entry in plc history if needed
+			END_IF
+			EXIT; // clear done
+		END_IF
+	END_IF
+END_FOR
+
+// Entry or refresh done and active alarm priority > allready active alarm class -> entry active alarm class
+IF ((bolIndexUpdate) OR (bolEmptyIndexFound)) AND (InAlmElement.eClass>eMe_ActivAlmClass) THEN 
+	eMe_ActivAlmClass := InAlmElement.eClass;
+END_IF
+
+// do new alarm element entry
+IF (bolEmptyIndexFound) THEN
+	IF ((InAlmElement.intState=E_AlmState.SET) OR (InAlmElement.intState=E_AlmState.RST)) THEN 
+		aAlm[uinEmptyIndex] := InAlmElement;
+	END_IF;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="clearAlarm" Id="{2591f45e-6872-4ead-9f63-8270fc349fb4}">
+      <Declaration><![CDATA[METHOD clearAlarm : BOOL
+VAR_INPUT
+	///-> clear all entries with state RST
+	bolClear_RST: BOOL;
+	///-> clear all entries with state CLR
+	bolClear_CLR: BOOL;
+END_VAR
+VAR
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+FOR ii:= 0 TO c_uinMaxAlmElements BY 1 DO
+	
+	IF (aAlm[ii].udiNr>0) THEN 
+		
+		IF (((aAlm[ii].intState=E_AlmState.RST) AND (bolClear_RST)) OR
+			((aAlm[ii].intState=E_AlmState.CLR) AND (bolClear_CLR)))THEN
+			
+			aAlm[ii] := EmptyAlmElement; // clear entry
+		END_IF
+		
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

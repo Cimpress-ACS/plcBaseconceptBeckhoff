@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="T_Ctrl_SIf_CYL_Cur" Id="{daad10a1-84fb-4318-8dcd-06ac542017bb}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_Cur :
+STRUCT
+	///[ms] time last movement to retract
+	udiMoveTimeRetract: UDINT;
+	///[ms] time last movement to extend
+	udiMoveTimeExtend: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

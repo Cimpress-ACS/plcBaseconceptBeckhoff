@@ -1,0 +1,26 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="T_AlmElement" Id="{42ed2ae8-bc10-4bcb-a225-aec2598f423d}">
+    <Declaration><![CDATA[TYPE T_AlmElement :
+STRUCT
+	///unique alarm number := 100000*udiMachineNr + intCtrlId*100 + udiAlarmNr
+	udiNr: UDINT;
+	///additional information - better string???
+	dinInfo: DINT;
+	///corresponding alarm class
+	eClass: E_AlmClass;
+	///clear, resetable
+	intState: E_AlmState;
+	///entry time
+	strDTEntry: STRING;
+	///from machine (standard = 1)
+	udiMachineNr: UDINT;
+	///from controller
+	intCtrlId: INT;
+	///local alarm number
+	udiAlarmNr: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
