@@ -68,7 +68,7 @@ fbGetLocalTime.NETID := '';
 fbGetLocalTime.START := NOT fbGetLocalTime.START;
 fbGetLocalTime.TMOUT := T#5S;
 fbGetLocalTime();
-strActTime := TC2_UTILITIES.SYSTEMTIME_TO_STRING(fbGetLocalTime.TIMESTR); // yyyymmdd-HH:mm::ss
+strActTime := TC2_UTILITIES.SYSTEMTIME_TO_STRING(fbGetLocalTime.TIMESTR); // YYYY-MM-DD-hh:mm:ss.xxx
 
 // interface for UI access
 CASE intState OF
