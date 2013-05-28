@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <POU Name="FB_Alm_Man" Id="{81054333-9eef-4f13-aee6-19866e320b72}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Alm_Man
 VAR_INPUT
@@ -12,13 +12,21 @@ VAR CONSTANT
 	c_uinModeAlarm: UINT := 1;
 	///machine number 1
 	c_udiMachineNr: UDINT := 1;
+	// commands for the UI
+	cCMD_RESET_ALL : INT := 2; // reset state=RST, reset state CLR
+	cCMD_RESET_RST : INT  := 4; // reset state=RST, reset state CLR
+	cCMD_RESET_CLR : INT  := 6; // reset state CLR -> c_uinModeAlarm = 1, automatic reset will be done on PLC
 END_VAR
 VAR
-	///alarmarray -> UI
+	//------------------------------------------------------------
+	// UI interface
+	// alarmarray PLC -> UI
 	aAlm: ARRAY[0..c_uinMaxAlmElements] OF T_AlmElement;
-	///command interface for UI
-	eAlmCmd: E_AlmCmd;
-	///real local variables
+	// command interface for UI -> PLC
+	intAlmCmd: INT;
+	
+	//------------------------------------------------------------
+	// real local variables
 	fbGetLocalTime: NT_GetTime;
 	strActTime: STRING;
 	jj: UINT;
@@ -66,17 +74,17 @@ strActTime := TC2_UTILITIES.SYSTEMTIME_TO_STRING(fbGetLocalTime.TIMESTR); // yyy
 CASE intState OF
 	
 	0: // reset cmd
-		eAlmCmd := E_AlmCmd.DONE; // Ready for new cmd
+		intAlmCmd := cCMD_DONE; // Ready for new cmd
 		intState := intState + 1;
 		
 	1: // wait for cmd
-		IF (eAlmCmd=E_AlmCmd.RESET_ALL) OR (eAlmCmd=E_AlmCmd.RESET_CLR) OR  (eAlmCmd=E_AlmCmd.RESET_RST) THEN
+		IF (intAlmCmd=cCMD_RESET_ALL) OR (intAlmCmd=cCMD_RESET_CLR) OR  (intAlmCmd=cCMD_RESET_RST) THEN
 			intState := intState + 1;
 		END_IF
 		
 	2: // reset alarms
 		// reset state=RST, reset state CLR
-		THIS^.clearAlarm(((eAlmCmd=E_AlmCmd.RESET_ALL) OR (eAlmCmd=E_AlmCmd.RESET_RST)), TRUE);
+		THIS^.clearAlarm(((intAlmCmd=cCMD_RESET_ALL) OR (intAlmCmd=cCMD_RESET_RST)), TRUE);
 		intState := intState + 1;
 		
 	3: // reset state machines

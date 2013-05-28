@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <POU Name="FB_CYL" Id="{7f6d4e15-a324-46d3-9c01-947902791507}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CYL EXTENDS FB_CtrlBase
 
@@ -95,13 +95,18 @@ CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 CIf.Info.strType := 'FB_CYL'; 
 
 // set alarm class
-SIf.Alm[1].eAlmClass := E_AlmClass.EOFF;
-//SIf.Alm[1].strAlarm := 'Alarmtext 1';
-SIf.Alm[2].eAlmClass := E_AlmClass.OFF;
-SIf.Alm[3].eAlmClass := E_AlmClass.STOP;
+SIf.Alm[1].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[1].strText := 'sensor retract always on'; 
+SIf.Alm[2].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[2].strText := 'timeout extend - sensor extend not reached';
+SIf.Alm[3].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[3].strText := 'sensor retract always on';
 SIf.Alm[4].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[5].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[6].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[4].strText := 'timeout extend cylinder - sensor retract not reached';
+SIf.Alm[5].eAlmClass := E_AlmClass.STOP;
+SIf.Alm[5].strText := 'interlock extend - movement stopped';
+SIf.Alm[6].eAlmClass := E_AlmClass.STOP;
+SIf.Alm[6].strText := 'interlock retract - movement stopped';
 
 //*******************************************************************************
 // initial values
@@ -159,6 +164,7 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 			ELSE
 				// bistable valve ->  switch both off
 				bolSwitchValvesOff := TRUE;
+				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			END_IF
 		END_IF
 		
@@ -173,6 +179,7 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 			ELSE
 				// bistable valve -> switch both off
 				bolSwitchValvesOff := TRUE;
+				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,6,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			END_IF
 		END_IF
 		
@@ -330,10 +337,10 @@ END_CASE;]]></ST>
 		// State Change Condition
 		IF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiExtendTime_ms) THEN
 			IF (SIf.In.bolRetracted.intern) THEN
-				// sensor retract always on cylinder
-				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,1,777,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				// sensor retract always on
+				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			ELSE
-				// timeout extend cylinder
+				// timeout extend
 				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,2,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			END_IF
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
@@ -382,7 +389,8 @@ END_CASE;]]></ST>
 		
 		// State Change Condition
 		IF (SIf.In.bolRetracted.intern) THEN
-			// sensor retract always on cylinder
+			// sensor retract always on
+			g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolExtended.intern = FALSE) THEN // wait time until error?
 			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
@@ -429,7 +437,8 @@ END_CASE;]]></ST>
 		
 		// State Change Condition
 		IF (SIf.In.bolExtended.intern) THEN
-			// sensor retract always on cylinder
+			// sensor retract always on
+			g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolRetracted.intern = FALSE) THEN // wait time until error?
 			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
@@ -488,7 +497,7 @@ END_CASE;]]></ST>
 		// State Change Condition
 		IF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiRetractTime_ms) THEN
 			IF (SIf.In.bolExtended.intern) THEN
-				// sensor retract always on cylinder
+				// sensor retract always on 
 				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			ELSE
 				// timeout extend cylinder

@@ -5,6 +5,7 @@ STRUCT
 	///alarm flag array
 	bol: BOOL;
 	eAlmClass: E_AlmClass;
+	strText: STRING;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

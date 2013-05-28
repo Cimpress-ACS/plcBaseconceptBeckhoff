@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <POU Name="FB_CtrlBase" Id="{e2b5831a-9637-46a4-99d4-a8cea553de4d}">
     <Declaration><![CDATA[{attribute 'reflection' := ''}
 FUNCTION_BLOCK FB_CtrlBase IMPLEMENTS I_CtrlBase
@@ -471,7 +471,7 @@ IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off con
 	me.bolChangeBackToAUTO := FALSE;
 END_IF
 
-IF ((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) THEN // switch after startup to PONBusy
+IF ((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) AND (me.StateMachine.intState<>cSTA_PONBusy)  AND (me.StateMachine.intState<>cSTA_PON) THEN // switch after startup to PONBusy
 	me.StateMachine.intStateNext := cSTA_PONBusy;
 END_IF
 

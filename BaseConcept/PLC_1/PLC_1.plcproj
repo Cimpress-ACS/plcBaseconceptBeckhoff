@@ -30,9 +30,6 @@
     <Compile Include="POUs\Alarm\E_AlmClass.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Alarm\E_AlmCmd.TcDUT">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="POUs\Alarm\E_AlmState.TcDUT">
       <SubType>Code</SubType>
     </Compile>

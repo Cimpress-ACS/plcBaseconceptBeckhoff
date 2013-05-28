@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <POU Name="FB_MOD" Id="{ce39c9c5-f1f6-48a4-885d-15a7f8be770f}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MOD EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -93,12 +93,18 @@ CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 CIf.Info.strType := 'FB_MOD'; 
 
 // set alarm class
-SIf.Alm[1].eAlmClass := E_AlmClass.EOFF;
-SIf.Alm[2].eAlmClass := E_AlmClass.OFF;
-SIf.Alm[3].eAlmClass := E_AlmClass.STOP;
-SIf.Alm[4].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[5].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[1].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[1].strText := 'not used';
+SIf.Alm[2].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[2].strText := 'not used';
+SIf.Alm[3].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[3].strText := 'not used';
+SIf.Alm[4].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[4].strText := 'not used';
+SIf.Alm[5].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[5].strText := 'not used';
 SIf.Alm[6].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[6].strText := 'not used';
 
 // for tests
 CIf.SwCfg.bolSimulation := FALSE;
@@ -197,11 +203,11 @@ END_CASE;]]></ST>
 				me.StateMachine.intStateNext := cSTA_OFFBusy;
 			ELSIF (me.StateMachine.intStateHistory<=cSTA_PON) OR (me.intCmd=cSTA_PON) THEN
 				me.StateMachine.intStateNext := cSTA_PONBusy;
-			ELSIF(me.intCmd=cSTA_OFF) THEN
+			ELSIF(me.intCmd=cCMD_OFF) THEN
 				me.StateMachine.intStateNext := cSTA_OFFBusy;
-			ELSIF(me.intCmd=cSTA_INIT) THEN
+			ELSIF(me.intCmd=cCMD_INIT) THEN
 				me.StateMachine.intStateNext := cSTA_INITBusy;
-			ELSIF(me.intCmd=cSTA_RUN) THEN
+			ELSIF(me.intCmd=cCMD_RUN) THEN
 				me.StateMachine.intStateNext := cSTA_INITBusy;
 			END_IF
 		END_IF
@@ -293,9 +299,9 @@ END_CASE;]]></ST>
 		// State Change Condition
 		IF ((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) THEN
 			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cSTA_OFF) THEN
+		ELSIF(me.intCmd=cCMD_OFF) THEN
 			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cSTA_RUN) THEN
+		ELSIF(me.intCmd=cCMD_RUN) THEN
 			me.StateMachine.intStateNext := cSTA_RUNBusy;
 		END_IF
 	END_IF
@@ -335,9 +341,9 @@ END_CASE;]]></ST>
 		// State Change Condition
 		IF ((me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF)) THEN
 			// enable start - no important error active
-			IF(me.intCmd=cSTA_INIT) THEN
+			IF(me.intCmd=cCMD_INIT) THEN
 				me.StateMachine.intStateNext := cSTA_INITBusy;
-			ELSIF(me.intCmd=cSTA_RUN) THEN
+			ELSIF(me.intCmd=cCMD_RUN) THEN
 				me.StateMachine.intStateNext := cSTA_INITBusy;
 			END_IF
 		END_IF
@@ -421,7 +427,7 @@ END_CASE;]]></ST>
 		
 		
 		// State Change Condition
-		IF(me.intCmd=cSTA_OFF) OR (me.intCmd=cSTA_INIT) OR (me.intCmd=cSTA_RUN) THEN
+		IF(me.intCmd=cCMD_OFF) OR (me.intCmd=cCMD_INIT) OR (me.intCmd=cCMD_RUN) THEN
 			me.StateMachine.intStateNext := cSTA_OFFBusy;
 		END_IF
 	END_IF
@@ -462,7 +468,7 @@ IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off con
 	me.bolChangeBackToAUTO := FALSE;
 END_IF
 
-IF ((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) THEN // switch after startup to PONBusy
+IF ((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) AND (me.StateMachine.intState<>cSTA_PONBusy)  AND (me.StateMachine.intState<>cSTA_PON) THEN // switch after startup to PONBusy
 	me.StateMachine.intStateNext := cSTA_PONBusy;
 END_IF
 
