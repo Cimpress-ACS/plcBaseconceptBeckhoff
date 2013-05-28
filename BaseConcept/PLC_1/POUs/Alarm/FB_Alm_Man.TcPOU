@@ -6,13 +6,13 @@ VAR_INPUT
 	intCtrlIdMax: INT;
 END_VAR
 VAR CONSTANT
-	///config alarm handler
+	// config alarm handler number of elements of queue
 	c_uinMaxAlmElements: UINT := 99;
-	///0: with history on PLC, auto clr
+	// 0: with history on PLC, auto clr alarms from array if alarm state clear is set
 	c_uinModeAlarm: UINT := 1;
-	///machine number 1
+	// machine number 1, at the moment every time set to 1
 	c_udiMachineNr: UDINT := 1;
-	// commands for the UI
+	// commands from the UI
 	cCMD_RESET_ALL : INT := 2; // reset state=RST, reset state CLR
 	cCMD_RESET_RST : INT  := 4; // reset state=RST, reset state CLR
 	cCMD_RESET_CLR : INT  := 6; // reset state CLR -> c_uinModeAlarm = 1, automatic reset will be done on PLC
@@ -54,6 +54,9 @@ The alarm manager sets and clears alarms from the internal array. In the interna
 alarms of a machine are listed. The list has no order. A new entry will be inserted at the next 
 free place.
 
+For the easy usage for UI the function block is to be define as global. And then the cmd for reset should be 
+set when the button is pressed -> intAlmCmd = cCMD_RESET_ALL
+All active alarms are shown in the aAlm array.
 
 History:
 Version		Date			Author		Comment
