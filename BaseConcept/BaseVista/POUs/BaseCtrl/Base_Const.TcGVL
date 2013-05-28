@@ -1,0 +1,13 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <GVL Name="Base_Const" Id="{f42e0853-8ea7-40ac-ab02-2078e6e00b3d}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///number of child access possible in one controller class
+	cMaxNrOfChilds: UINT := 10;
+	///maximal number of commands implemented in one controller class
+	cMaxCmdPerCtrl: UINT := 15;
+	///maximal number of commands implemented in one controller class
+	cMaxBaseCmdState: UINT := 200;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

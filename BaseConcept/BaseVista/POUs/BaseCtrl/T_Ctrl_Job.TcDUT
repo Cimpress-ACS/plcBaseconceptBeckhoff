@@ -1,0 +1,37 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <DUT Name="T_Ctrl_Job" Id="{be2c3b25-e079-4e9d-96b1-0ccb5320a23b}">
+    <Declaration><![CDATA[TYPE T_Ctrl_Job :
+STRUCT
+	///mode if mode = AUTO -> ACmd will be used, otherwise the MCmd channel is open
+	eMode: E_Mode;
+	///automatic command from parent ctrl
+	intACmd: INT;
+	///manual command from UI p.e.
+	intMCmd: INT;
+	///active cmd
+	strCmd: STRING;
+	///active state
+	intState: INT;
+	strState: STRING;
+	///if used - show substates for debugging
+	strSubState: STRING;
+	///event channel to signal special events to parent parallel to status
+	intEvt: INT;
+	///reset all alarms
+	bolAlmReset: BOOL;
+	///activate io-forcing
+	bolIoForce: BOOL;
+	///overwrite suspend all interlocks (for debugging/testing)
+	bolIlkOverwrite: BOOL;
+	///activ alarm class of parent ctrl
+	eParent_ActivAlmClass: E_AlmClass;
+	///activ alarm class of me ctrl
+	eMe_ActivAlmClass: E_AlmClass;
+	///list of all implemented commands
+	aCmdList: ARRAY[0..cMaxCmdPerCtrl] OF T_Ctrl_CmdListElement;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

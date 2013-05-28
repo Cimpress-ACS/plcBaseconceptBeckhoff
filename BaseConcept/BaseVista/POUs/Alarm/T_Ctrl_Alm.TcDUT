@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <DUT Name="T_Ctrl_Alm" Id="{3c4a8910-69af-4259-b91c-e1b2dbcb1237}">
+    <Declaration><![CDATA[TYPE T_Ctrl_Alm :
+STRUCT
+	///alarm flag array
+	bol: BOOL;
+	eAlmClass: E_AlmClass;
+	strText: STRING;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

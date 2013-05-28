@@ -1,0 +1,102 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <POU Name="SlowPRG_1" Id="{becf61f5-822d-4a35-9e70-446ac032208b}">
+    <Declaration><![CDATA[PROGRAM SlowPRG_1
+VAR
+	bolPlcStartupDone: BOOL := FALSE;
+	bolHostInitDone : BOOL := FALSE;
+	bolInitDone : BOOL := FALSE;
+	strInstance: STRING;
+	pCtrl_CIf: POINTER TO T_Ctrl_CIf;
+	intState: INT;
+	bolSetCmd: BOOL;
+	jj:INT;
+	bolCtrlRst: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+call of all controller (FUB) for the slow task class.
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		24.05.2013		AVME/KVO	Start history
+
+
+___________________________________________________________________________________________________*)
+
+// -----------------------------------------------------------------------------------------------
+// Initialize the PLC Parameter and check the PLC health
+// -----------------------------------------------------------------------------------------------
+IF (NOT bolPlcStartupDone) THEN
+	bolPlcStartupDone := TRUE;	
+END_IF
+// -----------------------------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------------------------
+// The host system is downloading all parameter at startup. 
+// bolPlcStartupDone will be set to true after the Host is done with the initialization
+// -----------------------------------------------------------------------------------------------
+IF (bolPlcStartupDone AND (NOT bolHostInitDone) AND NOT bolInitDone) THEN
+	bolHostInitDone := TRUE;
+END_IF
+// -----------------------------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------------------------
+// Start PLC code initialization
+// -----------------------------------------------------------------------------------------------
+IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone THEN
+	
+	// init	
+	bolInitDone := TRUE;
+END_IF
+// -----------------------------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------------------------
+// Normal Run mode after all the initialization is done
+// -----------------------------------------------------------------------------------------------
+IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
+	
+	//****************************************************************************************************
+	// cyclic controller calls
+	//****************************************************************************************************
+	// call alarm message handler
+	g_fbAlm_Man(bolCtrlRst:= bolCtrlRst);
+	IF (bolCtrlRst) THEN
+		FOR jj:=0 TO E_CtrlId.E_CtrlIdMax BY 1 DO
+			IF (g_a_pCtrlCIf[jj]<>0) THEN // check if entry exist
+				g_a_pCtrlCIf[jj]^.Job.bolAlmReset := TRUE;
+			END_IF
+		END_FOR
+		bolCtrlRst := FALSE;
+	END_IF
+	
+(* Tests
+IF (g_a_pCtrlCIf[E_CtrlId.CYL_HOR2]<>0) AND bolSetCmd THEN // check pointer valid
+	g_a_pCtrlCIf[E_CtrlId.CYL_HOR2]^.Job.intACmd := cCMD_EXTEND;
+	bolSetCmd := FALSE;
+END_IF;
+
+IF (g_a_pCtrlInst[E_CtrlId.CYL_HOR2]<>0) THEN // check pointer valid
+	pCtrl_CIf := g_a_pCtrlInst[E_CtrlId.CYL_HOR2]^.getCtrlCIf();
+	intState:= pCtrl_CIf^.Job.intState;
+END_IF;
+*)
+	
+END_IF
+// -----------------------------------------------------------------------------------------------]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

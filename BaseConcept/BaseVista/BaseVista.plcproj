@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>-->
+    <FileVersion>1.0.0.0</FileVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{bea43f75-96a6-4f54-ad09-f559f9b95fa9}</ProjectGuid>
+    <Name>BaseVista</Name>
+    <ProgramVersion>3.1.0.4</ProgramVersion>
+    <Application>{2268a0fc-b5b5-4439-9c3b-de75cf2595ce}</Application>
+    <TypeSystem>{ed4c9ebe-00ea-4ede-9881-623dfdd4ca64}</TypeSystem>
+    <Implicit_Task_Info>{2969cdba-7a0d-4535-932e-735903e6a11c}</Implicit_Task_Info>
+    <Implicit_KindOfTask>{e0bdaf8b-1eb1-4b3b-a43b-9a0a071ccf64}</Implicit_KindOfTask>
+    <Implicit_Jitter_Distribution>{196c3592-1877-49bb-83e7-88cc91583545}</Implicit_Jitter_Distribution>
+    <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
+    <Company>Vistaprint</Company>
+    <Title>Base PLC </Title>
+    <ProjectVersion>0.1</ProjectVersion>
+    <Released>True</Released>
+    <!--    <OutputType>Exe</OutputType>
+    <RootNamespace>MyApplication</RootNamespace>
+    <AssemblyName>MyApplication</AssemblyName>-->
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="POUs\Alarm\E_AlmClass.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Alarm\E_AlmCmd.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Alarm\E_AlmState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Alarm\FB_Alm_Man.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Alarm\T_AlmElement.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Alarm\T_Ctrl_Alm.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\Base_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\Base_Const.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\E_Mode.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\FB_CtrlBase.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\I_CtrlBase.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_CIf.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_Class.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_Class_Alm.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_Class_StateMachine.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_CmdListElement.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_Info.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_IoBool.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_Job.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_SwCfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\BaseCtrl\T_fbInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility Functions\getInBol.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility Functions\getStrInstanceName.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility Functions\setOutBol.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Version\Global_Version.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="POUs\" />
+    <Folder Include="POUs\Alarm\" />
+    <Folder Include="POUs\BaseCtrl\" />
+    <Folder Include="POUs\Utility Functions\" />
+    <Folder Include="Version\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PlaceholderReference Include="CDS_MemMan">
+      <DefaultResolution>CDS_MemMan, 3.3.2.0 (3S - Smart Software Solutions GmbH)</DefaultResolution>
+      <Namespace>CDS_MemMan</Namespace>
+      <SystemLibrary>True</SystemLibrary>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Standard">
+      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Standard</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_System">
+      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Interfaces">
+      <DefaultResolution>Tc3_Interfaces, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Interfaces</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Module">
+      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Module</Namespace>
+    </PlaceholderReference>
+  </ItemGroup>
+  <ItemGroup>
+    <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_Utilities</Namespace>
+    </LibraryReference>
+  </ItemGroup>
+  <ProjectExtensions />
+  <!-- 
+   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Release\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+-->
+</Project>

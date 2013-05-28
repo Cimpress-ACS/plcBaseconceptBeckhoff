@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>-->
+    <FileVersion>1.0.0.0</FileVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{0be07a7f-2331-4804-8973-92050309d01b}</ProjectGuid>
+    <Name>BaseVistaSample</Name>
+    <ProgramVersion>3.1.0.4</ProgramVersion>
+    <Application>{08d6478a-545d-4c57-9bfa-d42310e36190}</Application>
+    <TypeSystem>{a92e3e49-805a-4c16-bc4b-cb5ee6281183}</TypeSystem>
+    <Implicit_Task_Info>{3f29ed51-76de-457c-a698-f5e9fd7ffa92}</Implicit_Task_Info>
+    <Implicit_KindOfTask>{f10b656a-b44c-4c70-93ea-5217ab9f657e}</Implicit_KindOfTask>
+    <Implicit_Jitter_Distribution>{cf6d4757-6a19-4b37-972b-7dc998c5fc10}</Implicit_Jitter_Distribution>
+    <LibraryReferences>{a4298231-0edf-4ec5-ab2f-5f009f605bc6}</LibraryReferences>
+    <!--    <OutputType>Exe</OutputType>
+    <RootNamespace>MyApplication</RootNamespace>
+    <AssemblyName>MyApplication</AssemblyName>-->
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="DUTs\E_CtrlId.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="GVLs\Global.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="GVLs\Io.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\CYL_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\E_Typ_CYL.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\FB_CYL.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\T_Ctrl_SIf_CYL.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\T_Ctrl_SIf_CYL_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\T_Ctrl_SIf_CYL_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\T_Ctrl_SIf_CYL_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\T_Ctrl_SIf_CYL_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\T_Ctrl_SIf_CYL_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL\T_Ctrl_SIf_CYL_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD\E_Typ_MOD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD\FB_MOD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD\MOD_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD\T_Ctrl_SIf_MOD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD\T_Ctrl_SIf_MOD_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD\T_Ctrl_SIf_MOD_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD\T_Ctrl_SIf_MOD_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD\T_Ctrl_SIf_MOD_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD\T_MOD_RUN_StateMachine.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Program\FastPRG_1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Program\MiddlePRG_1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Program\SlowPRG_1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Task_Fast.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Task_Middle.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Task_Slow.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DUTs\" />
+    <Folder Include="GVLs\" />
+    <Folder Include="POUs\" />
+    <Folder Include="POUs\Controller\" />
+    <Folder Include="POUs\Controller\Lvl0\" />
+    <Folder Include="POUs\Controller\Lvl0\CYL\" />
+    <Folder Include="POUs\Controller\Lvl2\" />
+    <Folder Include="POUs\Controller\Lvl2\MOD\" />
+    <Folder Include="POUs\Controller\Lvl1" />
+    <Folder Include="POUs\Controller\Lvl3" />
+    <Folder Include="POUs\Controller\Lvl4" />
+    <Folder Include="POUs\Program\" />
+    <Folder Include="POUs\Utility Functions\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PlaceholderReference Include="CDS_MemMan">
+      <DefaultResolution>CDS_MemMan, 3.3.2.0 (3S - Smart Software Solutions GmbH)</DefaultResolution>
+      <Namespace>CDS_MemMan</Namespace>
+      <SystemLibrary>True</SystemLibrary>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Standard">
+      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Standard</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_System">
+      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Interfaces">
+      <DefaultResolution>Tc3_Interfaces, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Interfaces</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Module">
+      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Module</Namespace>
+    </PlaceholderReference>
+  </ItemGroup>
+  <ItemGroup>
+    <LibraryReference Include="Base PLC,0.1,Vistaprint">
+      <Namespace>Base_PLC</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_Utilities</Namespace>
+    </LibraryReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="BaseVistaSample.tmc">
+      <SubType>Content</SubType>
+    </Content>
+  </ItemGroup>
+  <ProjectExtensions />
+  <!-- 
+   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Release\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+-->
+</Project>

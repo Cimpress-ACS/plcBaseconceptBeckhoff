@@ -1,0 +1,20 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <DUT Name="T_Ctrl_IoBool" Id="{cb620801-5877-40b3-a516-f329475c904f}">
+    <Declaration><![CDATA[TYPE T_Ctrl_IoBool :
+STRUCT
+	///mapped io variable to hardware
+	map: BOOL;
+	///shows the state of (input: mapped, output: set by programm respectiv at the moment one cycle later evtl. from the forcing if forcing active) -> necessary for what?
+	state: BOOL;
+	///variabel to/ from program
+	intern: BOOL;
+	///variabel set from UI
+	force: BOOL;
+	///enable force of single io-datapoint
+	EnForce: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

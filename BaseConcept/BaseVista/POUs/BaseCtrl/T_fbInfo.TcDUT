@@ -1,0 +1,11 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <DUT Name="T_fbInfo" Id="{ddb8846a-1ac0-4a4d-a21c-b79f5f33c2b1}">
+    <Declaration><![CDATA[TYPE T_fbInfo :
+STRUCT
+	udiSample_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

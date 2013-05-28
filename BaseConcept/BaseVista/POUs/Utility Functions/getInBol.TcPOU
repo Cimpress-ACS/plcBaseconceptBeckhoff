@@ -1,0 +1,22 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <POU Name="getInBol" Id="{263f8b34-7e5c-4264-aab5-0bc5a85daf1e}">
+    <Declaration><![CDATA[FUNCTION getInBol : BOOL
+VAR_INPUT
+	bol_GlobalEnableForce: BOOL;
+	p_Input: POINTER TO T_Ctrl_IoBool;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[p_Input^.state := p_Input^.map;
+
+IF (p_Input^.EnForce OR bol_GlobalEnableForce) THEN
+	p_Input^.intern := p_Input^.force;
+ELSE
+	p_Input^.intern := p_Input^.map;
+END_IF;
+
+getInBol := p_Input^.intern;]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

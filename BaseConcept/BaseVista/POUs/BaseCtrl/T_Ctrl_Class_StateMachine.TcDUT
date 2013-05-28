@@ -1,0 +1,22 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <DUT Name="T_Ctrl_Class_StateMachine" Id="{1706ec3e-36e6-4db5-b1e7-9547457762a8}">
+    <Declaration><![CDATA[TYPE T_Ctrl_Class_StateMachine :
+STRUCT
+	///actual state
+	intState: INT;
+	///state of last cycle
+	intStateLastCycle: INT;
+	///save history backup p.e. in ERROR state
+	intStateHistory: INT;
+	///set state for next cycle
+	intStateNext: INT;
+	///[ms] to simulate state in SINGLE_ANSWER
+	udiStateSimSetTime_ms: UDINT := 1000;
+	///[ms] time in one state
+	udiTimeInState_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
