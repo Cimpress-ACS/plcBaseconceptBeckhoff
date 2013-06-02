@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <DUT Name="E_AlmClass" Id="{82a4a8f0-7c0b-4aae-9acb-8c95c51b0bfc}">
     <Declaration><![CDATA[TYPE E_AlmClass :
 (
@@ -17,7 +17,7 @@
 	///Emergency off
 	EOFF,
 	Max_E_AlmClass
-);
+) INT;
 END_TYPE
 ]]></Declaration>
     <ObjectProperties />

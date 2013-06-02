@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <DUT Name="T_Ctrl_CmdListElement" Id="{163d4e72-b9dd-4d90-a938-7fc2b094dde2}">
     <Declaration><![CDATA[TYPE T_Ctrl_CmdListElement :
 STRUCT
@@ -7,7 +7,7 @@ STRUCT
 	///command is available info for UI
 	bolAvailable: BOOL;
 	/// Name of command. Important for UI.
-	strName: STRING;
+	strName: STRING(80);
 END_STRUCT
 END_TYPE
 ]]></Declaration>

@@ -1,9 +1,22 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <GVL Name="Global" Id="{118a3a19-d9ae-43fa-9370-0480fd6e4d03}">
     <Declaration><![CDATA[VAR_GLOBAL
 	g_a_pCtrlInst: ARRAY[0..E_CtrlId.E_CtrlIdMax] OF POINTER TO fb_CtrlBase; // instance array of all controller instances
 	g_a_pCtrlCIf: ARRAY[0..E_CtrlId.E_CtrlIdMax] OF POINTER TO T_Ctrl_CIf; // common interface array of all controllers (main use for PLC)
+	
+	fbTest : fb_CtrlBase;
+	structTest : T_Ctrl_CIf;
+	
+	ptr_fbTest : POINTER TO fb_CtrlBase := ADR(fbTest);
+	ptr_structTest : POINTER TO T_Ctrl_CIf := ADR(structTest);
+	
 	g_fbAlm_Man: FB_Alm_Man; // global alarm manager
+	
+	
+	
+	test: ARRAY[0..cMaxCmdPerCtrl] OF T_Ctrl_CmdListElement;
+	test2 : ARRAY[0..cMaxCmdPerCtrl] OF DINT;
+	test3 : T_Ctrl_CmdListElement;
 END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>
