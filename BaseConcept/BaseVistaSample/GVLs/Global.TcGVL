@@ -17,7 +17,8 @@
 	test: ARRAY[0..cMaxCmdPerCtrl] OF T_Ctrl_CmdListElement;
 	test2 : ARRAY[0..cMaxCmdPerCtrl] OF DINT;
 	test3 : T_Ctrl_CmdListElement;
-END_VAR]]></Declaration>
+END_VAR
+]]></Declaration>
     <ObjectProperties />
   </GVL>
 </TcPlcObject>
