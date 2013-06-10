@@ -27,8 +27,7 @@ END_VAR
 ¦___________________________________________________________________________________________________
 
 Function desription:
-Basic controller implementation. This Controller should be the base father controller for all in the
-feature implemented ctontroller classes.
+Cylinder implementation. 
 
 
 History:
@@ -65,7 +64,6 @@ VAR_INPUT
 	bInCopyCode: BOOL;
 END_VAR
 VAR
-	udiTaskCnt: UDINT;
 	ii: UINT;
 END_VAR
 ]]></Declaration>

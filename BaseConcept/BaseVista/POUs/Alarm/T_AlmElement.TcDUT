@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <DUT Name="T_AlmElement" Id="{9def8861-4bd0-4bfd-9cab-5879a3bed286}">
     <Declaration><![CDATA[TYPE T_AlmElement :
 STRUCT
@@ -18,6 +18,8 @@ STRUCT
 	intCtrlId: INT;
 	///local alarm number
 	udiAlarmNr: UDINT;
+	// for debugging string alarm controller-alarm
+	strText: STRING;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

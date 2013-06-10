@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <POU Name="FB_Alm_Man" Id="{f11424bb-ec66-4e73-9805-32f741f5aee1}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Alm_Man
 VAR_INPUT
@@ -171,6 +171,7 @@ InAlmElement.dinInfo := dinInfo;
 InAlmElement.eClass := e_LocAlmClass;
 InAlmElement.intState := intState;
 InAlmElement.strDTEntry := strActTime;
+InAlmElement.strText := p_LocCtrlAlm^.strText;
 
 // loop over whole alarm array
 FOR ii:= 0 TO c_uinMaxAlmElements BY 1 DO

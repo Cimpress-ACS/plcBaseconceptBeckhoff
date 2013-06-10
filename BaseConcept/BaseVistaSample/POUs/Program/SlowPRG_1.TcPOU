@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <POU Name="SlowPRG_1" Id="{becf61f5-822d-4a35-9e70-446ac032208b}">
     <Declaration><![CDATA[PROGRAM SlowPRG_1
 VAR
@@ -81,7 +81,7 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 		END_FOR
 		bolCtrlRst := FALSE;
 	END_IF
-	
+
 (* Tests
 IF (g_a_pCtrlCIf[E_CtrlId.CYL_HOR2]<>0) AND bolSetCmd THEN // check pointer valid
 	g_a_pCtrlCIf[E_CtrlId.CYL_HOR2]^.Job.intACmd := cCMD_EXTEND;
