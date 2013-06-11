@@ -8,7 +8,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 {
     class Program
     {
-        private const string adsAddress = "192.168.10.113.1.1";
+        private const string adsAddress = "192.168.1.111.1.1";
         private const int adsPort = 851;
 
         static void Main(string[] args)
