@@ -76,6 +76,9 @@
     <Compile Include="POUs\BaseCtrl\T_Ctrl_IoBool.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\BaseCtrl\T_Ctrl_IoInt.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\BaseCtrl\T_Ctrl_Job.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -88,10 +91,16 @@
     <Compile Include="POUs\Utility Functions\getInBol.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Utility Functions\getInInt.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Utility Functions\getStrInstanceName.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Utility Functions\setOutBol.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility Functions\setOutInt.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Version\Global_Version.TcGVL">

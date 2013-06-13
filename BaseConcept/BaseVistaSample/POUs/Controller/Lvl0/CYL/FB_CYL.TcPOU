@@ -148,13 +148,14 @@ END_VAR
       <Implementation>
         <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
 IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolExtend));
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolRetract));
+	
 	// check interlocks to prevent damages
 	IF (CIf.Job.bolIlkOverwrite=FALSE) THEN
 		bolSwitchValvesOff := FALSE;
 		
-		IF (SIf.Ilk.bolExtend=FALSE) THEN
-			setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolExtend));
-		ELSE
+		IF (SIf.Ilk.bolExtend=TRUE) THEN
 			// switch off?
 			IF (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor2) 
 				OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorExtended) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorRetracted) THEN
@@ -162,13 +163,13 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 			ELSE
 				// bistable valve ->  switch both off
 				bolSwitchValvesOff := TRUE;
-				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				IF (SIf.Out.bolExtend.map=1) THEN
+					g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				END_IF
 			END_IF
 		END_IF
 		
-		IF (SIf.Ilk.bolRetract=FALSE) THEN
-			setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolRetract));
-		ELSE
+		IF (SIf.Ilk.bolRetract=TRUE) THEN
 			// switch off?
 			IF (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor2) 
 				OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorExtended) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorRetracted) THEN
@@ -177,7 +178,9 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 			ELSE
 				// bistable valve -> switch both off
 				bolSwitchValvesOff := TRUE;
-				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,6,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				IF (SIf.Out.bolRetract.map=1) THEN
+					g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,6,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				END_IF;
 			END_IF
 		END_IF
 		
@@ -207,6 +210,10 @@ CASE me.StateMachine.intState OF
         THIS^.sta_EXTENDBusy();
     cSTA_EXTEND: 
         THIS^.sta_EXTEND();
+	cSTA_STOPBusy: 
+        THIS^.sta_STOPBusy();
+    cSTA_STOP: 
+        THIS^.sta_STOP();
 END_CASE;]]></ST>
       </Implementation>
     </Method>
@@ -609,8 +616,8 @@ IF (getCmdState='') THEN // global not defined get local
 				getCmdState := 'cSTA_RETRACT';
 			cSTA_EXTENDBusy: 
 				getCmdState := 'cSTA_EXTENDBusy';
-			cCMD_EXTEND: 
-				getCmdState := 'cCMD_EXTEND';
+			cSTA_EXTEND: 
+				getCmdState := 'cSTA_EXTEND';
 		END_CASE;
 	END_IF
 END_IF

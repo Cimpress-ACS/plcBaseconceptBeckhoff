@@ -63,9 +63,6 @@
     <Compile Include="POUs\Controller\Lvl2\MOD\FB_MOD.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl2\MOD\MOD_CmdState.TcGVL">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="POUs\Controller\Lvl2\MOD\T_Ctrl_SIf_MOD.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -144,11 +141,11 @@
   <ItemGroup>
     <LibraryReference Include="Base PLC ,0.1,Vistaprint" />
     <LibraryReference Include="Base PLC ,0.1,Vistaprint" />
-    <LibraryReference Include="Base PLC ,0.1,Vistaprint" />
-    <LibraryReference Include="Base PLC ,0.1,Vistaprint" />
     <LibraryReference Include="Base PLC,0.1,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
+    <LibraryReference Include="Base PLC,0.1,Vistaprint" />
+    <LibraryReference Include="Base PLC,0.1,Vistaprint" />
     <LibraryReference Include="Base PLC,0.1,Vistaprint" />
     <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>

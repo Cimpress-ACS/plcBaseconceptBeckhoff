@@ -36,6 +36,28 @@ ________________________________________________________________________________
 // Initialize the PLC Parameter and check the PLC health
 // -----------------------------------------------------------------------------------------------
 IF (NOT bolPlcStartupDone) THEN
+	
+	
+	// init
+	//Driver
+	
+	// Lvl0
+	fbCyl_AB.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.CYL_VER1);     	// init and entry fb_instance in global fb pointer array
+	g_a_pCtrlCIf[E_CtrlId.CYL_VER1] := fbCyl_AB.getCtrlCIf();    // get adr of ctrl interface struct
+	
+	fbHOR_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.HOR_2); // init and entry fb_instance in global fb pointer array
+	g_a_pCtrlCIf[E_CtrlId.HOR_2] := fbHOR_2.getCtrlCIf();    // get adr of ctrl interface struct
+	
+	fbVER_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.VER_2); // init and entry fb_instance in global fb pointer array
+	g_a_pCtrlCIf[E_CtrlId.VER_2] := fbVER_2.getCtrlCIf();    // get adr of ctrl interface struct
+	
+	//Lvl2
+	fbMOD_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.MOD_2); // init and entry fb_instance in global fb pointer array
+	g_a_pCtrlCIf[E_CtrlId.MOD_2] := fbMOD_2.getCtrlCIf();    // get adr of ctrl interface struct
+	// add childs
+	fbMOD_2.p_fbHOR := g_a_pCtrlInst[E_CtrlId.HOR_2];
+	fbMOD_2.p_fbVER := g_a_pCtrlInst[E_CtrlId.VER_2];
+
 	bolPlcStartupDone := TRUE;	
 END_IF
 // -----------------------------------------------------------------------------------------------
@@ -57,25 +79,7 @@ END_IF
 IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone THEN
 	
 	// init
-	fbCyl_AB.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.CYL_VER1);     	// init and entry fb_instance in global fb pointer array
-	g_a_pCtrlCIf[E_CtrlId.CYL_VER1] := fbCyl_AB.getCtrlCIf();    // get adr of ctrl interface struct
 	
-	// init module example
-	// Lvl0
-	fbHOR_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.HOR_2); // init and entry fb_instance in global fb pointer array
-	g_a_pCtrlCIf[E_CtrlId.HOR_2] := fbHOR_2.getCtrlCIf();    // get adr of ctrl interface struct
-	
-	fbVER_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.VER_2); // init and entry fb_instance in global fb pointer array
-	g_a_pCtrlCIf[E_CtrlId.VER_2] := fbVER_2.getCtrlCIf();    // get adr of ctrl interface struct
-	
-	//Lvl2
-	fbMOD_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.MOD_2); // init and entry fb_instance in global fb pointer array
-	g_a_pCtrlCIf[E_CtrlId.MOD_2] := fbMOD_2.getCtrlCIf();    // get adr of ctrl interface struct
-	
-	// add childs
-	fbMOD_2.p_fbHOR := g_a_pCtrlInst[E_CtrlId.HOR_2];
-	fbMOD_2.p_fbVER := g_a_pCtrlInst[E_CtrlId.VER_2];
-
 	bolInitDone := TRUE;
 END_IF
 // -----------------------------------------------------------------------------------------------

@@ -12,11 +12,20 @@ VAR
 	SIf: T_Ctrl_SIf_MOD;
 	pHOR_CIF: POINTER TO T_Ctrl_CIf;
 	pVER_CIF: POINTER TO T_Ctrl_CIf;
-	stSubSate: T_MOD_RUN_StateMachine;
 	bolfpCmd: BOOL;
-	bolfpInit: BOOL;
+	
+	// local substates machine
+	stSubSate: BASE_PLC.T_Ctrl_Class_StateMachine;
 END_VAR
-]]></Declaration>
+VAR CONSTANT
+	// ctrl specific substates definitions
+	cSTA_VER_Up: INT := 201;
+	cSTA_VER_Down: INT := 202;
+	cSTA_WAIT_Pick: INT := 203;
+	cSTA_HOR_MoveToPlace: INT := 204;
+	cSTA_HOR_MoveToPick: INT := 205;
+	cSTA_Finished: INT := 206;
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
 ¦	
@@ -51,7 +60,6 @@ IF (me.bolActivate) AND (p_fbHOR<>0) AND (p_fbVER<>0) THEN // cyclic call enable
 		Always();
 		
 		StateMachine();
-		THIS^.CIf.Job.strSubState := stSubSate.strState; // entry substate info to common interface
 		
 		CycleEndDuty();
 	END_IF
@@ -119,10 +127,6 @@ SIf.Par.udiWaitPick_ms := 15000;]]></ST>
 
 // main statemachine of base controller
 CASE me.StateMachine.intState OF
-	 cSTA_OFFBusy: 
-        THIS^.sta_OFFBusy();
-    cSTA_OFF: 
-        THIS^.sta_OFF();
     cSTA_INITBusy: 
         THIS^.sta_INITBusy();
     cSTA_INIT: 
@@ -605,6 +609,7 @@ END_IF
 					
 		END_CASE
 		stSubSate.intStateLastCycle := stSubSate.intState;
+		CIf.Job.strSubState := THIS^.getCmdState(intCmdState:=stSubSate.intState,bolState:=TRUE);
 		IF (stSubSate.intState<>stSubSate.intStateNext) THEN
 			stSubSate.intState := stSubSate.intStateNext;  // set next state for next cycle
 			stSubSate.udiTimeInState_ms := 0; // reset timer
@@ -615,8 +620,6 @@ END_IF
 		END_IF
 		
 		
-		
-
 		// State Change Condition
 		IF ((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) THEN
 			me.StateMachine.intStateNext := cSTA_OFFBusy;
@@ -627,7 +630,7 @@ END_IF
 		ELSIF (stSubSate.intState=cSTA_Finished) THEN
 			me.StateMachine.intStateNext := cSTA_RUN;
 		END_IF
-		stSubSate.strState := THIS^.getCmdState(intCmdState:=stSubSate.intState,bolState:=TRUE);
+
 	END_IF
 
 
@@ -637,7 +640,7 @@ END_IF
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		SIf.Cur.udiCycleTime_ms := me.StateMachine.udiTimeInState_ms;
-		stSubSate.strState := '';
+		CIf.Job.strSubState := '';
 	END_IF]]></ST>
       </Implementation>
     </Method>
