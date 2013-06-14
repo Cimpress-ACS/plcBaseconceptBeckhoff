@@ -140,10 +140,10 @@
   </ItemGroup>
   <ItemGroup>
     <LibraryReference Include="Base PLC ,0.1,Vistaprint" />
-    <LibraryReference Include="Base PLC ,0.1,Vistaprint" />
     <LibraryReference Include="Base PLC,0.1,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
+    <LibraryReference Include="Base PLC,0.1,Vistaprint" />
     <LibraryReference Include="Base PLC,0.1,Vistaprint" />
     <LibraryReference Include="Base PLC,0.1,Vistaprint" />
     <LibraryReference Include="Base PLC,0.1,Vistaprint" />

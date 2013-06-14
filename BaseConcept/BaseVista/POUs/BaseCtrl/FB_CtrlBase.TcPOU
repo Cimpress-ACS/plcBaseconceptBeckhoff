@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <POU Name="FB_CtrlBase" Id="{b1ac081d-d4f6-4134-a9f2-1facb44ddfd2}">
     <Declaration><![CDATA[{attribute 'reflection' := ''}
 FUNCTION_BLOCK FB_CtrlBase IMPLEMENTS I_CtrlBase
@@ -69,7 +69,6 @@ IF (TRUE) THEN//e_CtrlID <= E_CtrlId.E_CtrlIdMax) THEN
 	iniCtrlArray := TRUE;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="FB_init" Id="{8e2e4733-0365-496f-ab15-4b7cede62253}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
@@ -108,7 +107,6 @@ CIf.SwCfg.bolSimulation := TRUE;
 //------------------------------------------------------------------------------------------------------------------------
 CIf.Info.strName := getStrInstanceName(strMyInstancePath); // get name of instance]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="StateMachine" Id="{bd82cc15-d8ac-4107-8c15-5f9179fe156e}">
       <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
@@ -133,7 +131,6 @@ CASE me.StateMachine.intState OF
         THIS^.sta_SINGLE_ANSWER();
 END_CASE;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PONBusy" Id="{b0f25ef0-7497-4069-a2fe-4d79633781d2}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
@@ -172,7 +169,6 @@ END_CASE;]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PON" Id="{a5415b1f-2cd7-4edc-ac8d-d843adc525dc}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
@@ -211,7 +207,6 @@ END_CASE;]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ERROR" Id="{d85375e1-5676-4086-9d3e-5d9b445cb21a}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
@@ -220,7 +215,7 @@ END_CASE;]]></ST>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateHistory) THEN
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
@@ -249,7 +244,6 @@ END_CASE;]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ERRORQuit" Id="{723cb042-1b57-4b76-b123-9f9bd89cfe75}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
@@ -290,7 +284,6 @@ END_CASE;]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_SINGLE_ANSWER" Id="{20d9321e-714d-47e4-806b-d308b0dda850}">
       <Declaration><![CDATA[METHOD PROTECTED sta_SINGLE_ANSWER : BOOL
@@ -339,7 +332,6 @@ END_CASE;]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="CycleStartDuty" Id="{b39f7fe6-b47d-4271-b1d4-ddb49a6de37a}">
       <Declaration><![CDATA[METHOD PROTECTED CycleStartDuty : BOOL
@@ -381,7 +373,6 @@ END_CASE;]]></ST>
 	CIf.Job.strCmd := THIS^.getCmdState(intCmdState:=me.intCmd,bolState:=FALSE);
 	]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="CycleEndDuty" Id="{57f49fa2-4066-4912-99d4-5d1d7e5e0228}">
       <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL
@@ -429,7 +420,6 @@ END_IF
 THIS^.IoOutBridge();	// digitale and analoge outputs or forcing write to hardware
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoInBridge" Id="{595969fe-b7bc-45d2-a690-6bba2ee66204}">
       <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
@@ -444,7 +434,6 @@ ELSE
 END_IF
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="CheckParentAlmClass" Id="{ec1be44d-8050-49b4-a7d6-f8a2a0151732}">
       <Declaration><![CDATA[METHOD PRIVATE CheckParentAlmClass : BOOL
@@ -462,7 +451,6 @@ ELSE
 	me.Alarm.eParent_ActivAlmClass := E_AlmClass.NONE;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="Always" Id="{d773bf4e-1480-43c6-b1d9-815b7b2800b0}">
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
@@ -492,7 +480,6 @@ IF (CIf.SwCfg.bolExist=FALSE) AND (me.StateMachine.intState<>cSTA_SINGLE_ANSWER)
 END_IF
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="CheckCmdValid" Id="{b8086996-e332-408f-922c-a6fe1cc399cf}">
       <Declaration><![CDATA[METHOD PRIVATE CheckCmdValid : BOOL
@@ -513,7 +500,6 @@ FOR ii:=0 TO cMaxCmdPerCtrl BY 1 DO
 	END_IF
 END_FOR]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoOutBridge" Id="{87aaeab6-874a-431a-9966-ce76def3ae9b}">
       <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
@@ -537,7 +523,6 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCtrlCIf" Id="{f5175047-6b1c-409e-9131-8b8198d7f33b}">
       <Declaration><![CDATA[METHOD getCtrlCIf : POINTER TO T_Ctrl_CIf
@@ -545,7 +530,6 @@ END_IF]]></ST>
       <Implementation>
         <ST><![CDATA[getCtrlCIf := adr(THIS^.CIf);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="CtrlInit" Id="{82ace724-adec-4b08-9e9f-389661fc0c1a}">
       <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
@@ -562,7 +546,6 @@ fbGETCURTASKINDEX();
 udiTaskCnt := fbGETCURTASKINDEX.index;
 me.FUBInfo.udiSample_ms := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10000; //[ms] X[100ns]/10000 -> [ms]]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCmdState" Id="{a5e84ddc-52c5-4dca-8f24-77b6da9322fb}">
       <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
@@ -643,7 +626,6 @@ END_IF
 
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFF" Id="{fb45899b-0d32-4910-9443-acd40fb2d0aa}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
@@ -682,7 +664,6 @@ END_IF
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFFBusy" Id="{b43c45d6-db5e-43b9-b8e6-886e382de8a7}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
@@ -721,7 +702,6 @@ END_IF
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <ObjectProperties />
   </POU>
