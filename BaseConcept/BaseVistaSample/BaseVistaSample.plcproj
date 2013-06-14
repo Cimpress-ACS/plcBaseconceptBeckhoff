@@ -78,9 +78,6 @@
     <Compile Include="POUs\Controller\Lvl2\MOD\T_Ctrl_SIf_MOD_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl2\MOD\T_MOD_RUN_StateMachine.TcDUT">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="POUs\Program\FastPRG_1.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -139,7 +136,9 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base PLC ,0.1,Vistaprint" />
+    <LibraryReference Include="Base PLC ,0.1,Vistaprint">
+      <Namespace>Base_PLC</Namespace>
+    </LibraryReference>
     <LibraryReference Include="Base PLC,0.1,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
