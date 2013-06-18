@@ -520,6 +520,7 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 		//END_IF
 	//end_if
 
+	//THIS^.Out_bolOut := SIf.Out.bolOut.map;
 
 END_IF]]></ST>
       </Implementation>

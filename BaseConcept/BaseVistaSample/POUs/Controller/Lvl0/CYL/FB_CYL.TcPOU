@@ -191,6 +191,9 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 		END_IF
 		
 	END_IF
+
+	THIS^.Out_bolExtend := SIf.Out.bolExtend.map;
+	THIS^.Out_bolRetract := SIf.Out.bolRetract.map;
 END_IF]]></ST>
       </Implementation>
     </Method>
