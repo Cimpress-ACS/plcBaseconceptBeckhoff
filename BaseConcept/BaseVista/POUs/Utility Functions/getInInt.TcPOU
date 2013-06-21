@@ -9,7 +9,7 @@ END_VAR
     <Implementation>
       <ST><![CDATA[p_Input^.state := p_Input^.map;
 
-IF (p_Input^.EnForce OR bol_GlobalEnableForce) THEN
+IF (p_Input^.EnForce AND bol_GlobalEnableForce) THEN
 	p_Input^.intern := p_Input^.force;
 ELSE
 	p_Input^.intern := p_Input^.map;

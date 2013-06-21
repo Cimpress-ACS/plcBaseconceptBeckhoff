@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{D5D058E2-D862-490D-9E1F-19A82A0D2277}" ModifiedGUID="{D51F12B9-7D8C-4AC0-B782-2F1EC2F6D8FF}">
+	<Project ProjectGUID="{D5D058E2-D862-490D-9E1F-19A82A0D2277}" ModifiedGUID="{2318340C-0F1A-4774-90ED-F5BAD7BB5591}" Target64Bit="true">
 		<System>
+			<Licenses>
+				<Target>
+					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
+				</Target>
+			</Licenses>
 			<Tasks>
 				<Task Id="2" Priority="5" CycleTime="100000" AmsPort="350">
 					<Name>Task_Fast</Name>
@@ -21,7 +26,7 @@
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 				</Instance>
 			</Project>
-			<Project Disabled="true" GUID="{BEA43F75-96A6-4F54-AD09-F559F9B95FA9}" Name="BaseVista" PrjFilePath="BaseVista\BaseVista.plcproj" TmcFilePath="BaseVista\BaseVista.tmc" ReloadTmc="true" AmsPort="852">
+			<Project GUID="{BEA43F75-96A6-4F54-AD09-F559F9B95FA9}" Name="BaseVista" PrjFilePath="BaseVista\BaseVista.plcproj" TmcFilePath="BaseVista\BaseVista.tmc" ReloadTmc="true" AmsPort="852">
 				<Instance Id="#x01010020" TcSmClass="TComPlcObjDef">
 					<Name>BaseVista Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>

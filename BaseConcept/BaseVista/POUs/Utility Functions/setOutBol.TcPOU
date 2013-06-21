@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <POU Name="setOutBol" Id="{891efa07-591c-44d6-ab21-1223451ff91c}">
     <Declaration><![CDATA[FUNCTION setOutBol : BOOL
 VAR_INPUT
@@ -10,7 +10,7 @@ END_VAR
       <ST><![CDATA[// Copy real values
 p_Output^.state := p_Output^.intern;
 
-IF (p_Output^.EnForce OR bol_GlobalEnableForce) THEN
+IF (p_Output^.EnForce AND bol_GlobalEnableForce) THEN
 	p_Output^.map := p_Output^.force;
 ELSE
 	p_Output^.map := p_Output^.intern;
