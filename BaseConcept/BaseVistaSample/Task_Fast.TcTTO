@@ -1,15 +1,15 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <Task Name="Task_Fast" Id="{bd38c029-eaa4-4a81-8305-b3bfb669c3cb}">
+  <Task Name="Task_Fast" Id="{e7b4119d-bd71-439b-bb49-fd267a2c6abc}">
     <!--CycleTime in micro seconds.-->
     <CycleTime>10000</CycleTime>
     <Priority>5</Priority>
     <PouCall>
       <Name>FastPRG_1</Name>
     </PouCall>
-    <TaskFBGuid>{300cecb8-f6fd-4203-957c-e7a0da1d095c}</TaskFBGuid>
-    <Fb_init>{b0ee14bf-8c4b-4ca8-8596-3fed86b4f622}</Fb_init>
-    <Fb_exit>{f4c90e2a-c6cd-47bd-8b33-b98f49e68888}</Fb_exit>
-    <CycleUpdate>{3f1a89c5-2478-489a-8bbe-a2f46c68cf9c}</CycleUpdate>
-    <PostCycleUpdate>{37a0d631-371c-4cd0-ad27-aa15986446c7}</PostCycleUpdate>
+    <TaskFBGuid>{73cd3154-60f2-418f-a4b0-1b9669158e86}</TaskFBGuid>
+    <Fb_init>{7e7120ec-5d56-41ee-8be4-4264a42e3a48}</Fb_init>
+    <Fb_exit>{879a4d61-692a-47de-a74a-b232156ab7b9}</Fb_exit>
+    <CycleUpdate>{ee39bfb3-b232-4882-8b0e-93c8c88bebbe}</CycleUpdate>
+    <PostCycleUpdate>{54de917b-6d50-48a0-a38f-2724b143ef2d}</PostCycleUpdate>
   </Task>
 </TcPlcObject>

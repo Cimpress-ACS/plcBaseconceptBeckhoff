@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using VP.FF.PT.Common.PlcCommunication;
 using VP.FF.PT.Common.PlcCommunication.PlcBaseCommunication;
+using VP.FF.PT.Common.PlcCommunication.PlcBaseCommunication.Impl;
 using VP.FF.PT.Common.PlcCommunicationBeckhoff;
 using VP.FF.PT.Common.PlcCommunicationBeckhoff.PlcBaseCommunication;
 
@@ -8,13 +9,20 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 {
     class Program
     {
-        private const string adsAddress = "192.168.1.111.1.1";
-        private const int adsPort = 851;
+        private const string AdsAddress = "10.38.60.148.1.1";
+        private const int AdsPort = 851;
 
         static void Main(string[] args)
         {
+
+            // ControllerTreeImporter
+            IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter(new BeckhoffOnlineTagImporter());
+            Controller rootControllers = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
+
+
+
             // TagListener
-            ITagListener tagListener = new BeckhoffPollingTagListener(adsAddress, adsPort);
+            ITagListener tagListener = new BeckhoffPollingTagListener(AdsAddress, AdsPort);
             tagListener.TagChanged += TagListenerTagChanged;
 
             Tag tag = new Tag("In_bolCyl_AB_Retracted_NO", "Io");
@@ -29,7 +37,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
 
             // TagController
-            ITagController tagController = new BeckhoffTagController(adsAddress, adsPort);
+            ITagController tagController = new BeckhoffTagController(AdsAddress, AdsPort);
             tagController.StartConnection();
             tagController.WriteTag(tag, true);
 
@@ -38,11 +46,6 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             // TagImporter
             //ITagImporter tagImporter = new BeckhoffOnlineTagImporter();
             //ICollection<Tag> importedTags = tagImporter.ImportTags(adsAddress, adsPort);
-
-
-            // ControllerTreeImporter
-            IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter(new BeckhoffOnlineTagImporter());
-            Controller rootController = controllerTreeImporter.ImportControllerTree(adsAddress, adsPort);
 
 
             while (true)

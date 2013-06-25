@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <POU Name="SlowPRG_1" Id="{becf61f5-822d-4a35-9e70-446ac032208b}">
+  <POU Name="SlowPRG_1" Id="{f627bb3d-dce4-4692-ab49-07a63d91fd84}">
     <Declaration><![CDATA[PROGRAM SlowPRG_1
 VAR
 	bolPlcStartupDone: BOOL := FALSE;

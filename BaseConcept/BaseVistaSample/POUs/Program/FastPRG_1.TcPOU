@@ -1,14 +1,10 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <POU Name="FastPRG_1" Id="{4bf0fd21-460c-4e12-bb79-8dc3377faf8a}">
+  <POU Name="FastPRG_1" Id="{cef9ae2e-c547-4599-8a76-ee84fec7c7c9}">
     <Declaration><![CDATA[PROGRAM FastPRG_1
 VAR
 	bolPlcStartupDone: BOOL := FALSE;
 	bolHostInitDone : BOOL := FALSE;
 	bolInitDone : BOOL := FALSE;
-	fbCyl_AB: FB_CYL;
-	fbMOD_2: FB_MOD;
-	fbVER_2: FB_CYL;
-	fbHOR_2: FB_CYL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________

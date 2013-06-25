@@ -5,10 +5,13 @@ VAR
 	bolPlcStartupDone: BOOL := FALSE;
 	bolHostInitDone : BOOL := FALSE;
 	bolInitDone : BOOL := FALSE;
-	fbCyl_AB: FB_CYL;
 	fbMOD_2: FB_MOD;
 	fbVER_2: FB_CYL;
 	fbHOR_2: FB_CYL;
+	intLen : INT;
+	
+	test : POINTER TO BYTE;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -41,9 +44,6 @@ IF (NOT bolPlcStartupDone) THEN
 	// init
 	//Driver
 	
-	// Lvl0
-	fbCyl_AB.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.CYL_VER1);     	// init and entry fb_instance in global fb pointer array
-	g_a_pCtrlCIf[E_CtrlId.CYL_VER1] := fbCyl_AB.getCtrlCIf();    // get adr of ctrl interface struct
 	
 	fbHOR_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.HOR_2); // init and entry fb_instance in global fb pointer array
 	g_a_pCtrlCIf[E_CtrlId.HOR_2] := fbHOR_2.getCtrlCIf();    // get adr of ctrl interface struct
@@ -94,11 +94,6 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 	//****************************************************************************************************
 	// cyclic controller calls
 	//****************************************************************************************************
-	fbCyl_AB.In_bolRetracted := In_bolCyl_AB_Retracted_NO;
-	fbCyl_AB.In_bolExtended := (NOT In_bolCyl_AB_Extended_NC);
-	fbCyl_AB();
-	Out_bolCyl_AB_Retract := fbCyl_AB.Out_bolRetract;
-	Out_bolCyl_AB_Extend := fbCyl_AB.Out_bolExtend;
 
 	// Modul example
 	// ----------------------------------------------------------------------------------------------------------------------------
@@ -106,7 +101,7 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 	fbMOD_2();
 	fbVER_2();
 	fbHOR_2();
-
+	intLen := SIZEOF(test);
 	
 END_IF
 // -----------------------------------------------------------------------------------------------
