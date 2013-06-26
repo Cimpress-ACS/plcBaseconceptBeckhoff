@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using VP.FF.PT.Common.PlcCommunication;
 using VP.FF.PT.Common.PlcCommunication.PlcBaseCommunication;
 using VP.FF.PT.Common.PlcCommunication.PlcBaseCommunication.Impl;
@@ -14,9 +16,25 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
         static void Main(string[] args)
         {
+            // TagImporter
+            ITagImporter tagImporter = new BeckhoffOnlineTagImporter();
+            ICollection<Tag> importedTags = tagImporter.ImportTags(AdsAddress, AdsPort);
+
+            var listener = new BeckhoffTagListener(AdsAddress, AdsPort);
+            foreach (var importedTag in importedTags)
+            {
+                listener.AddTagsRecursively(importedTag);
+            }
+            listener.RefreshAll();
+
+            foreach (var importedTag in importedTags)
+            {
+                CoutTags(importedTag);
+            }
+
 
             // ControllerTreeImporter
-            IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter(new BeckhoffOnlineTagImporter());
+            IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
             Controller rootControllers = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
 
 
@@ -43,13 +61,17 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
 
 
-            // TagImporter
-            //ITagImporter tagImporter = new BeckhoffOnlineTagImporter();
-            //ICollection<Tag> importedTags = tagImporter.ImportTags(adsAddress, adsPort);
-
-
             while (true)
                 Thread.Sleep(500);
+        }
+
+        static void CoutTags(Tag tag)
+        {
+            foreach (var child in tag.Childs)
+            {
+                Console.WriteLine(child.FullName() + " = " + child.Value);
+                CoutTags(child);
+            }
         }
 
         static void TagListenerTagChanged(object sender, TagChangedEventArgs e)
