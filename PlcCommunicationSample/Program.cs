@@ -16,6 +16,11 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
         static void Main(string[] args)
         {
+            // ControllerTreeImporter
+            IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
+            Controller rootControllers = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
+
+
             // TagImporter
             ITagImporter tagImporter = new BeckhoffOnlineTagImporter();
             ICollection<Tag> importedTags = tagImporter.ImportTags(AdsAddress, AdsPort);
@@ -27,16 +32,11 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             }
             listener.RefreshAll();
 
+
             foreach (var importedTag in importedTags)
             {
                 CoutTags(importedTag);
             }
-
-
-            // ControllerTreeImporter
-            IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
-            Controller rootControllers = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
-
 
 
             // TagListener
