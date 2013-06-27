@@ -8,9 +8,6 @@ VAR
 	fbMOD_2: FB_MOD;
 	fbVER_2: FB_CYL;
 	fbHOR_2: FB_CYL;
-	intLen : INT;
-	
-	test : POINTER TO BYTE;
 	
 END_VAR
 ]]></Declaration>
@@ -101,7 +98,6 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 	fbMOD_2();
 	fbVER_2();
 	fbHOR_2();
-	intLen := SIZEOF(test);
 	
 END_IF
 // -----------------------------------------------------------------------------------------------
