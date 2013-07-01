@@ -18,7 +18,11 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
         {
             // ControllerTreeImporter
             IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
-            Controller rootControllers = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
+            IController rootControllers = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
+
+            // AlarmsImporter
+            IAlarmsImporter alarmsImporter = new BeckhoffOnlineAlarmsImporter();
+            IAlarmManager alarmManager = alarmsImporter.ImportAlarms(rootControllers, AdsAddress, AdsPort);
 
 
             // TagImporter
