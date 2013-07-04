@@ -104,9 +104,9 @@
     <Folder Include="POUs\Controller\" />
     <Folder Include="POUs\Controller\Lvl0\" />
     <Folder Include="POUs\Controller\Lvl0\CYL\" />
+    <Folder Include="POUs\Controller\Lvl0\Lvl1\" />
     <Folder Include="POUs\Controller\Lvl2\" />
     <Folder Include="POUs\Controller\Lvl2\MOD\" />
-    <Folder Include="POUs\Controller\Lvl1" />
     <Folder Include="POUs\Controller\Lvl3" />
     <Folder Include="POUs\Controller\Lvl4" />
     <Folder Include="POUs\Program\" />

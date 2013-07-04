@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using VP.FF.PT.Common.PlcCommunication;
 using VP.FF.PT.Common.PlcCommunication.PlcBaseCommunication;
-using VP.FF.PT.Common.PlcCommunication.PlcBaseCommunication.Impl;
 using VP.FF.PT.Common.PlcCommunicationBeckhoff;
 using VP.FF.PT.Common.PlcCommunicationBeckhoff.PlcBaseCommunication;
 
@@ -18,11 +18,15 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
         {
             // ControllerTreeImporter
             IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
-            IController rootControllers = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
+            IController rootController = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
+
+            rootController.SendParameter(new Tag("udiWaitPick_ms", string.Empty, "UDINT") { Value = 1000 });
+            rootController.SendParameter("udiWaitPick_ms", 2000);
+            rootController.Commands.First().Fire();
 
             // AlarmsImporter
             IAlarmsImporter alarmsImporter = new BeckhoffOnlineAlarmsImporter();
-            IAlarmManager alarmManager = alarmsImporter.ImportAlarms(rootControllers, AdsAddress, AdsPort);
+            IAlarmManager alarmManager = alarmsImporter.ImportAlarms(rootController, AdsAddress, AdsPort);
 
 
             // TagImporter
