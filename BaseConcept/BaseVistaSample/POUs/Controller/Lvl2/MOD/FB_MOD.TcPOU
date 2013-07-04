@@ -15,7 +15,7 @@ VAR
 	bolfpCmd: BOOL;
 	
 	// local substates machine
-	stSubSate: BASE_PLC.T_Ctrl_Class_StateMachine;
+	stSubSate: T_Ctrl_Class_StateMachine;
 END_VAR
 VAR CONSTANT
 	// ctrl specific substates definitions
@@ -44,7 +44,7 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		02.05.2013		AVME/KVO	Start history
-
+0.00.2		03.07.2013		AVME/KVO	Always call Super.always
 
 ___________________________________________________________________________________________________*)
 
@@ -450,10 +450,11 @@ END_CASE;]]></ST>
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// ---------------------------------------------------------------------------------
+        <ST><![CDATA[SUPER^.Always();
+
+// ---------------------------------------------------------------------------------
 // check child me and set parent alarm class
 checkChildAlmClass();
-
 
 // ----------------------------------------------------------------------------------
 // cyclic actions outside of statemachine
@@ -461,25 +462,7 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	
 	; // always error supervision
 	
-END_IF
-
-
-
-// ----------------------------------------------------------------------------------
-// Conditions Always
-IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
-	me.StateMachine.intStateNext := cSTA_OFFBusy;
-	me.bolChangeBackToAUTO := FALSE;
-END_IF
-
-IF ((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) AND (me.StateMachine.intState<>cSTA_PONBusy)  AND (me.StateMachine.intState<>cSTA_PON) THEN // switch after startup to PONBusy
-	me.StateMachine.intStateNext := cSTA_PONBusy;
-END_IF
-
-IF (CIf.SwCfg.bolExist=FALSE) AND (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN // hardware of controller does not exist
-	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
-END_IF
-]]></ST>
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_PONBusy" Id="{bab8c042-e40a-4e22-bc52-ca7f2671848e}">

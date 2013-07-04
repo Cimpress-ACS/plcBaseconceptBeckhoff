@@ -34,7 +34,8 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		25.04.2013		AVME/KVO	Start history
-
+0.00.2		03.07.2013		AVME/KVO	Always call Super.always, no change to off when switch to automatic
+										alarm evt EOFF, OFF or cmd off detection in Always
 
 ___________________________________________________________________________________________________*)
 
@@ -354,8 +355,6 @@ END_CASE;]]></ST>
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolExtended.intern) AND (SIf.In.bolRetracted.intern=FALSE) THEN
 			me.StateMachine.intStateNext := cSTA_EXTEND;
-		ELSIF(me.intCmd=cCMD_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF(me.intCmd=cCMD_RETRACT) THEN
@@ -402,8 +401,6 @@ END_CASE;]]></ST>
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolExtended.intern = FALSE) THEN // wait time until error?
 			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
-		ELSIF(me.intCmd=cCMD_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF(me.intCmd=cCMD_RETRACT) THEN
@@ -450,8 +447,6 @@ END_CASE;]]></ST>
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolRetracted.intern = FALSE) THEN // wait time until error?
 			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
-		ELSIF(me.intCmd=cCMD_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF(me.intCmd=cCMD_EXTEND) THEN
@@ -514,8 +509,6 @@ END_CASE;]]></ST>
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolRetracted.intern) AND(SIf.In.bolExtended.intern=FALSE) THEN
 			me.StateMachine.intStateNext := cSTA_RETRACT;
-		ELSIF(me.intCmd=cCMD_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF(me.intCmd=cCMD_EXTEND) THEN
@@ -561,9 +554,7 @@ END_CASE;]]></ST>
 		
 		
 		// State Change Condition
-		IF(me.intCmd=cCMD_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cCMD_STOP) THEN
+		IF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF(me.intCmd=cCMD_RETRACT) THEN
 			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
@@ -699,9 +690,7 @@ END_IF
 		
 		
 		// State Change Condition
-		IF (FALSE) THEN
-			;
-		ELSIF (TRUE) THEN
+		IF (TRUE) THEN
 			me.StateMachine.intStateNext := cSTA_OFF;
 		END_IF
 	END_IF
@@ -737,10 +726,7 @@ END_IF
 		
 		
 		// State Change Condition
-		IF (me.intCmd=cCMD_OFF) THEN
-			// sensor retract always on cylinder
-			me.StateMachine.intStateNext :=  cSTA_OFFBusy;
-		ELSIF (me.intCmd=cCMD_EXTEND) THEN 
+		IF (me.intCmd=cCMD_EXTEND) THEN 
 			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
 		ELSIF(me.intCmd=cCMD_RETRACT) THEN
 			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
@@ -788,9 +774,7 @@ END_IF
 		
 		
 		// State Change Condition
-		IF (FALSE) THEN
-			;
-		ELSIF (TRUE) THEN
+		IF (TRUE) THEN
 			me.StateMachine.intStateNext := cSTA_STOP;
 		END_IF
 	END_IF
@@ -803,6 +787,35 @@ END_IF
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{e882caab-58e9-414f-a061-1e802538cdeb}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
+	//me.StateMachine.intStateNext := cSTA_OFFBusy;
+	me.bolChangeBackToAUTO := FALSE; // for cylinder no change to off when switch to automatic!!
+END_IF
+
+SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	; // always error supervision
+	
+END_IF
+
+// ----------------------------------------------------------------------------------
+// Conditions Always
+IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
+		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND
+		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
+	// alarm evt EOFF, OFF or cmd off
+	me.StateMachine.intStateNext := cSTA_OFFBusy;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <ObjectProperties />

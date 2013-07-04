@@ -15,8 +15,9 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base PLC </Title>
-    <ProjectVersion>0.1</ProjectVersion>
+    <ProjectVersion>0.2</ProjectVersion>
     <Released>True</Released>
+    <Description>0.2 - Methode CheckParentAlmClass Private -&gt; Protected</Description>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->

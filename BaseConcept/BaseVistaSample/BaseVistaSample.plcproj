@@ -136,9 +136,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base PLC ,0.1,Vistaprint">
-      <Namespace>Base_PLC</Namespace>
-    </LibraryReference>
+    <LibraryReference Include="Base PLC ,0.2,Vistaprint" />
     <LibraryReference Include="Base PLC,0.1,Vistaprint" />
     <LibraryReference Include="Base PLC,0.1,Vistaprint" />
     <LibraryReference Include="Base PLC,0.1,Vistaprint" />
@@ -152,6 +150,9 @@
     <Content Include="BaseVistaSample.tmc">
       <SubType>Content</SubType>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <SubObject Include="FB_CYL.Always" />
   </ItemGroup>
   <ProjectExtensions />
   <!-- 

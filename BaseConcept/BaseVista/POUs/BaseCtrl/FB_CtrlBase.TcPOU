@@ -436,7 +436,7 @@ END_IF
       </Implementation>
     </Method>
     <Method Name="CheckParentAlmClass" Id="{ec1be44d-8050-49b4-a7d6-f8a2a0151732}">
-      <Declaration><![CDATA[METHOD PRIVATE CheckParentAlmClass : BOOL
+      <Declaration><![CDATA[METHOD PROTECTED CheckParentAlmClass : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// --------------------------------------------------------------------------
