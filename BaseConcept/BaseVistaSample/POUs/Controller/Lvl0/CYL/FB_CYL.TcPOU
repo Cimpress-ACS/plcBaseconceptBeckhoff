@@ -439,10 +439,6 @@ END_CASE;]]></ST>
 		IF (CIf.SwCfg.bolSimulation) THEN
 			;
 		END_IF
-
-		// TEST ALARM
-		g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-		me.StateMachine.intStateNext :=  cSTA_ERROR;
 		
 		// State Change Condition
 		IF (SIf.In.bolExtended.intern) THEN
