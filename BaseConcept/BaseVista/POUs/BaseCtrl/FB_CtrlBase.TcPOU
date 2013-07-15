@@ -704,6 +704,25 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlCIf" Id="{4a700db5-ec99-4277-8ba6-00b3b08ee955}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
+      <Set Name="Set" Id="{b42000cb-44e4-4af6-acbb-f49c84bf4014}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{1c35a505-c9e9-4c16-b2a1-3f6ecfe67a51}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlCIf := ADR(CIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <ObjectProperties />
   </POU>
 </TcPlcObject>
