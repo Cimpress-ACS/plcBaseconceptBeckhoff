@@ -89,11 +89,11 @@ FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
 	END_IF
 END_FOR
 
-CIf.Job.aCmdList[ii].intCmd := cSTA_INIT;
+CIf.Job.aCmdList[ii].intCmd := cCMD_INIT;
 CIf.Job.aCmdList[ii].strName := 'Init';
 CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 ii := ii +1;
-CIf.Job.aCmdList[ii].intCmd := cSTA_RUN;
+CIf.Job.aCmdList[ii].intCmd := cCMD_RUN;
 CIf.Job.aCmdList[ii].strName := 'Run';
 CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 

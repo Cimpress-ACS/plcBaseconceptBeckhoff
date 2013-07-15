@@ -97,7 +97,12 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 	// modul controller MOD_2 with childs
 	fbMOD_2();
 	fbVER_2();
+	
+	fbHOR_2.In_bolRetracted := In_bolHOR_2_Retracted_NO;
+	fbHOR_2.In_bolExtended := (NOT In_bolHOR_2_Extended_NC);
 	fbHOR_2();
+	Out_bolHOR_2_Retract := fbHOR_2.Out_bolRetract;
+	Out_bolHOR_2_Extend := fbHOR_2.Out_bolExtend;
 	
 END_IF
 // -----------------------------------------------------------------------------------------------
