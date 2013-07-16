@@ -1,0 +1,20 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="T_Ctrl_IoUint" Id="{a5d5dc47-bd6e-4251-8c11-379359fb9c7a}">
+    <Declaration><![CDATA[TYPE T_Ctrl_IoUint :
+STRUCT
+	///mapped io variable to hardware
+	map: UINT;
+	///shows the state of (input: mapped, output: set by programm respectiv at the moment one cycle later evtl. from the forcing if forcing active) -> necessary for what?
+	state: UINT;
+	///variabel to/ from program
+	intern: UINT;
+	///variabel set from UI
+	force: UINT;
+	///enable force of single io-datapoint
+	EnForce: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <POU Name="GetInUint" Id="{d475b944-8df7-4335-9a88-bf0929b960fc}">
+    <Declaration><![CDATA[FUNCTION GetInUint : UINT
+VAR_INPUT
+	bol_GlobalEnableForce		: BOOL;
+	p_Input						: POINTER TO T_Ctrl_IoUint;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[p_Input^.state := p_Input^.map;
+
+IF (p_Input^.EnForce AND bol_GlobalEnableForce) THEN
+	p_Input^.intern := p_Input^.force;
+ELSE
+	p_Input^.intern := p_Input^.map;
+END_IF;
+
+getInUint := p_Input^.intern;]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>
