@@ -19,12 +19,13 @@ VAR
 END_VAR
 VAR CONSTANT
 	// ctrl specific substates definitions
-	cSTA_VER_Up: INT := 201;
-	cSTA_VER_Down: INT := 202;
-	cSTA_WAIT_Pick: INT := 203;
-	cSTA_HOR_MoveToPlace: INT := 204;
-	cSTA_HOR_MoveToPick: INT := 205;
-	cSTA_Finished: INT := 206;
+	cSUB_INITIALIZED: INT := 301;
+	cSUB_VER_Up: INT := 302;
+	cSUB_VER_Down: INT := 303;
+	cSUB_WAIT_Pick: INT := 304;
+	cSUB_HOR_MoveToPlace: INT := 305;
+	cSUB_HOR_MoveToPick: INT := 306;
+	cSUB_Finished: INT := 307;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
@@ -454,7 +455,7 @@ END_CASE;]]></ST>
 
 // ---------------------------------------------------------------------------------
 // check child me and set parent alarm class
-checkChildAlmClass();
+CheckChildAlmClass();
 
 // ----------------------------------------------------------------------------------
 // cyclic actions outside of statemachine
@@ -514,7 +515,7 @@ END_IF]]></ST>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
-		stSubSate.intState := cCMD_INITIALIZED; // init sub state machine
+		stSubSate.intState := cSUB_INITIALIZED; // init sub state machine
 	END_IF
 
 
@@ -533,61 +534,61 @@ END_IF]]></ST>
 		// sub state machine for sequence
 		CASE stSubSate.intState OF
 			//--------------------------------------------------------------------------------------
-			cCMD_INITIALIZED:
+			cSUB_INITIALIZED:
 					// State Change Condition
 					IF(TRUE) THEN
-						stSubSate.intStateNext := cSTA_VER_Down;
+						stSubSate.intStateNext := cSUB_VER_Down;
 					END_IF
 					
 			//--------------------------------------------------------------------------------------
-			cSTA_VER_Down:
-					pVER_CIF^.Job.intACmd := cCMD_EXTEND; // move to position down
+			cSUB_VER_Down:
+					pVER_CIF^.Job.intACmd := CYL_CmdState.cCMD_EXTEND; // move to position down
 					
 					// State Change Condition
-					IF (pVER_CIF^.Job.intState=cSTA_EXTEND) AND (pHOR_CIF^.Job.intState=cSTA_RETRACT) THEN // pick position
-						stSubSate.intStateNext := cSTA_WAIT_Pick;
-					ELSIF (pVER_CIF^.Job.intState=cSTA_EXTEND) THEN // place position
-						stSubSate.intStateNext := cSTA_VER_Up;
+					IF (pVER_CIF^.Job.intState=CYL_CmdState.cSTA_EXTEND) AND (pHOR_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) THEN // pick position
+						stSubSate.intStateNext := cSUB_WAIT_Pick;
+					ELSIF (pVER_CIF^.Job.intState=CYL_CmdState.cSTA_EXTEND) THEN // place position
+						stSubSate.intStateNext := cSUB_VER_Up;
 					END_IF
 					
 			//--------------------------------------------------------------------------------------
-			cSTA_WAIT_Pick:
+			cSUB_WAIT_Pick:
 	
 					// State Change Condition
 					IF(stSubSate.udiTimeInState_ms>=SIf.Par.udiWaitPick_ms) THEN
-						stSubSate.intStateNext := cSTA_VER_Up;
+						stSubSate.intStateNext := cSUB_VER_Up;
 					END_IF
 					
 			//--------------------------------------------------------------------------------------
-			cSTA_VER_Up:
-					pVER_CIF^.Job.intACmd := cCMD_RETRACT; // move to position up
+			cSUB_VER_Up:
+					pVER_CIF^.Job.intACmd := CYL_CmdState.cCMD_RETRACT; // move to position up
 					
 					// State Change Condition
-					IF (pVER_CIF^.Job.intState=cSTA_RETRACT) AND (pHOR_CIF^.Job.intState=cSTA_RETRACT) THEN // pick position
-						stSubSate.intStateNext := cSTA_HOR_MoveToPlace;
-					ELSIF (pVER_CIF^.Job.intState=cSTA_RETRACT) THEN // place position
-						stSubSate.intStateNext := cSTA_HOR_MoveToPick;
+					IF (pVER_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) AND (pHOR_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) THEN // pick position
+						stSubSate.intStateNext := cSUB_HOR_MoveToPlace;
+					ELSIF (pVER_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) THEN // place position
+						stSubSate.intStateNext := cSUB_HOR_MoveToPick;
 					END_IF		
 					
 			//--------------------------------------------------------------------------------------
-			cSTA_HOR_MoveToPlace:
-					pHOR_CIF^.Job.intACmd := cCMD_EXTEND; // move to position place
+			cSUB_HOR_MoveToPlace:
+					pHOR_CIF^.Job.intACmd := CYL_CmdState.cCMD_EXTEND; // move to position place
 					
 					// State Change Condition
-					IF(pHOR_CIF^.Job.intState=cSTA_EXTEND) THEN
-						stSubSate.intStateNext := cSTA_VER_Down;
+					IF(pHOR_CIF^.Job.intState=CYL_CmdState.cSTA_EXTEND) THEN
+						stSubSate.intStateNext := cSUB_VER_Down;
 					END_IF
 					
 			//--------------------------------------------------------------------------------------
-			cSTA_HOR_MoveToPick:
-					pHOR_CIF^.Job.intACmd := cCMD_RETRACT; // move to position pick	
+			cSUB_HOR_MoveToPick:
+					pHOR_CIF^.Job.intACmd := CYL_CmdState.cCMD_RETRACT; // move to position pick	
 					
 					// State Change Condition
-					IF(pHOR_CIF^.Job.intState=cSTA_RETRACT) THEN
-						stSubSate.intStateNext := cSTA_Finished;
+					IF(pHOR_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) THEN
+						stSubSate.intStateNext := cSUB_Finished;
 					END_IF
 			//--------------------------------------------------------------------------------------
-			cSTA_Finished:
+			cSUB_Finished:
 					;
 					
 		END_CASE
@@ -610,7 +611,7 @@ END_IF]]></ST>
 			me.StateMachine.intStateNext := cSTA_OFFBusy;
 		ELSIF(me.intCmd=cCMD_INIT) THEN
 			me.StateMachine.intStateNext := cSTA_INITBusy;
-		ELSIF (stSubSate.intState=cSTA_Finished) THEN
+		ELSIF (stSubSate.intState=cSUB_Finished) THEN
 			me.StateMachine.intStateNext := cSTA_RUN;
 		END_IF
 
@@ -694,8 +695,8 @@ THIS^.CIf.Info.p_aCIf[0] := THIS^.pHOR_CIF;
 THIS^.CIf.Info.p_aCIf[1] := THIS^.pVER_CIF;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="checkChildAlmClass" Id="{d45cf562-3263-4dce-9708-d68b105843bd}">
-      <Declaration><![CDATA[METHOD checkChildAlmClass : BOOL
+    <Method Name="CheckChildAlmClass" Id="{d45cf562-3263-4dce-9708-d68b105843bd}">
+      <Declaration><![CDATA[METHOD CheckChildAlmClass : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------
@@ -744,18 +745,23 @@ IF (getCmdState='') THEN // global not defined get local
 		//END_CASE;
 	ELSE
 	
-	// cmd's
+	// state's
 		CASE intCmdState OF
-			cSTA_VER_Down: 
-				getCmdState := 'cSTA_VER_Down';
-			cSTA_WAIT_Pick: 
-				getCmdState := 'cSTA_WAIT_Pick';
-			cSTA_HOR_MoveToPlace: 
-				getCmdState := 'cSTA_HOR_MoveToPlace';
-			cSTA_HOR_MoveToPick: 
-				getCmdState := 'cSTA_HOR_MoveToPick';
-			cSTA_Finished: 
-				getCmdState := 'cSTA_Finished';
+			// substates
+			cSUB_INITIALIZED: 
+				getCmdState := 'cSUB_INITIALIZED';
+			cSUB_VER_Up: 
+				getCmdState := 'cSUB_VER_Up';
+			cSUB_VER_Down: 
+				getCmdState := 'cSUB_VER_Down';
+			cSUB_WAIT_Pick: 
+				getCmdState := 'cSUB_WAIT_Pick';
+			cSUB_HOR_MoveToPlace: 
+				getCmdState := 'cSUB_HOR_MoveToPlace';
+			cSUB_HOR_MoveToPick: 
+				getCmdState := 'cSUB_HOR_MoveToPick';
+			cSUB_Finished: 
+				getCmdState := 'cSUB_Finished';
 		END_CASE;
 	END_IF
 END_IF

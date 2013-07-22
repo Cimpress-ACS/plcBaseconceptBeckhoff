@@ -206,13 +206,13 @@ END_IF]]></ST>
 
 // main statemachine of base controller
 CASE me.StateMachine.intState OF
-    cSTA_RETRACTBusy: 
+    CYL_CmdState.cSTA_RETRACTBusy: 
         THIS^.sta_RETRACTBusy();
-    cSTA_RETRACT: 
+    CYL_CmdState.cSTA_RETRACT: 
         THIS^.sta_RETRACT();
-    cSTA_EXTENDBusy: 
+    CYL_CmdState.cSTA_EXTENDBusy: 
         THIS^.sta_EXTENDBusy();
-    cSTA_EXTEND: 
+    CYL_CmdState.cSTA_EXTEND: 
         THIS^.sta_EXTEND();
 	cSTA_STOPBusy: 
         THIS^.sta_STOPBusy();
@@ -354,11 +354,11 @@ END_CASE;]]></ST>
 			END_IF
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolExtended.intern) AND (SIf.In.bolRetracted.intern=FALSE) THEN
-			me.StateMachine.intStateNext := cSTA_EXTEND;
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTEND;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF(me.intCmd=cCMD_RETRACT) THEN
-			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
 		END_IF
 	END_IF
 
@@ -400,11 +400,11 @@ END_CASE;]]></ST>
 			g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolExtended.intern = FALSE) THEN // wait time until error?
-			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		ELSIF(me.intCmd=cCMD_RETRACT) THEN
-			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
+		ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
 		END_IF
 	END_IF
 
@@ -446,11 +446,11 @@ END_CASE;]]></ST>
 			g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolRetracted.intern = FALSE) THEN // wait time until error?
-			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		ELSIF(me.intCmd=cCMD_EXTEND) THEN
-			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
+		ELSIF(me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
 		END_IF
 	END_IF
 
@@ -508,11 +508,11 @@ END_CASE;]]></ST>
 			END_IF
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolRetracted.intern) AND(SIf.In.bolExtended.intern=FALSE) THEN
-			me.StateMachine.intStateNext := cSTA_RETRACT;
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACT;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		ELSIF(me.intCmd=cCMD_EXTEND) THEN
-			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
+		ELSIF(me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
 		END_IF
 	END_IF
 
@@ -642,9 +642,9 @@ END_IF
 		IF (me.intCmd=cCMD_STOP) THEN
 			// sensor retract always on cylinder
 			me.StateMachine.intStateNext :=  cSTA_STOPBusy;
-		ELSIF (me.intCmd=cCMD_EXTEND) THEN 
+		ELSIF (me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN 
 			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
-		ELSIF(me.intCmd=cCMD_RETRACT) THEN
+		ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
 			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
 		END_IF
 	END_IF
@@ -726,10 +726,10 @@ END_IF
 		
 		
 		// State Change Condition
-		IF (me.intCmd=cCMD_EXTEND) THEN 
-			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
-		ELSIF(me.intCmd=cCMD_RETRACT) THEN
-			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
+		IF (me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN 
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
+		ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
 		END_IF
 	END_IF
 

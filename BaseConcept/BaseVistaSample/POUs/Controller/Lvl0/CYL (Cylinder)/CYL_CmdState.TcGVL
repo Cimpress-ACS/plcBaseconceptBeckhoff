@@ -7,9 +7,9 @@
 	cCMD_EXTEND: INT := 204;
 	///ctrl specific states definitions
 	cSTA_RETRACTBusy: INT := 201;
-	cSTA_RETRACT: INT := cCMD_RETRACT;
+	cSTA_RETRACT: INT := CYL_CmdState.cCMD_RETRACT;
 	cSTA_EXTENDBusy: INT := 203;
-	cSTA_EXTEND: INT := cCMD_EXTEND;
+	cSTA_EXTEND: INT := CYL_CmdState.cCMD_EXTEND;
 END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>
