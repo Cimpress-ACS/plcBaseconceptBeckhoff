@@ -25,8 +25,8 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             rootController.Commands.First().Fire();
 
             // AlarmsImporter
-            IAlarmsImporter alarmsImporter = new BeckhoffOnlineAlarmsImporter();
-            IAlarmManager alarmManager = alarmsImporter.ImportAlarms(rootController, AdsAddress, AdsPort);
+            //IAlarmsImporter alarmsImporter = new BeckhoffOnlineAlarmsImporter();
+            //IAlarmManager alarmManager = alarmsImporter.ImportAlarms(rootController, AdsAddress, AdsPort);
 
 
             // TagImporter
@@ -51,7 +51,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             ITagListener tagListener = new BeckhoffPollingTagListener(AdsAddress, AdsPort);
             tagListener.TagChanged += TagListenerTagChanged;
 
-            Tag tag = new Tag("In_bolCyl_AB_Retracted_NO", "Io");
+            Tag tag = new Tag("In_bolHOR_2_Retracted_NO", "Io");
 
             tag.ValueChanged += TagValueChanged;
 
