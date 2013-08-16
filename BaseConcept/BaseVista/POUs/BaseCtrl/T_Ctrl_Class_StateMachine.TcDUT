@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <DUT Name="T_Ctrl_Class_StateMachine" Id="{1706ec3e-36e6-4db5-b1e7-9547457762a8}">
     <Declaration><![CDATA[TYPE T_Ctrl_Class_StateMachine :
 STRUCT
@@ -14,6 +14,10 @@ STRUCT
 	udiStateSimSetTime_ms: UDINT := 1000;
 	///[ms] time in one state
 	udiTimeInState_ms: UDINT;
+	///[ms] time in one state
+	relTimeInState_ms: REAL;
+	///[us] time in one state
+	udiTimeInState_us: UDINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

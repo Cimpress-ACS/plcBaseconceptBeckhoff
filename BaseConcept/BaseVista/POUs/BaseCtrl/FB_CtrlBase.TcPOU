@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_CtrlBase" Id="{b1ac081d-d4f6-4134-a9f2-1facb44ddfd2}">
     <Declaration><![CDATA[{attribute 'reflection' := ''}
 FUNCTION_BLOCK FB_CtrlBase IMPLEMENTS I_CtrlBase
@@ -392,10 +392,13 @@ END_IF
 IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 	me.StateMachine.intState := me.StateMachine.intStateNext;  // set next state for next cycle
 	me.StateMachine.udiTimeInState_ms := 0; // reset timer
+	me.StateMachine.udiTimeInState_us := 0; // reset timer
 	// log state change -> open point
 ELSE
 	// increment time in state	
+	me.StateMachine.udiTimeInState_us := me.StateMachine.udiTimeInState_us + me.FUBInfo.udiSample_us;
 	me.StateMachine.udiTimeInState_ms := me.StateMachine.udiTimeInState_ms + me.FUBInfo.udiSample_ms;
+	me.StateMachine.relTimeInState_ms := UDINT_TO_REAL(me.StateMachine.udiTimeInState_us) / 1000.0;
 END_IF
 
 // --------------------------------------------------------------------------
@@ -545,7 +548,10 @@ END_VAR
 udiTaskCnt := TwinCAT_SystemInfoVarList._AppInfo.TaskCnt;
 fbGETCURTASKINDEX();
 udiTaskCnt := fbGETCURTASKINDEX.index;
-me.FUBInfo.udiSample_ms := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10000; //[ms] X[100ns]/10000 -> [ms]]]></ST>
+me.FUBInfo.udiSample_us := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10; //[ms] X[100ns]/10 -> [us]
+me.FUBInfo.udiSample_ms := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10000; //[ms] X[100ns]/10000 -> [ms]
+
+me.FUBInfo.bolCycleTimeBelowMS := me.FUBInfo.udiSample_us >= 1000;]]></ST>
       </Implementation>
     </Method>
     <Method Name="getCmdState" Id="{a5e84ddc-52c5-4dca-8f24-77b6da9322fb}">
@@ -706,14 +712,6 @@ END_IF
     </Method>
     <Property Name="CtrlCIf" Id="{4a700db5-ec99-4277-8ba6-00b3b08ee955}">
       <Declaration><![CDATA[PROPERTY PUBLIC CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
-      <Set Name="Set" Id="{b42000cb-44e4-4af6-acbb-f49c84bf4014}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
       <Get Name="Get" Id="{1c35a505-c9e9-4c16-b2a1-3f6ecfe67a51}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -722,6 +720,14 @@ END_VAR
           <ST><![CDATA[CtrlCIf := ADR(CIf);]]></ST>
         </Implementation>
       </Get>
+      <Set Name="Set" Id="{b42000cb-44e4-4af6-acbb-f49c84bf4014}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
     </Property>
     <ObjectProperties />
   </POU>
