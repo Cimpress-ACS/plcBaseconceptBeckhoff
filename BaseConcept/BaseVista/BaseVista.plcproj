@@ -15,9 +15,11 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.2.3.0</ProjectVersion>
+    <ProjectVersion>0.3.0.1</ProjectVersion>
     <Released>True</Released>
-    <Description>0.2.3 - Added support for sub usec cycletimes
+    <Description>0.3.0 - Added the substate to T_CTRL_CLASS_STATEMACHINE
+Automatic Substate handling.
+0.2.3 - Added support for sub usec cycletimes
 0.2.2 - Added the UInt for IO. T_CTRL_IOUint, setInUint(), setOutUint()
 0.2.1 - Added the property CtrlCIf to FB_CtrlBase
 </Description>

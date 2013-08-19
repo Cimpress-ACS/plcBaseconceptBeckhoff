@@ -393,6 +393,9 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 	me.StateMachine.intState := me.StateMachine.intStateNext;  // set next state for next cycle
 	me.StateMachine.udiTimeInState_ms := 0; // reset timer
 	me.StateMachine.udiTimeInState_us := 0; // reset timer
+	me.SubStateMachine.udiTimeInState_ms := 0; // reset timer
+	me.SubStateMachine.udiTimeInState_us := 0; // reset timer
+	me.SubStateMachine.intState := cSTA_DONE;
 	// log state change -> open point
 ELSE
 	// increment time in state	
@@ -401,6 +404,21 @@ ELSE
 	me.StateMachine.relTimeInState_ms := UDINT_TO_REAL(me.StateMachine.udiTimeInState_us) / 1000.0;
 END_IF
 
+
+IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateNext) THEN
+	me.SubStateMachine.intStateLastCycle 	:= me.SubStateMachine.intState;
+	me.SubStateMachine.intState 			:= me.SubStateMachine.intStateNext;  // set next state for next cycle
+	CIf.Job.strSubState := THIS^.getCmdState(intCmdState:=me.SubStateMachine.intState,bolState:=TRUE);
+	me.SubStateMachine.udiTimeInState_ms := 0; // reset timer
+	me.SubStateMachine.udiTimeInState_us := 0; // reset timer
+	// log state change -> open point
+ELSE
+	// increment time in state	
+	me.SubStateMachine.udiTimeInState_us := me.SubStateMachine.udiTimeInState_us + me.FUBInfo.udiSample_us;
+	me.SubStateMachine.udiTimeInState_ms := me.SubStateMachine.udiTimeInState_ms + me.FUBInfo.udiSample_ms;
+	me.SubStateMachine.relTimeInState_ms := UDINT_TO_REAL(me.SubStateMachine.udiTimeInState_us) / 1000.0;
+END_IF
+		
 // --------------------------------------------------------------------------
 // Final state reached -> reset command
 // --------------------------------------------------------------------------
