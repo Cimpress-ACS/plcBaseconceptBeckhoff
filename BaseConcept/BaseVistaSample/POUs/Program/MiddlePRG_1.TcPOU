@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="MiddlePRG_1" Id="{fc4c9c72-f24d-4184-a857-29a82ecbaa1c}">
     <Declaration><![CDATA[PROGRAM MiddlePRG_1
 VAR
@@ -54,7 +54,7 @@ IF (NOT bolPlcStartupDone) THEN
 	// add childs
 	fbMOD_2.p_fbHOR := g_a_pCtrlInst[E_CtrlId.HOR_2];
 	fbMOD_2.p_fbVER := g_a_pCtrlInst[E_CtrlId.VER_2];
-
+	
 	bolPlcStartupDone := TRUE;	
 END_IF
 // -----------------------------------------------------------------------------------------------

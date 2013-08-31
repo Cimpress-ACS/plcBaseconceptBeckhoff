@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <DUT Name="T_Ctrl_SwCfg" Id="{a3c77727-482a-464c-9a06-508002f4acd3}">
     <Declaration><![CDATA[TYPE T_Ctrl_SwCfg :
 STRUCT
@@ -8,6 +8,8 @@ STRUCT
 	bolEnable: BOOL;
 	///set controller in simulation(statemachine active, io local simulated)
 	bolSimulation: BOOL;
+	///set controller in simulation(statemachine active, io local simulated)
+	bolPropagateEOFF: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

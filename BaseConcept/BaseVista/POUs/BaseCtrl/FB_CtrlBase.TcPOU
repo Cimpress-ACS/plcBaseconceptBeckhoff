@@ -97,6 +97,10 @@ CIf.Job.aCmdList[1].intCmd := cCMD_OFF; // for test simulation single answer
 CIf.Job.aCmdList[1].strName := 'Off';
 CIf.Job.aCmdList[1].bolAvailable := TRUE;
 
+CIf.Job.aCmdList[2].intCmd := cCMD_EOFF;
+CIf.Job.aCmdList[2].strName := 'Emergency OFF';
+CIf.Job.aCmdList[2].bolAvailable := TRUE;
+
 // set name of class/typ
 CIf.Info.strType := 'FB_CtrlBase'; 
 
@@ -105,7 +109,9 @@ CIf.SwCfg.bolExist := TRUE;
 CIf.SwCfg.bolSimulation := TRUE;
 
 //------------------------------------------------------------------------------------------------------------------------
-CIf.Info.strName := getStrInstanceName(strMyInstancePath); // get name of instance]]></ST>
+CIf.Info.strName := getStrInstanceName(strMyInstancePath); // get name of instance
+
+CIf.Info.uinChildNbr := 0;]]></ST>
       </Implementation>
     </Method>
     <Method Name="StateMachine" Id="{bd82cc15-d8ac-4107-8c15-5f9179fe156e}">
@@ -127,6 +133,10 @@ CASE me.StateMachine.intState OF
         THIS^.sta_ERROR();
     cSTA_ERRORQuit: 
         THIS^.sta_ERRORQuit();
+	cSTA_EOFFBusy:
+		THIS^.sta_EOFFBusy();
+	cSTA_EOFF:
+		THIS^.sta_EOFF();
     cSTA_SINGLE_ANSWER: 
         THIS^.sta_SINGLE_ANSWER();
 END_CASE;]]></ST>
@@ -496,6 +506,10 @@ IF ((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) AND (me
 	me.StateMachine.intStateNext := cSTA_PONBusy;
 END_IF
 
+IF me.intCmd = cCMD_EOFF THEN
+	me.StateMachine.intStateNext := cSTA_EOFFBusy;
+END_IF
+
 IF (CIf.SwCfg.bolExist=FALSE) AND (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN // hardware of controller does not exist
 	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
 END_IF
@@ -569,7 +583,9 @@ udiTaskCnt := fbGETCURTASKINDEX.index;
 me.FUBInfo.udiSample_us := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10; //[ms] X[100ns]/10 -> [us]
 me.FUBInfo.udiSample_ms := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10000; //[ms] X[100ns]/10000 -> [ms]
 
-me.FUBInfo.bolCycleTimeBelowMS := me.FUBInfo.udiSample_us >= 1000;]]></ST>
+me.FUBInfo.bolCycleTimeBelowMS := me.FUBInfo.udiSample_us >= 1000;
+
+CIf.Info.uinChildNbr := 0;]]></ST>
       </Implementation>
     </Method>
     <Method Name="getCmdState" Id="{a5e84ddc-52c5-4dca-8f24-77b6da9322fb}">
@@ -726,6 +742,127 @@ END_IF
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EOFFBusy" Id="{cee17390-0b81-484b-8394-086015e07c5d}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_EOFFBusy : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	iIdx			: UINT;
+	bAllEOFF		: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		EOFF_EntryAction();
+		
+		IF CIf.SwCfg.bolPropagateEOFF AND (CIf.Info.uinChildNbr > 0)THEN
+			FOR iIdx := 0 TO CIf.Info.uinChildNbr - 1 DO
+				CIf.Info.p_aCIf[iIdx]^.Job.intACmd := cCMD_EOFF;
+			END_FOR
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF CIf.SwCfg.bolPropagateEOFF AND (CIf.Info.uinChildNbr > 0) THEN
+			bAllEOFF := TRUE;
+
+			FOR iIdx := 0 TO CIf.Info.uinChildNbr - 1 DO
+				bAllEOFF := bAllEOFF AND (CIf.Info.p_aCIf[iIdx]^.Job.intState = cSTA_EOFF);
+			END_FOR
+			
+			IF bAllEOFF THEN
+				me.StateMachine.intStateNext := cSTA_EOFF;
+			END_IF
+		ELSE
+			me.StateMachine.intStateNext := cSTA_EOFF;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EOFF" Id="{462928ac-6dbf-4aac-8633-d52af2465488}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (FALSE) THEN
+			;
+		ELSIF (TRUE) THEN
+			;	//me.StateMachine.intStateNext := cSTA_PON;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="AddChild" Id="{83dc619a-1931-44c4-9988-526543a4ba1b}">
+      <Declaration><![CDATA[METHOD PROTECTED AddChild : BOOL
+VAR_INPUT
+	p_fbChild			: I_CtrlBase;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AddChild := FALSE;
+
+IF CIf.Info.uinChildNbr <= Base_Const.cMaxNrOfChilds THEN
+	CIf.Info.p_afbChild[CIf.Info.uinChildNbr] := ADR(p_fbChild);
+	CIf.Info.p_aCIf[CIf.Info.uinChildNbr] := p_fbChild.getCtrlCIf();
+	CIf.Info.p_aCIf[CIf.Info.uinChildNbr]^.Info.intParentCtrlId := CIf.Info.intCtrlId;
+	CIf.Info.uinChildNbr := CIf.Info.uinChildNbr + 1;
+	AddChild := TRUE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="EOFF_EntryAction" Id="{9fbbb54b-f3b4-4753-b5d8-6ed9ad4532a5}">
+      <Declaration><![CDATA[METHOD PROTECTED EOFF_EntryAction : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
     <Property Name="CtrlCIf" Id="{4a700db5-ec99-4277-8ba6-00b3b08ee955}">

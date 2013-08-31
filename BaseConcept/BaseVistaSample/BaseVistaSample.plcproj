@@ -136,7 +136,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.2.2.0,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.1.0,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">

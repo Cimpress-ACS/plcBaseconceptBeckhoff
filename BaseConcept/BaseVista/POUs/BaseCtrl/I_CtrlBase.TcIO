@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <Itf Name="I_CtrlBase" Id="{5a1244ea-115e-47c8-8954-1288b08d0a23}">
     <Declaration><![CDATA[INTERFACE I_CtrlBase
 ]]></Declaration>
@@ -9,13 +9,20 @@ VAR_INPUT
 	intCtrlID: INT;
 END_VAR
 ]]></Declaration>
-      <ObjectProperties />
     </Method>
     <Method Name="getCtrlCIf" Id="{d69af68a-65c9-4196-9663-86b68d57759a}">
       <Declaration><![CDATA[METHOD getCtrlCIf : POINTER TO T_Ctrl_CIf
 ]]></Declaration>
-      <ObjectProperties />
     </Method>
+    <Property Name="CtrlCIf" Id="{84be03e7-9160-4085-b543-ae45e6d95dab}">
+      <Declaration><![CDATA[PROPERTY CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
+      <Get Name="Get" Id="{da4ad213-9554-4085-be73-bf50cae85f13}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{b8a40b25-34f4-44c6-82bf-ddd70ebbd4a5}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
     <ObjectProperties />
   </Itf>
 </TcPlcObject>

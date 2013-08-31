@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_MOD" Id="{ce39c9c5-f1f6-48a4-885d-15a7f8be770f}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MOD EXTENDS FB_CtrlBase
 VAR_INPUT
