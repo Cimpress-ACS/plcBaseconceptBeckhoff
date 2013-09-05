@@ -10,7 +10,7 @@ STRUCT
 	Cur: T_Ctrl_SIf_MOD_Cur;
 	///In: T_Ctrl_SIf_MOD_In;
 	///Out: T_Ctrl_SIf_MOD_Out;
-	Alm: ARRAY[1..6] OF T_Ctrl_Alm;
+	Alm: ARRAY[1..7] OF T_Ctrl_Alm;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

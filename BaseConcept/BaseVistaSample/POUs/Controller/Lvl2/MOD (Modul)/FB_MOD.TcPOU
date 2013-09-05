@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
   <POU Name="FB_MOD" Id="{ce39c9c5-f1f6-48a4-885d-15a7f8be770f}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MOD EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -13,6 +13,16 @@ VAR
 	pHOR_CIF: POINTER TO T_Ctrl_CIf;
 	pVER_CIF: POINTER TO T_Ctrl_CIf;
 	bolfpCmd: BOOL;
+	
+	// Data Channel To PLC  test
+	intLastReadData : DINT;
+	
+	stDataChannelTest_DtChnToPlc : T_Data_DtChn;
+	intStatemachine : INT;			// State of the Communication Statemachine
+	bolDataBad: BOOL;				// Data not correct
+	intCountRetry: INT;				// Retry Counts for error message
+	intIndexOldest : INT;			// Temporary Index saved
+	dtOldestTag : DATE_AND_TIME;	// Date and time of the oldes imput
 	
 	// local substates machine
 	stSubSate: T_Ctrl_Class_StateMachine;
@@ -114,6 +124,8 @@ SIf.Alm[5].eAlmClass := E_AlmClass.WARNING;
 SIf.Alm[5].strText := 'not used';
 SIf.Alm[6].eAlmClass := E_AlmClass.WARNING;
 SIf.Alm[6].strText := 'not used';
+SIf.Alm[7].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[7].strText := 'Data Channel Error Receive Data';
 
 // for tests
 CIf.SwCfg.bolSimulation := FALSE;
@@ -461,7 +473,8 @@ CheckChildAlmClass();
 // cyclic actions outside of statemachine
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	
-	; // always error supervision
+	// Communication to the Line Controll over Data Channel
+	THIS^.DtChnToPlc_Test();
 	
 END_IF]]></ST>
       </Implementation>
@@ -766,6 +779,100 @@ IF (getCmdState='') THEN // global not defined get local
 	END_IF
 END_IF
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="DtChnToPlc_Test" Id="{fc488651-8c69-4492-bec7-b1190b1bdfcb}">
+      <Declaration><![CDATA[METHOD DtChnToPlc_Test : BOOL
+VAR_INPUT
+END_VAR
+
+VAR CONSTANT
+	cSTA_SUB_Data_Init: INT := 900;
+	cSTA_SUB_Data_WaitForJob: INT := 902;
+	cSTA_SUB_Data_CheckData: INT := 904;
+	cSTA_SUB_Data_Acknowledge: INT := 906;
+	cSTA_SUB_Data_Retry: INT := 908;
+	cSTA_SUB_Data_Error: INT := 910;
+	
+	cDataState_DONE: INT := -1;
+	cDataState_Ready : INT := 1;
+	cDataState_Retry : INT := -99;
+	cDataState_Error : INT := -100;
+	
+	cMAX_RETRY : INT := 10;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Data Channel to Receive Data from Line Controller
+// Startup check States
+IF intStatemachine < cSTA_SUB_Data_Init THEN
+	intStatemachine := cSTA_SUB_Data_Init;
+END_IF
+
+CASE intStatemachine OF
+	cSTA_SUB_Data_Init:
+		IF CIf.Job.intState > cSTA_PON THEN
+			intCountRetry := 0;
+			stDataChannelTest_DtChnToPlc.intDataState := cDataState_DONE;
+			intStatemachine := cSTA_SUB_Data_WaitForJob;
+		END_IF
+		
+	cSTA_SUB_Data_WaitForJob:
+		// New data arrived
+		IF stDataChannelTest_DtChnToPlc.intDataState = cDataState_Ready THEN
+			bolDataBad := FALSE;
+			//dtOldestTag := dtActualTime;
+			intIndexOldest := -1;			// -1 = no Oldest free input found
+			intStatemachine := cSTA_SUB_Data_CheckData;
+		END_IF
+	
+	cSTA_SUB_Data_CheckData:	
+		// Check Data
+		//IF stDataChannelTest_DtChnToPlc.stDecision.uliRFID <= 0 THEN
+		//		bolDataBad := TRUE;
+		//		// Set Alarm: SIf.Alm[3].strText := 'False Job Parameter';
+		//		g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);					
+		//END_IF
+ 
+		// ------------------------------------------------------------------------------------
+		// Data Use
+		IF bolDataBad = TRUE THEN
+			IF intCountRetry >= cMAX_RETRY THEN
+				intStatemachine := cSTA_SUB_Data_Error;
+			ELSE
+				intCountRetry := intCountRetry + 1;
+				intStatemachine := cSTA_SUB_Data_Retry;
+			END_IF
+		ELSE
+			// Reset counter because right job
+			intCountRetry := 0;
+
+			// do something here
+			intLastReadData := stDataChannelTest_DtChnToPlc.dinTest;
+			
+			intStatemachine := cSTA_SUB_Data_Acknowledge;
+			
+		END_IF
+		
+	cSTA_SUB_Data_Acknowledge:	
+		// Delete all values
+		stDataChannelTest_DtChnToPlc.dinTest := 0;
+		// Acknowledge communication
+		stDataChannelTest_DtChnToPlc.intDataState := cDataState_DONE;
+		intStatemachine := cSTA_SUB_Data_WaitForJob;
+		
+	cSTA_SUB_Data_Retry:
+		stDataChannelTest_DtChnToPlc.intDataState := cDataState_Retry;
+		intStatemachine := cSTA_SUB_Data_WaitForJob;
+
+	cSTA_SUB_Data_Error:
+		stDataChannelTest_DtChnToPlc.intDataState := cDataState_Error;
+		// Set Alarm: SIf.Alm[7].strText := 'Data Channel Error Receive Dat
+		g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,7,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);										
+		IF CIf.Job.bolAlmReset = TRUE THEN
+			intStatemachine := cSTA_SUB_Data_Init;
+		END_IF
+			
+END_CASE]]></ST>
       </Implementation>
     </Method>
     <ObjectProperties />

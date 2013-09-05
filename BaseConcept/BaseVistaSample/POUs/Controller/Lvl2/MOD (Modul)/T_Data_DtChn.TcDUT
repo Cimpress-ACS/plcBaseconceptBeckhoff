@@ -1,0 +1,13 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="T_Data_DtChn" Id="{a6967b81-9303-4e37-920a-825b497ad40d}">
+    <Declaration><![CDATA[TYPE T_Data_DtChn :
+STRUCT
+	dinTest : DINT;
+	intDataState : INT;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
