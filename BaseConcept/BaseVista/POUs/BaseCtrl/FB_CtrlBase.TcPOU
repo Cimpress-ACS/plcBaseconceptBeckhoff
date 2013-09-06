@@ -865,6 +865,25 @@ END_VAR
         <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
+    <Method Name="iniAllCtrlArrays" Id="{d4d8fd91-9d47-438c-abf2-140ec06ce409}">
+      <Declaration><![CDATA[METHOD PUBLIC iniAllCtrlArrays : BOOL
+VAR_INPUT
+	p_pCtrlArray	: POINTER TO POINTER TO FB_CtrlBase;
+	p_pCIfArray		: POINTER TO POINTER TO T_Ctrl_CIf;
+	intCtrlID		: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[iniAllCtrlArrays := FALSE;
+
+IF (TRUE) THEN//e_CtrlID <= E_CtrlId.E_CtrlIdMax) THEN
+	p_pCtrlArray[intCtrlID] 	:= THIS;
+	THIS^.CIf.Info.intCtrlID 	:= intCtrlID;
+	p_pCIfArray[intCtrlID] 		:= ADR(CIf);
+	iniAllCtrlArrays := TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Property Name="CtrlCIf" Id="{4a700db5-ec99-4277-8ba6-00b3b08ee955}">
       <Declaration><![CDATA[PROPERTY PUBLIC CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
       <Get Name="Get" Id="{1c35a505-c9e9-4c16-b2a1-3f6ecfe67a51}">
