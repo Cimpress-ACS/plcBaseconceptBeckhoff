@@ -57,6 +57,12 @@
     <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\T_Ctrl_SIf_CYL_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD %28Modul%29\FB_DtChnToLine_Test.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD %28Modul%29\T_Data_DtChn.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl2\MOD (Modul)\E_Typ_MOD.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -136,7 +142,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.1.1,Vistaprint">
+    <LibraryReference Include="Base_PLC,newest,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">
