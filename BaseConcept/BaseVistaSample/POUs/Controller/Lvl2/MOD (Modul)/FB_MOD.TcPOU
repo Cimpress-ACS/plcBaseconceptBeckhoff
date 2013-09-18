@@ -426,7 +426,7 @@ END_IF
 // ----------------------------------------------------------------------------------
 // overrule error always from base -> no EOFF State!! in EOFF go to OFF
 IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
-	IF (me.StateMachine.intState=cSTA_OFF) OR (me.StateMachine.intState=cSTA_OFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) THEN
 		me.StateMachine.intStateNext := cSTA_OFF;
 	ELSE // stay in OFF
 		me.StateMachine.intStateNext := cSTA_OFFBusy;
