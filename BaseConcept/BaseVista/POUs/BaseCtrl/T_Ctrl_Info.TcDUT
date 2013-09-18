@@ -13,7 +13,7 @@ STRUCT
 	///all inputs valid -> init done
 	bolInitDone			: BOOL;
 	///Childs
-	p_afbChild			: ARRAY[0..Base_Const.cMaxNrOfChilds] OF POINTER TO BYTE;
+	p_afbChild			: ARRAY[0..Base_Const.cMaxNrOfChilds] OF POINTER TO FB_CtrlBase;
 	///common interface array of childs
 	p_aCIf				: ARRAY[0..Base_Const.cMaxNrOfChilds] OF POINTER TO T_Ctrl_CIf;
 	/// Child Count

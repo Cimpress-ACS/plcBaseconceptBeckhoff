@@ -1,14 +1,10 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="SlowPRG_1" Id="{f627bb3d-dce4-4692-ab49-07a63d91fd84}">
     <Declaration><![CDATA[PROGRAM SlowPRG_1
 VAR
 	bolPlcStartupDone: BOOL := FALSE;
 	bolHostInitDone : BOOL := FALSE;
 	bolInitDone : BOOL := FALSE;
-	strInstance: STRING;
-	pCtrl_CIf: POINTER TO T_Ctrl_CIf;
-	intState: INT;
-	bolSetCmd: BOOL;
 	jj:INT;
 	bolCtrlRst: BOOL;
 END_VAR
@@ -82,18 +78,6 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 		bolCtrlRst := FALSE;
 	END_IF
 
-(* Tests
-IF (g_a_pCtrlCIf[E_CtrlId.CYL_HOR2]<>0) AND bolSetCmd THEN // check pointer valid
-	g_a_pCtrlCIf[E_CtrlId.CYL_HOR2]^.Job.intACmd := cCMD_EXTEND;
-	bolSetCmd := FALSE;
-END_IF;
-
-IF (g_a_pCtrlInst[E_CtrlId.CYL_HOR2]<>0) THEN // check pointer valid
-	pCtrl_CIf := g_a_pCtrlInst[E_CtrlId.CYL_HOR2]^.getCtrlCIf();
-	intState:= pCtrl_CIf^.Job.intState;
-END_IF;
-*)
-	
 END_IF
 // -----------------------------------------------------------------------------------------------]]></ST>
     </Implementation>

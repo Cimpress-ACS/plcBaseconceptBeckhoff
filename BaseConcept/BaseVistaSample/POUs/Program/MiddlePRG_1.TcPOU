@@ -41,20 +41,16 @@ IF (NOT bolPlcStartupDone) THEN
 	// init
 	//Driver
 	
+	fbHOR_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.HOR_2); // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
 	
-	fbHOR_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.HOR_2); // init and entry fb_instance in global fb pointer array
-	g_a_pCtrlCIf[E_CtrlId.HOR_2] := fbHOR_2.getCtrlCIf();    // get adr of ctrl interface struct
-	
-	fbVER_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.VER_2); // init and entry fb_instance in global fb pointer array
-	g_a_pCtrlCIf[E_CtrlId.VER_2] := fbVER_2.getCtrlCIf();    // get adr of ctrl interface struct
-	
+	fbVER_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VER_2); // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
+
 	//Lvl2
-	fbMOD_2.iniCtrlArray(ADR(g_a_pCtrlInst),E_CtrlId.MOD_2); // init and entry fb_instance in global fb pointer array
-	g_a_pCtrlCIf[E_CtrlId.MOD_2] := fbMOD_2.getCtrlCIf();    // get adr of ctrl interface struct
+	fbMOD_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.MOD_2);  // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
 	// add childs
-	fbMOD_2.p_fbHOR := g_a_pCtrlInst[E_CtrlId.HOR_2];
-	fbMOD_2.p_fbVER := g_a_pCtrlInst[E_CtrlId.VER_2];
-	
+	fbMOD_2.In_p_fbHOR := g_a_pCtrlInst[E_CtrlId.HOR_2];
+	fbMOD_2.In_p_fbVER := g_a_pCtrlInst[E_CtrlId.VER_2];
+
 	bolPlcStartupDone := TRUE;	
 END_IF
 // -----------------------------------------------------------------------------------------------

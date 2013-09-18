@@ -142,7 +142,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,newest,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.2.0,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">
@@ -150,12 +150,12 @@
     </LibraryReference>
   </ItemGroup>
   <ItemGroup>
+    <SubObject Include="FB_CYL.Always" />
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="BaseVistaSample.tmc">
       <SubType>Content</SubType>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <SubObject Include="FB_CYL.Always" />
   </ItemGroup>
   <ProjectExtensions />
   <!-- 

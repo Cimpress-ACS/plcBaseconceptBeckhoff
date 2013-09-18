@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_CYL" Id="{7f6d4e15-a324-46d3-9c01-947902791507}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CYL EXTENDS FB_CtrlBase
 
@@ -14,7 +14,6 @@ END_VAR
 VAR
 	/// Specific interface struct for public access
 	SIf: T_Ctrl_SIf_CYL;
-	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -101,21 +100,21 @@ SIf.Alm[2].strText := 'timeout extend - sensor extend not reached';
 SIf.Alm[3].eAlmClass := E_AlmClass.TSTOP;
 SIf.Alm[3].strText := 'sensor retract always on';
 SIf.Alm[4].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[4].strText := 'timeout extend cylinder - sensor retract not reached';
-SIf.Alm[5].eAlmClass := E_AlmClass.STOP;
+SIf.Alm[4].strText := 'timeout retract cylinder - sensor retract not reached';
+SIf.Alm[5].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[5].strText := 'interlock extend - movement stopped';
-SIf.Alm[6].eAlmClass := E_AlmClass.STOP;
+SIf.Alm[6].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[6].strText := 'interlock retract - movement stopped';
 
 //*******************************************************************************
 // initial values
 //*******************************************************************************
 
-// software configuration
+// Configuration defaults of class
 CIf.SwCfg.bolExist := TRUE;
 CIf.SwCfg.bolSimulation := TRUE;
 
-// parmeter
+// Parameter defaults of class
 SIf.Par.udiExtendTime_ms := 10000;
 SIf.Par.udiRetractTime_ms := 8000;
 SIf.Par.udiSimExtendTime_ms := SIf.Par.udiExtendTime_ms/2;	
@@ -133,7 +132,6 @@ SIf.In.bolRetracted.map := THIS^.In_bolRetracted;
 IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolExtended));
 	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolRetracted));
-	//ctrl.In.bol_PosSwitchBasicDefTyp.intern := getInBol(ctrl.ifc.Job.bol_Force ,ADR(ctrl.In.bol_PosSwitchBasicDefTyp);
 ELSE
 	//simulation of global IO
 END_IF
@@ -299,8 +297,6 @@ END_CASE;]]></ST>
 	END_IF
 
 
-
-
 //--------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
@@ -407,7 +403,6 @@ END_CASE;]]></ST>
 			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
 		END_IF
 	END_IF
-
 
 
 
@@ -552,7 +547,6 @@ END_CASE;]]></ST>
 		
 		;
 		
-		
 		// State Change Condition
 		IF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
@@ -595,23 +589,27 @@ IF (getCmdState='') THEN // global not defined get local
 	IF (bolState=FALSE) THEN
 		// cmd's
 		CASE intCmdState OF
-			cCMD_RETRACT: 
+			CYL_CmdState.cCMD_RETRACT: 
 				getCmdState := 'cCMD_RETRACT';
-			cCMD_EXTEND: 
+			CYL_CmdState.cCMD_EXTEND: 
 				getCmdState := 'cCMD_EXTEND';
+		ELSE
+			getCmdState := 'Cmd not defined';
 		END_CASE;
 	ELSE
 	
 	// cmd's
 		CASE intCmdState OF
-			cSTA_RETRACTBusy: 
+			CYL_CmdState.cSTA_RETRACTBusy: 
 				getCmdState := 'cSTA_RETRACTBusy';
-			cSTA_RETRACT: 
+			CYL_CmdState.cSTA_RETRACT: 
 				getCmdState := 'cSTA_RETRACT';
-			cSTA_EXTENDBusy: 
+			CYL_CmdState.cSTA_EXTENDBusy: 
 				getCmdState := 'cSTA_EXTENDBusy';
-			cSTA_EXTEND: 
+			CYL_CmdState.cSTA_EXTEND: 
 				getCmdState := 'cSTA_EXTEND';
+		ELSE
+			getCmdState := 'State not defined';
 		END_CASE;
 	END_IF
 END_IF
@@ -637,15 +635,16 @@ END_IF
 		
 		;
 		
-		
 		// State Change Condition
-		IF (me.intCmd=cCMD_STOP) THEN
-			// sensor retract always on cylinder
-			me.StateMachine.intStateNext :=  cSTA_STOPBusy;
-		ELSIF (me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN 
-			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
-		ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
-			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+			IF (me.intCmd=cCMD_STOP) THEN
+				// sensor retract always on cylinder
+				me.StateMachine.intStateNext :=  cSTA_STOPBusy;
+			ELSIF (me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN 
+				me.StateMachine.intStateNext := cSTA_EXTENDBusy;
+			ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
+				me.StateMachine.intStateNext := cSTA_RETRACTBusy;
+			END_IF
 		END_IF
 	END_IF
 
@@ -809,6 +808,15 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 END_IF
 
 // ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) OR (me.StateMachine.intState=cSTA_OFFBusy) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF
+
 // Conditions Always
 IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
 		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND

@@ -1,11 +1,11 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_MOD" Id="{ce39c9c5-f1f6-48a4-885d-15a7f8be770f}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MOD EXTENDS FB_CtrlBase
 VAR_INPUT
 	///pointer to function block
-	p_fbHOR: POINTER TO FB_CYL;
+	In_p_fbHOR: POINTER TO FB_CYL;
 	///pointer to function block
-	p_fbVER: POINTER TO FB_CYL;
+	In_p_fbVER: POINTER TO FB_CYL;
 END_VAR
 VAR
 	///Specific interface struct for public access
@@ -24,8 +24,6 @@ VAR
 	intIndexOldest : INT;			// Temporary Index saved
 	dtOldestTag : DATE_AND_TIME;	// Date and time of the oldes imput
 	
-	// local substates machine
-	stSubSate: T_Ctrl_Class_StateMachine;
 END_VAR
 VAR CONSTANT
 	// ctrl specific substates definitions
@@ -60,7 +58,7 @@ Version		Date			Author		Comment
 ___________________________________________________________________________________________________*)
 
 // check if child pointer valid
-IF (me.bolActivate) AND (p_fbHOR<>0) AND (p_fbVER<>0) THEN // cyclic call enabled
+IF (me.bolActivate) AND (In_p_fbHOR<>0) AND (In_p_fbVER<>0) THEN // cyclic call enabled
 	
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
@@ -127,8 +125,11 @@ SIf.Alm[6].strText := 'not used';
 SIf.Alm[7].eAlmClass := E_AlmClass.INFO;
 SIf.Alm[7].strText := 'Data Channel Error Receive Data';
 
-// for tests
+// Configuration defaults of class
+CIf.SwCfg.bolExist := TRUE;
 CIf.SwCfg.bolSimulation := FALSE;
+
+// Parameter defaults of class
 SIf.Par.udiWaitPick_ms := 15000;]]></ST>
       </Implementation>
     </Method>
@@ -215,17 +216,10 @@ END_CASE;]]></ST>
 		// State Change Condition
 		IF (CIf.Job.bolAlmReset = FALSE) THEN
 			// State Change Condition
-			IF ((CIf.Job.eParent_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eParent_ActivAlmClass=E_AlmClass.OFF)) OR 
-				((CIf.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.OFF)) THEN
-				me.StateMachine.intStateNext := cSTA_OFFBusy;
-			ELSIF (me.StateMachine.intStateHistory<=cSTA_PON) OR (me.intCmd=cSTA_PON) THEN
+			IF (me.StateMachine.intStateHistory<=cSTA_PON) OR (me.intCmd=cSTA_PON) THEN
 				me.StateMachine.intStateNext := cSTA_PONBusy;
-			ELSIF(me.intCmd=cCMD_OFF) THEN
+			ELSIF(me.intCmd<>cCMD_DONE) THEN
 				me.StateMachine.intStateNext := cSTA_OFFBusy;
-			ELSIF(me.intCmd=cCMD_INIT) THEN
-				me.StateMachine.intStateNext := cSTA_INITBusy;
-			ELSIF(me.intCmd=cCMD_RUN) THEN
-				me.StateMachine.intStateNext := cSTA_INITBusy;
 			END_IF
 		END_IF
 	END_IF
@@ -272,9 +266,7 @@ END_CASE;]]></ST>
 		END_IF
 		
 		// State Change Condition
-		IF ((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cSTA_OFF) THEN
+		IF(me.intCmd=cSTA_OFF) THEN
 			me.StateMachine.intStateNext := cSTA_OFFBusy;
 		ELSIF (pVER_CIF^.Job.intState = cSTA_RETRACT) AND (pHOR_CIF^.Job.intState = cSTA_RETRACT) THEN
 			me.StateMachine.intStateNext := cSTA_INIT;
@@ -311,19 +303,12 @@ END_CASE;]]></ST>
 		IF (CIf.SwCfg.bolSimulation) THEN
 			;
 		END_IF
-		
+
 		// State Change Condition
-		// State Change Condition
-		IF ((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cCMD_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cCMD_RUN) THEN
+		IF(me.intCmd=cCMD_RUN) THEN
 			me.StateMachine.intStateNext := cSTA_RUNBusy;
 		END_IF
 	END_IF
-
-
 
 
 //--------------------------------------------------------------------------------------
@@ -423,51 +408,11 @@ END_CASE;]]></ST>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_PON" Id="{cf17ae8c-d7d9-4380-8e30-6241c2206453}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		
-		// State Change Condition
-		IF(me.intCmd=cCMD_OFF) OR (me.intCmd=cCMD_INIT) OR (me.intCmd=cCMD_RUN) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="Always" Id="{2c870b32-2bc2-4544-82fa-e278fa972b09}">
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.Always();
-
-// ---------------------------------------------------------------------------------
-// check child me and set parent alarm class
-CheckChildAlmClass();
 
 // ----------------------------------------------------------------------------------
 // cyclic actions outside of statemachine
@@ -476,46 +421,17 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	// Communication to the Line Controll over Data Channel
 	THIS^.DtChnToPlc_Test();
 	
+END_IF
+
+// ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) OR (me.StateMachine.intState=cSTA_OFFBusy) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
 END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PONBusy" Id="{bab8c042-e40a-4e22-bc52-ca7f2671848e}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		pVER_CIF^.Job.intACmd := cCMD_PON;
-		pHOR_CIF^.Job.intACmd := cCMD_PON;
-		
-		// State Change Condition
-		IF (pVER_CIF^.Job.intState = cSTA_PON) AND (pHOR_CIF^.Job.intState = cSTA_PON) THEN
-			me.StateMachine.intStateNext := cSTA_PON;
-		ELSE
-			;
-			// timeout power on child not ok -> failure or log entry???
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_RUNBusy" Id="{1f9de034-dff8-477f-b9a8-1c73db7b3b29}">
@@ -528,7 +444,7 @@ END_IF]]></ST>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
-		stSubSate.intState := cSUB_INITIALIZED; // init sub state machine
+		me.SubStateMachine.intState := cSUB_INITIALIZED; // init sub state machine
 	END_IF
 
 
@@ -545,12 +461,12 @@ END_IF]]></ST>
 		
 		//--------------------------------------------------------------------------------------
 		// sub state machine for sequence
-		CASE stSubSate.intState OF
+		CASE me.SubStateMachine.intState OF
 			//--------------------------------------------------------------------------------------
 			cSUB_INITIALIZED:
 					// State Change Condition
 					IF(TRUE) THEN
-						stSubSate.intStateNext := cSUB_VER_Down;
+						me.SubStateMachine.intStateNext := cSUB_VER_Down;
 					END_IF
 					
 			//--------------------------------------------------------------------------------------
@@ -559,17 +475,17 @@ END_IF]]></ST>
 					
 					// State Change Condition
 					IF (pVER_CIF^.Job.intState=CYL_CmdState.cSTA_EXTEND) AND (pHOR_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) THEN // pick position
-						stSubSate.intStateNext := cSUB_WAIT_Pick;
+						me.SubStateMachine.intStateNext := cSUB_WAIT_Pick;
 					ELSIF (pVER_CIF^.Job.intState=CYL_CmdState.cSTA_EXTEND) THEN // place position
-						stSubSate.intStateNext := cSUB_VER_Up;
+						me.SubStateMachine.intStateNext := cSUB_VER_Up;
 					END_IF
 					
 			//--------------------------------------------------------------------------------------
 			cSUB_WAIT_Pick:
 	
 					// State Change Condition
-					IF(stSubSate.udiTimeInState_ms>=SIf.Par.udiWaitPick_ms) THEN
-						stSubSate.intStateNext := cSUB_VER_Up;
+					IF(me.SubStateMachine.udiTimeInState_ms>=SIf.Par.udiWaitPick_ms) THEN
+						me.SubStateMachine.intStateNext := cSUB_VER_Up;
 					END_IF
 					
 			//--------------------------------------------------------------------------------------
@@ -578,9 +494,9 @@ END_IF]]></ST>
 					
 					// State Change Condition
 					IF (pVER_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) AND (pHOR_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) THEN // pick position
-						stSubSate.intStateNext := cSUB_HOR_MoveToPlace;
+						me.SubStateMachine.intStateNext := cSUB_HOR_MoveToPlace;
 					ELSIF (pVER_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) THEN // place position
-						stSubSate.intStateNext := cSUB_HOR_MoveToPick;
+						me.SubStateMachine.intStateNext := cSUB_HOR_MoveToPick;
 					END_IF		
 					
 			//--------------------------------------------------------------------------------------
@@ -589,7 +505,7 @@ END_IF]]></ST>
 					
 					// State Change Condition
 					IF(pHOR_CIF^.Job.intState=CYL_CmdState.cSTA_EXTEND) THEN
-						stSubSate.intStateNext := cSUB_VER_Down;
+						me.SubStateMachine.intStateNext := cSUB_VER_Down;
 					END_IF
 					
 			//--------------------------------------------------------------------------------------
@@ -598,33 +514,17 @@ END_IF]]></ST>
 					
 					// State Change Condition
 					IF(pHOR_CIF^.Job.intState=CYL_CmdState.cSTA_RETRACT) THEN
-						stSubSate.intStateNext := cSUB_Finished;
+						me.SubStateMachine.intStateNext := cSUB_Finished;
 					END_IF
 			//--------------------------------------------------------------------------------------
 			cSUB_Finished:
-					;
-					
+					;			
 		END_CASE
-		stSubSate.intStateLastCycle := stSubSate.intState;
-		CIf.Job.strSubState := THIS^.getCmdState(intCmdState:=stSubSate.intState,bolState:=TRUE);
-		IF (stSubSate.intState<>stSubSate.intStateNext) THEN
-			stSubSate.intState := stSubSate.intStateNext;  // set next state for next cycle
-			stSubSate.udiTimeInState_ms := 0; // reset timer
-			// log state change -> open point
-		ELSE
-			// increment time in state	
-			stSubSate.udiTimeInState_ms := stSubSate.udiTimeInState_ms + me.FUBInfo.udiSample_ms;
-		END_IF
-		
 		
 		// State Change Condition
-		IF ((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cCMD_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cCMD_INIT) THEN
+		IF(me.intCmd=cCMD_INIT) THEN
 			me.StateMachine.intStateNext := cSTA_INITBusy;
-		ELSIF (stSubSate.intState=cSUB_Finished) THEN
+		ELSIF (me.SubStateMachine.intState=cSUB_Finished) THEN
 			me.StateMachine.intStateNext := cSTA_RUN;
 		END_IF
 
@@ -668,11 +568,7 @@ END_IF]]></ST>
 		END_IF
 		
 		// State Change Condition
-		IF ((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cCMD_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		ELSIF(me.intCmd=cCMD_INIT) THEN
+		IF(me.intCmd=cCMD_INIT) THEN
 			me.StateMachine.intStateNext := cSTA_INITBusy;
 		ELSIF (me.intCmd=cCMD_RUN) AND (bolfpCmd=TRUE) THEN // command RUN and positive flag command was onetime <> RUN
 			me.StateMachine.intStateNext := cSTA_RUNBusy;
@@ -695,47 +591,11 @@ END_IF]]></ST>
       <Implementation>
         <ST><![CDATA[SUPER^.CtrlInit();
 
-// get child if
-pHOR_CIF := p_fbHOR^.getCtrlCIf();
-pVER_CIF := p_fbVER^.getCtrlCIf();
-
-// set parent id
-pHOR_CIF^.Info.intParentCtrlId := CIf.Info.intCtrlId;
-pVER_CIF^.Info.intParentCtrlId := CIf.Info.intCtrlId;
-
-//necessary???
-THIS^.CIf.Info.p_aCIf[0] := THIS^.pHOR_CIF;
-THIS^.CIf.Info.p_aCIf[1] := THIS^.pVER_CIF;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CheckChildAlmClass" Id="{d45cf562-3263-4dce-9708-d68b105843bd}">
-      <Declaration><![CDATA[METHOD CheckChildAlmClass : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[//------------------------------------------------------------------------------------------------------
-// check child alarm classes
-IF (pHOR_CIF^.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) OR (pVER_CIF^.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) THEN
-	CIf.Job.eMe_ActivAlmClass := E_AlmClass.EOFF;
-	me.Alarm.bolfp := TRUE;
-ELSE
-	IF (me.Alarm.bolfp) THEN
-		CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // no reset necessary
-		me.Alarm.bolfp := FALSE;
-	END_IF
+IF (THIS^.AddChild(In_p_fbHOR^)) THEN // add child done?
+	pHOR_CIF := CIf.Info.p_aCIf[CIf.Info.uinChildNbr-1];
 END_IF
-
-//------------------------------------------------------------------------------------------------------
-// set alarm class parent of childs
-IF (CIf.Job.eParent_ActivAlmClass=E_AlmClass.EOFF) THEN
-	pHOR_CIF^.Job.eParent_ActivAlmClass := CIf.Job.eParent_ActivAlmClass;
-	pVER_CIF^.Job.eParent_ActivAlmClass := CIf.Job.eParent_ActivAlmClass;
-ELSIF(CIf.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.OFF) THEN
-	pHOR_CIF^.Job.eParent_ActivAlmClass := CIf.Job.eMe_ActivAlmClass;
-	pVER_CIF^.Job.eParent_ActivAlmClass := CIf.Job.eMe_ActivAlmClass;
-ELSE
-	// no important alarm for child active
-	pHOR_CIF^.Job.eParent_ActivAlmClass := E_AlmClass.NONE;
-	pVER_CIF^.Job.eParent_ActivAlmClass := E_AlmClass.NONE;
+IF (THIS^.AddChild(In_p_fbVER^)) THEN // add child done?
+	pVER_CIF := CIf.Info.p_aCIf[CIf.Info.uinChildNbr-1];
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -748,13 +608,15 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+
 IF (getCmdState='') THEN // global not defined get local
 	// get string cmd/state string information in runtime
 	IF (bolState=FALSE) THEN
 		// cmd's
-		//CASE intCmdState OF 
+		//CASE intCmdState OF
+		//	; 
 		//ELSE
-				getCmdState := 'not defined';
+			getCmdState := 'Cmd not defined';
 		//END_CASE;
 	ELSE
 	
@@ -775,6 +637,8 @@ IF (getCmdState='') THEN // global not defined get local
 				getCmdState := 'cSUB_HOR_MoveToPick';
 			cSUB_Finished: 
 				getCmdState := 'cSUB_Finished';
+		ELSE
+			getCmdState := 'State not defined';
 		END_CASE;
 	END_IF
 END_IF

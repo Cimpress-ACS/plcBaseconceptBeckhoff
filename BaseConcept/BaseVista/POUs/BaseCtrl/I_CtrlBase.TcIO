@@ -2,26 +2,17 @@
   <Itf Name="I_CtrlBase" Id="{5a1244ea-115e-47c8-8954-1288b08d0a23}">
     <Declaration><![CDATA[INTERFACE I_CtrlBase
 ]]></Declaration>
-    <Method Name="iniCtrlArray" Id="{fe4e07d9-b88e-4594-b3cd-0cf948d7d808}">
-      <Declaration><![CDATA[METHOD iniCtrlArray : BOOL
-VAR_INPUT
-	p_pCtrlArray: POINTER TO POINTER TO fb_CtrlBase;
-	intCtrlID: INT;
-END_VAR
-]]></Declaration>
-    </Method>
-    <Method Name="getCtrlCIf" Id="{d69af68a-65c9-4196-9663-86b68d57759a}">
-      <Declaration><![CDATA[METHOD getCtrlCIf : POINTER TO T_Ctrl_CIf
-]]></Declaration>
-    </Method>
     <Property Name="CtrlCIf" Id="{84be03e7-9160-4085-b543-ae45e6d95dab}">
       <Declaration><![CDATA[PROPERTY CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
       <Get Name="Get" Id="{da4ad213-9554-4085-be73-bf50cae85f13}">
         <Declaration><![CDATA[]]></Declaration>
       </Get>
-      <Set Name="Set" Id="{b8a40b25-34f4-44c6-82bf-ddd70ebbd4a5}">
+    </Property>
+    <Property Name="CtrlFB" Id="{6e1073fc-7253-41cb-846b-6f93e9ba9101}">
+      <Declaration><![CDATA[PROPERTY CtrlFB : POINTER TO FB_CtrlBASE]]></Declaration>
+      <Get Name="Get" Id="{ca6ca1de-7838-4742-8263-ca4b962f8c9b}">
         <Declaration><![CDATA[]]></Declaration>
-      </Set>
+      </Get>
     </Property>
     <ObjectProperties />
   </Itf>
