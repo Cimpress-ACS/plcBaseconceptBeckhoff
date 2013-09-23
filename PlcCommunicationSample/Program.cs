@@ -20,7 +20,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
     class Program
     {
-        private const string AdsAddress = "10.38.10.83.1.1";
+        private const string AdsAddress = "192.168.2.111.1.1";
         private const int AdsPort = 851;
 
         static void Main(string[] args)
@@ -45,8 +45,31 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             tagController.WriteTag(tag, true);
 
 
+            // ControllerTreeImporter
+            IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
+            IController rootController = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
+            Console.WriteLine("imported " + rootController.Name + " controller");
+
+            rootController.SendParameter(new Tag("udiWaitPick_ms", string.Empty, "UDINT") { Value = 1000 });
+            rootController.SendParameter("udiWaitPick_ms", 2000);
+            rootController.Commands.First().Fire();
+
+            var s = (from c in rootController.Commands
+                     where c.Name.Equals("Run", StringComparison.InvariantCultureIgnoreCase)
+                     select c).First();
+
+            // start root controller, otherwise the DataChannes would not work
+            s.Fire();
+            Console.WriteLine(s.Name + " Command fired");
+
+            // AlarmsImporter
+            //IAlarmsImporter alarmsImporter = new BeckhoffOnlineAlarmsImporter();
+            //IAlarmManager alarmManager = alarmsImporter.ImportAlarms(rootController, AdsAddress, AdsPort);
+
+
+
             // IDataChannelManager
-            IDataChannelManager dataChannel = new DataChannelManager(tagListener, tagController);
+            IDataChannelWriter dataChannel = new DataChannelWriter(tagListener, tagController);
             dataChannel.CommunicationProblemOccured += dataChannel_CommunicationProblemOccured;
 
             var dataChannelTag = new Tag("fbMOD_2.stDataChannelTest_DtChnToPlc", "MiddlePRG_1", "T_Data_DtChn");
@@ -68,27 +91,14 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
             // this is optional
             dataChannel.WaitWriteComplete();
-
-
-
-            // ControllerTreeImporter
-            IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
-            IController rootController = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
-
-            rootController.SendParameter(new Tag("udiWaitPick_ms", string.Empty, "UDINT") { Value = 1000 });
-            rootController.SendParameter("udiWaitPick_ms", 2000);
-            rootController.Commands.First().Fire();
-
-            // AlarmsImporter
-            //IAlarmsImporter alarmsImporter = new BeckhoffOnlineAlarmsImporter();
-            //IAlarmManager alarmManager = alarmsImporter.ImportAlarms(rootController, AdsAddress, AdsPort);
+            Console.WriteLine("wrote 14 values over DataChannelManager");
 
 
             // TagImporter
             ITagImporter tagImporter = new BeckhoffOnlineTagImporter();
             ICollection<Tag> importedTags = tagImporter.ImportTags(AdsAddress, AdsPort);
 
-            var listener = new BeckhoffTagListener(AdsAddress, AdsPort);
+            var listener = new BeckhoffPollingTagListener(AdsAddress, AdsPort);
             foreach (var importedTag in importedTags)
             {
                 listener.AddTagsRecursively(importedTag);
