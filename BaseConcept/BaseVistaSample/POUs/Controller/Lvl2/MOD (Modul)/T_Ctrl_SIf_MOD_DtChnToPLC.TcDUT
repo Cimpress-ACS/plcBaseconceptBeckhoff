@@ -1,6 +1,6 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Data_DtChn" Id="{6431b662-259f-4c30-bb7c-d3235bf970f0}">
-    <Declaration><![CDATA[TYPE T_Data_DtChn :
+  <DUT Name="T_Ctrl_SIf_MOD_DtChnToPLC" Id="{6431b662-259f-4c30-bb7c-d3235bf970f0}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_DtChnToPLC :
 STRUCT
 	dinTest : DINT;
 	intDataState : INT;

@@ -17,7 +17,6 @@ VAR
 	// Data Channel To PLC  test
 	intLastReadData : DINT;
 	
-	stDataChannelTest_DtChnToPlc : T_Data_DtChn;
 	intStatemachine : INT;			// State of the Communication Statemachine
 	bolDataBad: BOOL;				// Data not correct
 	intCountRetry: INT;				// Retry Counts for error message
@@ -676,13 +675,13 @@ CASE intStatemachine OF
 	cSTA_SUB_Data_Init:
 		IF CIf.Job.intState > cSTA_PON THEN
 			intCountRetry := 0;
-			stDataChannelTest_DtChnToPlc.intDataState := cDataState_DONE;
+			SIf.DtChnToPLC.intDataState := cDataState_DONE;
 			intStatemachine := cSTA_SUB_Data_WaitForJob;
 		END_IF
 		
 	cSTA_SUB_Data_WaitForJob:
 		// New data arrived
-		IF stDataChannelTest_DtChnToPlc.intDataState = cDataState_Ready THEN
+		IF SIf.DtChnToPLC.intDataState = cDataState_Ready THEN
 			bolDataBad := FALSE;
 			//dtOldestTag := dtActualTime;
 			intIndexOldest := -1;			// -1 = no Oldest free input found
@@ -711,7 +710,7 @@ CASE intStatemachine OF
 			intCountRetry := 0;
 
 			// do something here
-			intLastReadData := stDataChannelTest_DtChnToPlc.dinTest;
+			intLastReadData := SIf.DtChnToPLC.dinTest;
 			
 			intStatemachine := cSTA_SUB_Data_Acknowledge;
 			
@@ -719,17 +718,17 @@ CASE intStatemachine OF
 		
 	cSTA_SUB_Data_Acknowledge:	
 		// Delete all values
-		stDataChannelTest_DtChnToPlc.dinTest := 0;
+		SIf.DtChnToPLC.dinTest := 0;
 		// Acknowledge communication
-		stDataChannelTest_DtChnToPlc.intDataState := cDataState_DONE;
+		SIf.DtChnToPLC.intDataState := cDataState_DONE;
 		intStatemachine := cSTA_SUB_Data_WaitForJob;
 		
 	cSTA_SUB_Data_Retry:
-		stDataChannelTest_DtChnToPlc.intDataState := cDataState_Retry;
+		SIf.DtChnToPLC.intDataState := cDataState_Retry;
 		intStatemachine := cSTA_SUB_Data_WaitForJob;
 
 	cSTA_SUB_Data_Error:
-		stDataChannelTest_DtChnToPlc.intDataState := cDataState_Error;
+		SIf.DtChnToPLC.intDataState := cDataState_Error;
 		// Set Alarm: SIf.Alm[7].strText := 'Data Channel Error Receive Dat
 		g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,7,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);										
 		IF CIf.Job.bolAlmReset = TRUE THEN

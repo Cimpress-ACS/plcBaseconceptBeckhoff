@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <DUT Name="T_Ctrl_SIf_MOD" Id="{25c02d6f-6c80-4fb0-a5bd-dc4ba1e2fdd8}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD :
 STRUCT
@@ -11,6 +11,13 @@ STRUCT
 	///In: T_Ctrl_SIf_MOD_In;
 	///Out: T_Ctrl_SIf_MOD_Out;
 	Alm: ARRAY[1..7] OF T_Ctrl_Alm;
+	
+	///Data Channel from LineControl to PLC
+	DtChnToPLC: T_Ctrl_SIf_MOD_DtChnToPLC;
+	
+	///Data Channel from PLC to LineControl
+	DtChnToLine: T_Ctrl_SIf_MOD_DtChnToLine;
+	
 END_STRUCT
 END_TYPE
 ]]></Declaration>

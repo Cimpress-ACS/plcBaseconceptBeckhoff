@@ -68,11 +68,11 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
 
 
-            // IDataChannelManager
+            // IDataChannelWriter
             IDataChannelWriter dataChannel = new DataChannelWriter(tagListener, tagController);
             dataChannel.CommunicationProblemOccured += dataChannel_CommunicationProblemOccured;
 
-            var dataChannelTag = new Tag("fbMOD_2.stDataChannelTest_DtChnToPlc", "MiddlePRG_1", "T_Data_DtChn");
+            var dataChannelTag = new Tag("fbMOD_2.SIf.DtChnToPLC", "MiddlePRG_1", "T_Data_DtChn");
 
             dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 1 });
             dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 2 });
@@ -92,6 +92,10 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             // this is optional
             dataChannel.WaitWriteComplete();
             Console.WriteLine("wrote 14 values over DataChannelManager");
+
+
+            // IDataChannelListener
+            //IDataChannelListener<>
 
 
             // TagImporter

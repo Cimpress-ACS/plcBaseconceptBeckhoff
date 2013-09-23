@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
   <POU Name="FB_CtrlBase" Id="{b1ac081d-d4f6-4134-a9f2-1facb44ddfd2}">
     <Declaration><![CDATA[{attribute 'reflection' := ''}
 FUNCTION_BLOCK FB_CtrlBase IMPLEMENTS I_CtrlBase
@@ -53,232 +53,6 @@ IF (me.bolActivate) THEN // cyclic call enabled
 	
 END_IF;]]></ST>
     </Implementation>
-    <Method Name="FB_init" Id="{8e2e4733-0365-496f-ab15-4b7cede62253}">
-      <Declaration><![CDATA[METHOD FB_init : BOOL
-VAR_INPUT
-	///if TRUE, the retain variables are initialized (warm start / cold start)
-	bInitRetains: BOOL;
-	///if TRUE, the instance afterwards gets moved into the copy code (online change)
-	bInCopyCode: BOOL;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
-// enable cyclic call
-me.bolActivate := TRUE;
-// reset init flag
-CIf.Info.bolInitDone := FALSE;
-
-//------------------------------------------------------------------------------------------------------------------------
-// to manually change in new FUB implementation!!!
-// define valid commands for this controller
-CIf.Job.aCmdList[0].intCmd := cCMD_PON;
-CIf.Job.aCmdList[0].strName := 'Power On';
-CIf.Job.aCmdList[0].bolAvailable := TRUE;
-
-CIf.Job.aCmdList[1].intCmd := cCMD_OFF; // for test simulation single answer
-CIf.Job.aCmdList[1].strName := 'Off';
-CIf.Job.aCmdList[1].bolAvailable := TRUE;
-
-CIf.Job.aCmdList[2].intCmd := cCMD_EOFF;
-CIf.Job.aCmdList[2].strName := 'Emergency OFF';
-CIf.Job.aCmdList[2].bolAvailable := TRUE;
-
-// set name of class/typ
-CIf.Info.strType := 'FB_CtrlBase'; 
-
-// for tests
-CIf.SwCfg.bolExist := TRUE;
-CIf.SwCfg.bolSimulation := TRUE;
-
-//------------------------------------------------------------------------------------------------------------------------
-CIf.Info.strName := getStrInstanceName(strMyInstancePath); // get name of instance
-
-CIf.Info.uinChildNbr := 0;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="StateMachine" Id="{bd82cc15-d8ac-4107-8c15-5f9179fe156e}">
-      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[
-// main statemachine of base controller
-CASE me.StateMachine.intState OF
-    cSTA_PONBusy: 
-        THIS^.sta_PONBusy();
-    cSTA_PON: 
-        THIS^.sta_PON();
-	cSTA_OFFBusy: 
-        THIS^.sta_OFFBusy();
-    cSTA_OFF: 
-        THIS^.sta_OFF();
-    cSTA_ERROR: 
-        THIS^.sta_ERROR();
-    cSTA_ERRORQuit: 
-        THIS^.sta_ERRORQuit();
-	cSTA_EOFFBusy:
-		THIS^.sta_EOFFBusy();
-	cSTA_EOFF:
-		THIS^.sta_EOFF();
-    cSTA_SINGLE_ANSWER: 
-        THIS^.sta_SINGLE_ANSWER();
-END_CASE;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PONBusy" Id="{b0f25ef0-7497-4069-a2fe-4d79633781d2}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		SetAllChildCmd(cCMD_PON); // set acmd off all childs 
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		
-		// State Change Condition
-		IF (FALSE) THEN
-			;
-		ELSIF CheckAllChildState(cSTA_PON) THEN
-			me.StateMachine.intStateNext := cSTA_PON;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PON" Id="{a5415b1f-2cd7-4edc-ac8d-d843adc525dc}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		
-		// State Change Condition
-		IF (FALSE) THEN
-			;
-		ELSIF (me.intCmd<>cCMD_PON) AND (me.intCmd<>cCMD_DONE) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ERROR" Id="{d85375e1-5676-4086-9d3e-5d9b445cb21a}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		
-		// State Change Condition
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			me.StateMachine.intStateNext := cSTA_ERRORQuit;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ERRORQuit" Id="{723cb042-1b57-4b76-b123-9f9bd89cfe75}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
-			CIf.Job.bolAlmReset := FALSE;
-		END_IF
-		
-		// State Change Condition
-		IF (CIf.Job.bolAlmReset = FALSE) OR (me.StateMachine.intStateHistory<=cSTA_PON) THEN
-			me.StateMachine.intStateNext := cSTA_PONBusy;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="sta_SINGLE_ANSWER" Id="{20d9321e-714d-47e4-806b-d308b0dda850}">
       <Declaration><![CDATA[METHOD PROTECTED sta_SINGLE_ANSWER : BOOL
 ]]></Declaration>
@@ -327,50 +101,106 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CycleStartDuty" Id="{b39f7fe6-b47d-4271-b1d4-ddb49a6de37a}">
-      <Declaration><![CDATA[METHOD PROTECTED CycleStartDuty : BOOL
+    <Property Name="CtrlFB" Id="{3ca18992-3bce-43a7-9b73-b07afcf04696}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlFB : POINTER TO FB_CtrlBASE
+]]></Declaration>
+      <Get Name="Get" Id="{51d1308f-61e1-4a38-b6b9-6b36881af9d1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlFB := ADR(THIS^);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="sta_EOFF" Id="{462928ac-6dbf-4aac-8633-d52af2465488}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
+VAR_INPUT
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[
-	// --------------------------------------------------------------------------
-	// input bridge
-	// --------------------------------------------------------------------------
-	THIS^.IoInBridge(); // digitale and analoge inputs read from hardware or forcing
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
 
-	// --------------------------------------------------------------------------
-	// check alarm recation class of master													
-	// --------------------------------------------------------------------------
-	THIS^.CheckParentAlmClass();
-	
-	// ----------------------------------------------------------------------------------
-	// check the highest active alarm -> set local class
-	// ----------------------------------------------------------------------------------
-	IF (me.Alarm.eParent_ActivAlmClass>CIf.job.eMe_ActivAlmClass) THEN
-		me.Alarm.eActivAlmClass := me.Alarm.eParent_ActivAlmClass;
-	ELSE
-		me.Alarm.eActivAlmClass := CIf.job.eMe_ActivAlmClass;
-	END_IF
-	
-	// ----------------------------------------------------------------------------------
-	// check child me and set parent alarm class
-	// ----------------------------------------------------------------------------------
-	CheckChildAlmClass();
-	
-	// --------------------------------------------------------------------------
-	// get command											
-	// --------------------------------------------------------------------------
-	IF (CIf.Job.eMode = E_Mode.MANU) THEN
-		me.intCmd := CIf.Job.intMCmd;  
-	ELSE
-		IF (me.eModeHistory <> E_MODE.AUTO) THEN
-			CIf.Job.intMCmd:= cCMD_DONE;	// reset manual command
-			me.bolChangeBackToAUTO := TRUE;	// switch off  or .....
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>cCMD_EOFF) AND (me.intCmd<>cCMD_DONE) THEN
+			IF (FALSE) THEN
+				;
+			ELSIF (TRUE) THEN
+				me.StateMachine.intStateNext := cSTA_OFF;
+			END_IF
 		END_IF
-		CIf.Job.eMode := E_MODE.AUTO;
-		me.intCmd := CIf.Job.intACmd;
 	END_IF
-	CIf.Job.strCmd := THIS^.getCmdState(intCmdState:=me.intCmd,bolState:=FALSE);
-	]]></ST>
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CtrlCIf" Id="{4a700db5-ec99-4277-8ba6-00b3b08ee955}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
+      <Get Name="Get" Id="{1c35a505-c9e9-4c16-b2a1-3f6ecfe67a51}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlCIf := ADR(CIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="CheckAllChildState" Id="{52209db5-cc26-42e5-8903-f96f556fdc74}">
+      <Declaration><![CDATA[METHOD PROTECTED CheckAllChildState : BOOL;
+VAR_INPUT
+	In_intCheckState : INT;
+END_VAR
+VAR
+	uinIdx: UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// check if all child controller have reached the final In_intCheckState
+CheckAllChildState := TRUE;
+IF (CIf.Info.uinChildNbr > 0) THEN
+	FOR uinIdx := 0 TO CIf.Info.uinChildNbr - 1 DO
+		CheckAllChildState := CheckAllChildState AND (CIf.Info.p_aCIf[uinIdx]^.Job.intState = In_intCheckState);
+		IF (CheckAllChildState=FALSE) THEN	// at least one child has not whished state reached
+			EXIT ;
+		END_IF 
+	END_FOR
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetAllChildCmd" Id="{56e5323e-497a-463e-b8db-087c9fa3b505}">
+      <Declaration><![CDATA[METHOD PROTECTED SetAllChildCmd
+VAR_INPUT
+	In_intSetAcmd : INT;
+END_VAR
+VAR
+	uinIdx: UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (CIf.Info.uinChildNbr > 0) THEN
+	FOR uinIdx := 0 TO CIf.Info.uinChildNbr - 1 DO
+		CIf.Info.p_aCIf[uinIdx]^.Job.intACmd := In_intSetAcmd;
+	END_FOR
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="CycleEndDuty" Id="{57f49fa2-4066-4912-99d4-5d1d7e5e0228}">
@@ -454,80 +284,97 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CheckParentAlmClass" Id="{ec1be44d-8050-49b4-a7d6-f8a2a0151732}">
-      <Declaration><![CDATA[METHOD PROTECTED CheckParentAlmClass : BOOL
-]]></Declaration>
+    <Method Name="SetAllChildAlmClass" Id="{5d03fd03-0a51-48ac-891b-63bc574d9f38}">
+      <Declaration><![CDATA[METHOD PROTECTED SetAllChildAlmClass : BOOL
+VAR_INPUT
+	In_intSetAlmClass : INT;
+END_VAR
+VAR
+	uinIdx: UINT;
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// --------------------------------------------------------------------------
-// check alarm recation class of master													
-// --------------------------------------------------------------------------
-IF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.EOFF) THEN
-	me.Alarm.eParent_ActivAlmClass := E_AlmClass.EOFF;
-	// prevent automatic restart in manual or automatic
-	CIf.job.intACmd := cCMD_DONE;
-	CIf.job.intMCmd  := cCMD_DONE;
-ELSE
-	me.Alarm.eParent_ActivAlmClass := E_AlmClass.NONE;
+        <ST><![CDATA[IF (CIf.Info.uinChildNbr > 0) THEN
+	FOR uinIdx := 0 TO CIf.Info.uinChildNbr - 1 DO
+		CIf.Info.p_aCIf[uinIdx]^.Job.eParent_ActivAlmClass := In_intSetAlmClass;
+	END_FOR
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="Always" Id="{d773bf4e-1480-43c6-b1d9-815b7b2800b0}">
-      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+    <Method Name="sta_ERRORQuit" Id="{723cb042-1b57-4b76-b123-9f9bd89cfe75}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// ----------------------------------------------------------------------------------
-// cyclic actions outside of statemachine
-IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	
-	; // always error supervision
-	// ---------------------------------------------------------------------------------
-END_IF
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
 
-// ----------------------------------------------------------------------------------
-// Conditions Always
-IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
-	me.StateMachine.intStateNext := cSTA_OFFBusy;
-	me.bolChangeBackToAUTO := FALSE;
-END_IF
 
-IF (CIf.SwCfg.bolExist=FALSE) AND (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN // hardware of controller does not exist
-	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
-ELSIF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.intCmd=cCMD_EOFF)) 
-		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
-		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN
-	me.StateMachine.intStateNext := cSTA_EOFFBusy;
-ELSIF (((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) 
-		AND (me.StateMachine.intState<>cSTA_PONBusy) AND (me.StateMachine.intState<>cSTA_PON)
-		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
-		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN // switch after startup to PONBusy
-	me.StateMachine.intStateNext := cSTA_PONBusy;
-ELSIF (((me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
-		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
-		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
-		AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
-	me.StateMachine.intStateNext := cSTA_OFFBusy;	
-END_IF
-		]]></ST>
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = FALSE) OR (me.StateMachine.intStateHistory<=cSTA_PON) THEN
+			me.StateMachine.intStateNext := cSTA_PONBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CheckCmdValid" Id="{b8086996-e332-408f-922c-a6fe1cc399cf}">
-      <Declaration><![CDATA[METHOD PRIVATE CheckCmdValid : BOOL
+    <Method Name="CtrlInit" Id="{82ace724-adec-4b08-9e9f-389661fc0c1a}">
+      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
 VAR
-	ii: UINT;
+	udiTaskCnt: UDINT;
+	fbGETCURTASKINDEX: Tc2_System.GETCURTASKINDEX;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[CheckCmdValid := FALSE;
-FOR ii:=0 TO cMaxCmdPerCtrl BY 1 DO
-	// check if a valid cmd
-	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) OR (CIf.Job.aCmdList[ii].intCmd=cCMD_DONE) THEN
-		EXIT; // end for
-	END_IF
-	// check if a in this ctrl implemented cmd
-	IF (CIf.Job.aCmdList[ii].intCmd=me.intCmd) THEN
-		CheckCmdValid := TRUE;
-	END_IF
-END_FOR]]></ST>
+        <ST><![CDATA[
+//automatic read out infos about FUB
+udiTaskCnt := TwinCAT_SystemInfoVarList._AppInfo.TaskCnt;
+fbGETCURTASKINDEX();
+udiTaskCnt := fbGETCURTASKINDEX.index;
+me.FUBInfo.udiSample_us := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10; //[ms] X[100ns]/10 -> [us]
+me.FUBInfo.udiSample_ms := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10000; //[ms] X[100ns]/10000 -> [ms]
+me.FUBInfo.bolCycleTimeBelowMS := me.FUBInfo.udiSample_us <= 1000;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="AddChild" Id="{83dc619a-1931-44c4-9988-526543a4ba1b}">
+      <Declaration><![CDATA[METHOD PROTECTED AddChild : BOOL
+VAR_INPUT
+	p_fbChild			: I_CtrlBase;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AddChild := FALSE;
+
+IF CIf.Info.uinChildNbr <= Base_Const.cMaxNrOfChilds THEN
+	CIf.Info.p_afbChild[CIf.Info.uinChildNbr] := p_fbChild.CtrlFB;
+	CIf.Info.p_aCIf[CIf.Info.uinChildNbr] := CIf.Info.p_afbChild[CIf.Info.uinChildNbr]^.CtrlCIf;
+	CIf.Info.p_aCIf[CIf.Info.uinChildNbr]^.Info.intParentCtrlId := CIf.Info.intCtrlId;
+	CIf.Info.uinChildNbr := CIf.Info.uinChildNbr + 1;
+	AddChild := TRUE;
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="IoOutBridge" Id="{87aaeab6-874a-431a-9966-ce76def3ae9b}">
@@ -554,22 +401,95 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CtrlInit" Id="{82ace724-adec-4b08-9e9f-389661fc0c1a}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
-VAR
-	udiTaskCnt: UDINT;
-	fbGETCURTASKINDEX: Tc2_System.GETCURTASKINDEX;
+    <Method Name="FB_init" Id="{8e2e4733-0365-496f-ab15-4b7cede62253}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[
-//automatic read out infos about FUB
-udiTaskCnt := TwinCAT_SystemInfoVarList._AppInfo.TaskCnt;
-fbGETCURTASKINDEX();
-udiTaskCnt := fbGETCURTASKINDEX.index;
-me.FUBInfo.udiSample_us := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10; //[ms] X[100ns]/10 -> [us]
-me.FUBInfo.udiSample_ms := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10000; //[ms] X[100ns]/10000 -> [ms]
-me.FUBInfo.bolCycleTimeBelowMS := me.FUBInfo.udiSample_us <= 1000;]]></ST>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// enable cyclic call
+me.bolActivate := TRUE;
+// reset init flag
+CIf.Info.bolInitDone := FALSE;
+
+//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+CIf.Job.aCmdList[0].intCmd := cCMD_PON;
+CIf.Job.aCmdList[0].strName := 'Power On';
+CIf.Job.aCmdList[0].bolAvailable := TRUE;
+
+CIf.Job.aCmdList[1].intCmd := cCMD_OFF; // for test simulation single answer
+CIf.Job.aCmdList[1].strName := 'Off';
+CIf.Job.aCmdList[1].bolAvailable := TRUE;
+
+CIf.Job.aCmdList[2].intCmd := cCMD_EOFF;
+CIf.Job.aCmdList[2].strName := 'Emergency OFF';
+CIf.Job.aCmdList[2].bolAvailable := TRUE;
+
+// set name of class/typ
+CIf.Info.strType := 'FB_CtrlBase'; 
+
+// for tests
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolSimulation := TRUE;
+
+//------------------------------------------------------------------------------------------------------------------------
+CIf.Info.strName := getStrInstanceName(strMyInstancePath); // get name of instance
+
+CIf.Info.uinChildNbr := 0;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="EOFF_EntryAction" Id="{9fbbb54b-f3b4-4753-b5d8-6ed9ad4532a5}">
+      <Declaration><![CDATA[METHOD PROTECTED EOFF_EntryAction : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ // used for special events in EOFF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PON" Id="{a5415b1f-2cd7-4edc-ac8d-d843adc525dc}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (FALSE) THEN
+			;
+		ELSIF (me.intCmd<>cCMD_PON) AND (me.intCmd<>cCMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="getCmdState" Id="{a5e84ddc-52c5-4dca-8f24-77b6da9322fb}">
@@ -652,8 +572,45 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_OFF" Id="{fb45899b-0d32-4910-9443-acd40fb2d0aa}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+    <Method Name="CheckChildAlmClass" Id="{aeb1fc9a-452c-4e20-b12f-e2232cb09e5e}">
+      <Declaration><![CDATA[METHOD CheckChildAlmClass : BOOL
+VAR_INPUT
+;
+END_VAR
+VAR
+	uinIdx: UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------
+// check child alarm classes
+// set me alarm class active if at least one child has an EOFF
+IF CheckAllChildAlmClass(E_AlmClass.EOFF) THEN
+	CIf.Job.eMe_ActivAlmClass := E_AlmClass.EOFF;
+	me.Alarm.bolfp := TRUE;
+ELSIF CheckAllChildAlmClass(E_AlmClass.OFF) THEN
+	CIf.Job.eMe_ActivAlmClass := E_AlmClass.OFF;
+	me.Alarm.bolfp := TRUE;
+ELSE
+	IF (me.Alarm.bolfp) THEN
+		CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // no reset necessary
+		me.Alarm.bolfp := FALSE;
+	END_IF
+END_IF
+
+//------------------------------------------------------------------------------------------------------
+// set alarm class parent of childs in the case of a parent EOFF or me=OFF or EOFF
+IF (CIf.Job.eParent_ActivAlmClass=E_AlmClass.EOFF) THEN
+	SetAllChildAlmClass(CIf.Job.eParent_ActivAlmClass);
+ELSIF(CIf.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.OFF) THEN
+	SetAllChildAlmClass(CIf.Job.eMe_ActivAlmClass);
+ELSE
+	// no important alarm for child active
+	SetAllChildAlmClass(E_AlmClass.NONE);
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PONBusy" Id="{b0f25ef0-7497-4069-a2fe-4d79633781d2}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -662,6 +619,7 @@ END_IF
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
+		SetAllChildCmd(cCMD_PON); // set acmd off all childs 
 	END_IF
 
 
@@ -673,13 +631,11 @@ END_IF
 		
 		
 		// State Change Condition
-		IF ((me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF)) THEN
-			IF (FALSE) THEN
-				;
-			ELSIF (TRUE) THEN
-				;	//me.StateMachine.intStateNext := cSTA_PON;
-			END_IF
-		END_IF;
+		IF (FALSE) THEN
+			;
+		ELSIF CheckAllChildState(cSTA_PON) THEN
+			me.StateMachine.intStateNext := cSTA_PON;
+		END_IF
 	END_IF
 
 
@@ -690,6 +646,52 @@ END_IF
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CycleStartDuty" Id="{b39f7fe6-b47d-4271-b1d4-ddb49a6de37a}">
+      <Declaration><![CDATA[METHOD PROTECTED CycleStartDuty : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+	// --------------------------------------------------------------------------
+	// input bridge
+	// --------------------------------------------------------------------------
+	THIS^.IoInBridge(); // digitale and analoge inputs read from hardware or forcing
+
+	// --------------------------------------------------------------------------
+	// check alarm recation class of master													
+	// --------------------------------------------------------------------------
+	THIS^.CheckParentAlmClass();
+	
+	// ----------------------------------------------------------------------------------
+	// check the highest active alarm -> set local class
+	// ----------------------------------------------------------------------------------
+	IF (me.Alarm.eParent_ActivAlmClass>CIf.job.eMe_ActivAlmClass) THEN
+		me.Alarm.eActivAlmClass := me.Alarm.eParent_ActivAlmClass;
+	ELSE
+		me.Alarm.eActivAlmClass := CIf.job.eMe_ActivAlmClass;
+	END_IF
+	
+	// ----------------------------------------------------------------------------------
+	// check child me and set parent alarm class
+	// ----------------------------------------------------------------------------------
+	CheckChildAlmClass();
+	
+	// --------------------------------------------------------------------------
+	// get command											
+	// --------------------------------------------------------------------------
+	IF (CIf.Job.eMode = E_Mode.MANU) THEN
+		me.intCmd := CIf.Job.intMCmd;  
+	ELSE
+		IF (me.eModeHistory <> E_MODE.AUTO) THEN
+			CIf.Job.intMCmd:= cCMD_DONE;	// reset manual command
+			me.bolChangeBackToAUTO := TRUE;	// switch off  or .....
+		END_IF
+		CIf.Job.eMode := E_MODE.AUTO;
+		me.intCmd := CIf.Job.intACmd;
+	END_IF
+	CIf.Job.strCmd := THIS^.getCmdState(intCmdState:=me.intCmd,bolState:=FALSE);
+	]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_OFFBusy" Id="{b43c45d6-db5e-43b9-b8e6-886e382de8a7}">
@@ -731,6 +733,54 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="CheckCmdValid" Id="{b8086996-e332-408f-922c-a6fe1cc399cf}">
+      <Declaration><![CDATA[METHOD PRIVATE CheckCmdValid : BOOL
+VAR
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CheckCmdValid := FALSE;
+FOR ii:=0 TO cMaxCmdPerCtrl BY 1 DO
+	// check if a valid cmd
+	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) OR (CIf.Job.aCmdList[ii].intCmd=cCMD_DONE) THEN
+		EXIT; // end for
+	END_IF
+	// check if a in this ctrl implemented cmd
+	IF (CIf.Job.aCmdList[ii].intCmd=me.intCmd) THEN
+		CheckCmdValid := TRUE;
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{bd82cc15-d8ac-4107-8c15-5f9179fe156e}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    cSTA_PONBusy: 
+        THIS^.sta_PONBusy();
+    cSTA_PON: 
+        THIS^.sta_PON();
+	cSTA_OFFBusy: 
+        THIS^.sta_OFFBusy();
+    cSTA_OFF: 
+        THIS^.sta_OFF();
+    cSTA_ERROR: 
+        THIS^.sta_ERROR();
+    cSTA_ERRORQuit: 
+        THIS^.sta_ERRORQuit();
+	cSTA_EOFFBusy:
+		THIS^.sta_EOFFBusy();
+	cSTA_EOFF:
+		THIS^.sta_EOFF();
+    cSTA_SINGLE_ANSWER: 
+        THIS^.sta_SINGLE_ANSWER();
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="sta_EOFFBusy" Id="{cee17390-0b81-484b-8394-086015e07c5d}">
       <Declaration><![CDATA[METHOD PROTECTED sta_EOFFBusy : BOOL
 VAR_INPUT
@@ -767,132 +817,6 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_EOFF" Id="{462928ac-6dbf-4aac-8633-d52af2465488}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		
-		// State Change Condition
-		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>cCMD_EOFF) AND (me.intCmd<>cCMD_DONE) THEN
-			IF (FALSE) THEN
-				;
-			ELSIF (TRUE) THEN
-				me.StateMachine.intStateNext := cSTA_OFF;
-			END_IF
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="AddChild" Id="{83dc619a-1931-44c4-9988-526543a4ba1b}">
-      <Declaration><![CDATA[METHOD PROTECTED AddChild : BOOL
-VAR_INPUT
-	p_fbChild			: I_CtrlBase;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[AddChild := FALSE;
-
-IF CIf.Info.uinChildNbr <= Base_Const.cMaxNrOfChilds THEN
-	CIf.Info.p_afbChild[CIf.Info.uinChildNbr] := p_fbChild.CtrlFB;
-	CIf.Info.p_aCIf[CIf.Info.uinChildNbr] := CIf.Info.p_afbChild[CIf.Info.uinChildNbr]^.CtrlCIf;
-	CIf.Info.p_aCIf[CIf.Info.uinChildNbr]^.Info.intParentCtrlId := CIf.Info.intCtrlId;
-	CIf.Info.uinChildNbr := CIf.Info.uinChildNbr + 1;
-	AddChild := TRUE;
-END_IF
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="EOFF_EntryAction" Id="{9fbbb54b-f3b4-4753-b5d8-6ed9ad4532a5}">
-      <Declaration><![CDATA[METHOD PROTECTED EOFF_EntryAction : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[ // used for special events in EOFF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="iniAllCtrlArrays" Id="{d4d8fd91-9d47-438c-abf2-140ec06ce409}">
-      <Declaration><![CDATA[METHOD PUBLIC iniAllCtrlArrays : BOOL
-VAR_INPUT
-	p_pCtrlFbBaseArray	: POINTER TO POINTER TO FB_CtrlBase;
-	p_pCtrlCIfArray		: POINTER TO POINTER TO T_Ctrl_CIf;
-	intCtrlID		: INT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[iniAllCtrlArrays := FALSE;
-
-IF (TRUE) THEN//e_CtrlID <= E_CtrlId.E_CtrlIdMax) THEN
-	p_pCtrlFbBaseArray[intCtrlID] 	:= THIS;
-	THIS^.CIf.Info.intCtrlID := intCtrlID;
-	p_pCtrlCIfArray[intCtrlID] := CtrlCIf;
-	iniAllCtrlArrays := TRUE;
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CheckAllChildState" Id="{52209db5-cc26-42e5-8903-f96f556fdc74}">
-      <Declaration><![CDATA[METHOD PROTECTED CheckAllChildState : BOOL;
-VAR_INPUT
-	In_intCheckState : INT;
-END_VAR
-VAR
-	uinIdx: UINT;
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// check if all child controller have reached the final In_intCheckState
-CheckAllChildState := TRUE;
-IF (CIf.Info.uinChildNbr > 0) THEN
-	FOR uinIdx := 0 TO CIf.Info.uinChildNbr - 1 DO
-		CheckAllChildState := CheckAllChildState AND (CIf.Info.p_aCIf[uinIdx]^.Job.intState = In_intCheckState);
-		IF (CheckAllChildState=FALSE) THEN	// at least one child has not whished state reached
-			EXIT ;
-		END_IF 
-	END_FOR
-END_IF	]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="SetAllChildCmd" Id="{56e5323e-497a-463e-b8db-087c9fa3b505}">
-      <Declaration><![CDATA[METHOD PROTECTED SetAllChildCmd
-VAR_INPUT
-	In_intSetAcmd : INT;
-END_VAR
-VAR
-	uinIdx: UINT;
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[IF (CIf.Info.uinChildNbr > 0) THEN
-	FOR uinIdx := 0 TO CIf.Info.uinChildNbr - 1 DO
-		CIf.Info.p_aCIf[uinIdx]^.Job.intACmd := In_intSetAcmd;
-	END_FOR
-END_IF]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="CheckAllChildAlmClass" Id="{d04d3807-bfb6-46c0-8db2-3fa992d6e03b}">
       <Declaration><![CDATA[METHOD PROTECTED CheckAllChildAlmClass : BOOL
 VAR_INPUT
@@ -915,82 +839,158 @@ IF (CIf.Info.uinChildNbr > 0) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CheckChildAlmClass" Id="{aeb1fc9a-452c-4e20-b12f-e2232cb09e5e}">
-      <Declaration><![CDATA[METHOD CheckChildAlmClass : BOOL
+    <Method Name="iniAllCtrlArrays" Id="{d4d8fd91-9d47-438c-abf2-140ec06ce409}">
+      <Declaration><![CDATA[METHOD PUBLIC iniAllCtrlArrays : BOOL
 VAR_INPUT
-;
+	p_pCtrlFbBaseArray	: POINTER TO POINTER TO FB_CtrlBase;
+	p_pCtrlCIfArray		: POINTER TO POINTER TO T_Ctrl_CIf;
+	intCtrlID		: INT;
 END_VAR
-VAR
-	uinIdx: UINT;
-END_VAR]]></Declaration>
+]]></Declaration>
       <Implementation>
-        <ST><![CDATA[//------------------------------------------------------------------------------------------------------
-// check child alarm classes
-// set me alarm class active if at least one child has an EOFF
-IF CheckAllChildAlmClass(E_AlmClass.EOFF) THEN
-	CIf.Job.eMe_ActivAlmClass := E_AlmClass.EOFF;
-	me.Alarm.bolfp := TRUE;
-ELSIF CheckAllChildAlmClass(E_AlmClass.OFF) THEN
-	CIf.Job.eMe_ActivAlmClass := E_AlmClass.OFF;
-	me.Alarm.bolfp := TRUE;
-ELSE
-	IF (me.Alarm.bolfp) THEN
-		CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // no reset necessary
-		me.Alarm.bolfp := FALSE;
-	END_IF
+        <ST><![CDATA[iniAllCtrlArrays := FALSE;
+
+IF (TRUE) THEN//e_CtrlID <= E_CtrlId.E_CtrlIdMax) THEN
+	p_pCtrlFbBaseArray[intCtrlID] 	:= THIS;
+	THIS^.CIf.Info.intCtrlID := intCtrlID;
+	p_pCtrlCIfArray[intCtrlID] := CtrlCIf;
+	iniAllCtrlArrays := TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{d773bf4e-1480-43c6-b1d9-815b7b2800b0}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	; // always error supervision
+	// ---------------------------------------------------------------------------------
 END_IF
 
-//------------------------------------------------------------------------------------------------------
-// set alarm class parent of childs in the case of a parent EOFF or me=OFF or EOFF
-IF (CIf.Job.eParent_ActivAlmClass=E_AlmClass.EOFF) THEN
-	SetAllChildAlmClass(CIf.Job.eParent_ActivAlmClass);
-ELSIF(CIf.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.OFF) THEN
-	SetAllChildAlmClass(CIf.Job.eMe_ActivAlmClass);
-ELSE
-	// no important alarm for child active
-	SetAllChildAlmClass(E_AlmClass.NONE);
-END_IF]]></ST>
+// ----------------------------------------------------------------------------------
+// Conditions Always
+IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
+	me.StateMachine.intStateNext := cSTA_OFFBusy;
+	me.bolChangeBackToAUTO := FALSE;
+END_IF
+
+IF (CIf.SwCfg.bolExist=FALSE) AND (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN // hardware of controller does not exist
+	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
+ELSIF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.intCmd=cCMD_EOFF)) 
+		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN
+	me.StateMachine.intStateNext := cSTA_EOFFBusy;
+ELSIF (((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) 
+		AND (me.StateMachine.intState<>cSTA_PONBusy) AND (me.StateMachine.intState<>cSTA_PON)
+		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN // switch after startup to PONBusy
+	me.StateMachine.intStateNext := cSTA_PONBusy;
+ELSIF (((me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
+		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
+		AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
+	me.StateMachine.intStateNext := cSTA_OFFBusy;	
+END_IF
+		]]></ST>
       </Implementation>
     </Method>
-    <Method Name="SetAllChildAlmClass" Id="{5d03fd03-0a51-48ac-891b-63bc574d9f38}">
-      <Declaration><![CDATA[METHOD PROTECTED SetAllChildAlmClass : BOOL
-VAR_INPUT
-	In_intSetAlmClass : INT;
-END_VAR
-VAR
-	uinIdx: UINT;
-END_VAR]]></Declaration>
+    <Method Name="sta_ERROR" Id="{d85375e1-5676-4086-9d3e-5d9b445cb21a}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF (CIf.Info.uinChildNbr > 0) THEN
-	FOR uinIdx := 0 TO CIf.Info.uinChildNbr - 1 DO
-		CIf.Info.p_aCIf[uinIdx]^.Job.eParent_ActivAlmClass := In_intSetAlmClass;
-	END_FOR
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CheckParentAlmClass" Id="{ec1be44d-8050-49b4-a7d6-f8a2a0151732}">
+      <Declaration><![CDATA[METHOD PROTECTED CheckParentAlmClass : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// --------------------------------------------------------------------------
+// check alarm recation class of master													
+// --------------------------------------------------------------------------
+IF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.EOFF) THEN
+	me.Alarm.eParent_ActivAlmClass := E_AlmClass.EOFF;
+	// prevent automatic restart in manual or automatic
+	CIf.job.intACmd := cCMD_DONE;
+	CIf.job.intMCmd  := cCMD_DONE;
+ELSE
+	me.Alarm.eParent_ActivAlmClass := E_AlmClass.NONE;
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Property Name="CtrlCIf" Id="{4a700db5-ec99-4277-8ba6-00b3b08ee955}">
-      <Declaration><![CDATA[PROPERTY PUBLIC CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
-      <Get Name="Get" Id="{1c35a505-c9e9-4c16-b2a1-3f6ecfe67a51}">
-        <Declaration><![CDATA[VAR
-END_VAR
+    <Method Name="sta_OFF" Id="{fb45899b-0d32-4910-9443-acd40fb2d0aa}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
 ]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlCIf := ADR(CIf);]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
-    <Property Name="CtrlFB" Id="{3ca18992-3bce-43a7-9b73-b07afcf04696}">
-      <Declaration><![CDATA[PROPERTY PUBLIC CtrlFB : POINTER TO FB_CtrlBASE
-]]></Declaration>
-      <Get Name="Get" Id="{51d1308f-61e1-4a38-b6b9-6b36881af9d1}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlFB := ADR(THIS^);]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF ((me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF)) THEN
+			IF (FALSE) THEN
+				;
+			ELSIF (TRUE) THEN
+				;	//me.StateMachine.intStateNext := cSTA_PON;
+			END_IF
+		END_IF;
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
     <ObjectProperties />
   </POU>
 </TcPlcObject>
