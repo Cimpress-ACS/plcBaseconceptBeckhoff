@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
   <POU Name="MiddlePRG_1" Id="{fc4c9c72-f24d-4184-a857-29a82ecbaa1c}">
     <Declaration><![CDATA[PROGRAM MiddlePRG_1
 VAR
@@ -72,6 +72,7 @@ END_IF
 IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone THEN
 	
 	// init
+	fbMOD_2.CtrlCIf^.Job.intACmd := cCMD_RUN;
 	
 	bolInitDone := TRUE;
 END_IF
