@@ -27,17 +27,18 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
         {
             // TagListener
             ITagListener tagListener = new BeckhoffPollingTagListener(AdsAddress, AdsPort);
+            tagListener.RefreshRate = 200;
             tagListener.TagChanged += TagListenerTagChanged;
 
             Tag tag = new Tag("In_bolHOR_2_Retracted_NO", "Io");
 
             tag.ValueChanged += TagValueChanged;
 
+            tagListener.AddUdtHandler<TestData>("T_Ctrl_SIf_MOD_DtChnToPLC");
             tagListener.AddTag(tag);
 
             tagListener.RefreshAll();
             tagListener.StartListening();
-
 
             // TagController
             ITagController tagController = new BeckhoffTagController(AdsAddress, AdsPort);
@@ -68,36 +69,41 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
 
 
+            // IDataChannelListener
+            IDataChannelListener<TestData> dataChannelListener = new DataChannelListener<TestData>(tagListener, tagController);
+            dataChannelListener.SetChannel(new Tag("fbMOD_2.SIf.DtChnToLine", "MiddlePRG_1", "T_Ctrl_SIf_MOD_DtChnToPLC"));
+
+            dataChannelListener.DataReceived += DataChannelListenerDataReceived;
+            dataChannelListener.CommunicationProblemOccured += DataChannelListenerCommunicationProblemOccured;
+
+
             // IDataChannelWriter
-            IDataChannelWriter dataChannel = new DataChannelWriter(tagListener, tagController);
-            dataChannel.CommunicationProblemOccured += dataChannel_CommunicationProblemOccured;
+            IDataChannelWriter dataChannelWriter = new DataChannelWriter(tagListener, tagController);
+            dataChannelWriter.CommunicationProblemOccured += DataChannelWriterCommunicationProblemOccured;
 
-            var dataChannelTag = new Tag("fbMOD_2.SIf.DtChnToPLC", "MiddlePRG_1", "T_Data_DtChn");
+            var dataChannelTag = new Tag("fbMOD_2.SIf.DtChnToPLC", "MiddlePRG_1", "T_Ctrl_SIf_MOD_DtChnToPLC");
 
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 1 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 2 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 3 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 4 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 5 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 6 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 7 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 8 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 9 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 10 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 11 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 12 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 13 });
-            dataChannel.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 14 });
-
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 1 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 2 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 3 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 4 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 5 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 6 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 7 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 8 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 9 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 10 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 11 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 12 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 13 });
+            dataChannelWriter.AddAsyncWriteTask(dataChannelTag, new TestData { Test = 14 });
+ 
             // this is optional
-            dataChannel.WaitWriteComplete();
+            //dataChannelWriter.WaitWriteComplete();
             Console.WriteLine("wrote 14 values over DataChannelManager");
 
 
-            // IDataChannelListener
-            //IDataChannelListener<>
-
-
+            /*
             // TagImporter
             ITagImporter tagImporter = new BeckhoffOnlineTagImporter();
             ICollection<Tag> importedTags = tagImporter.ImportTags(AdsAddress, AdsPort);
@@ -114,12 +120,23 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             {
                 CoutTags(importedTag);
             }
+            */
 
             while (true)
                 Thread.Sleep(500);
         }
 
-        static void dataChannel_CommunicationProblemOccured(object sender, Exception e)
+        static void DataChannelListenerCommunicationProblemOccured(object sender, Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
+        static void DataChannelListenerDataReceived(object sender, TestData e)
+        {
+            Console.WriteLine("Received data from DataChannelListener: " + e.Test);
+        }
+
+        static void DataChannelWriterCommunicationProblemOccured(object sender, Exception e)
         {
             Console.WriteLine(e);
         }

@@ -1,46 +1,49 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
   <POU Name="FB_DtChnToLine_Test" Id="{23e5902b-7bcc-46ce-8f3e-6ced6b811d28}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DtChnToLine_Test
 VAR_INPUT
 	bolResetError : BOOL;
+	
+	// Communication Variable
+	// Depending on the Datachannel
+	p_stTest_DtChnToLine : POINTER TO T_Ctrl_SIf_MOD_DtChnToLine;
+
 END_VAR
 VAR_OUTPUT
 	intError : INT;		//Error value
 END_VAR
 VAR
-	// Communication Variable
-	// Depending on the Datachannel
-	stJobDone_DtChnToPlc : T_JobDone_DtChn;
-	// Internal Variable
-	intStatemachine : INT;			// State of the Communication Statemachine
-	bolDataBad: BOOL;				// Data not correct
-	intCountRetry: INT;				// Retry Counts for error message
-	// Buffer for Senddata
-	aBuffer : ARRAY [0..cDtChnBuffer] OF T_JobDone_DtChn;
-	intPBufferInput : INT;			// Pointer for new Input
-	intPBufferOutput : INT;			// Pointer for readout
-	// Data Channel Specific Variable
-	intIndexOldest : INT;			// Temporary Index saved
-	dtOldestTag : DATE_AND_TIME;	// Date and time of the oldes imput
+	/// Internal Variable
+	intStatemachine: INT;
+	/// Data not correct
+	bolDataBad: BOOL;
+	/// Retry Counts for error message
+	intCountRetry: INT;
+	/// Buffer for Senddata
+	aBuffer: ARRAY[0..cDtChnBuffer] OF T_Ctrl_SIf_MOD_DtChnToLine;
+	/// Pointer for new Input
+	intPBufferInput: INT;
+	/// Pointer for readout
+	intPBufferOutput: INT;
+	/// Data Channel Specific Variable
+	intIndexOldest: INT;
+	/// Date and time of the oldes imput
+	dtOldestTag: DT;
 
 END_VAR
 VAR CONSTANT
-	cDtChnBuffer : INT := 20;
-
+	cDtChnBuffer: INT := 20;
 	cSTA_SUB_Data_Init: INT := 900;
 	cSTA_SUB_Data_WaitForJob: INT := 902;
 	cSTA_SUB_Data_SendData: INT := 904;
 	cSTA_SUB_Data_Acknowledge: INT := 906;
 	cSTA_SUB_Data_Retry: INT := 908;
-	
 	cSTA_SUB_Data_Error: INT := 910;
-	
 	cDataState_DONE: INT := -1;
-	cDataState_Ready : INT := 1;
-	cDataState_Retry : INT := -99;
-	cDataState_Error : INT := -100;
-	
-	cMAX_RETRY : INT := 10;
+	cDataState_Ready: INT := 1;
+	cDataState_Retry: INT := -99;
+	cDataState_Error: INT := -100;
+	cMAX_RETRY: INT := 10;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
@@ -60,48 +63,43 @@ Send buffer elements if Linecontroller is ready
 History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
-0.00.1		05.09.2013		VP/RE		Start history
-
+0.00.1		26.08.2013		AVM/PRE		Start history
+0.00.2.		30.09.2013		VP/RE		use sample data
 
 ___________________________________________________________________________________________________*)
 
 // Data Channel to Receive Data from Line Controller
 // Startup check States
-IF intStatemachine < cSTA_SUB_Data_Init THEN
+IF (intStatemachine < cSTA_SUB_Data_Init) THEN
 	intStatemachine := cSTA_SUB_Data_Init;
 END_IF
 
+
 CASE intStatemachine OF
 	cSTA_SUB_Data_Init:
-		IF stJobDone_DtChnToPlc.intDataState = cDataState_DONE THEN
+		IF p_stTest_DtChnToLine^.intDataState = cDataState_DONE THEN
 			intStatemachine := cSTA_SUB_Data_WaitForJob;
 		END_IF
 		
 	cSTA_SUB_Data_WaitForJob:
 		// New data arrived
 		IF intPBufferInput <> intPBufferOutput THEN
-			IF stJobDone_DtChnToPlc.intDataState = cDataState_DONE THEN
+			IF p_stTest_DtChnToLine^.intDataState = cDataState_DONE THEN
 				intStatemachine := cSTA_SUB_Data_SendData;
 			END_IF
 		END_IF
 	
 	cSTA_SUB_Data_SendData:	
-		stJobDone_DtChnToPlc.stDecision.uliRFID := aBuffer[intPBufferOutput].stDecision.uliRFID;
-		stJobDone_DtChnToPlc.stDecision.strID := aBuffer[intPBufferOutput].stDecision.strID;
-		stJobDone_DtChnToPlc.stDecision.dinTarget := aBuffer[intPBufferOutput].stDecision.dinTarget;
-		stJobDone_DtChnToPlc.dtTimestamp := aBuffer[intPBufferOutput].dtTimestamp;
-		stJobDone_DtChnToPlc.intDataState := cDataState_Ready;
+		p_stTest_DtChnToLine^.dinTest := aBuffer[intPBufferOutput].dinTest;
+		p_stTest_DtChnToLine^.intDataState := cDataState_Ready;
 		intStatemachine := cSTA_SUB_Data_Acknowledge;	
 		
 	cSTA_SUB_Data_Acknowledge:	
-		IF stJobDone_DtChnToPlc.intDataState = cDataState_DONE THEN
+		IF p_stTest_DtChnToLine^.intDataState = cDataState_DONE THEN
 			// Data read from Line Controller
 			// Reset Buffer Element
-			aBuffer[intPBufferOutput].dtTimestamp := DINT_TO_DT(0);
+			aBuffer[intPBufferOutput].dinTest := 0;
 			aBuffer[intPBufferOutput].intDataState := 0;
-			aBuffer[intPBufferOutput].stDecision.uliRFID := 0;
-			aBuffer[intPBufferOutput].stDecision.strID := '';
-			aBuffer[intPBufferOutput].stDecision.dinTarget := 0;
 			// Increase Read out pointer
 			IF intPBufferOutput < cDtChnBuffer THEN
 				intPBufferOutput := intPBufferOutput + 1;
@@ -110,9 +108,9 @@ CASE intStatemachine OF
 			END_IF
 			intStatemachine := cSTA_SUB_Data_WaitForJob;
 			
-		ELSIF stJobDone_DtChnToPlc.intDataState = cDataState_Retry THEN
+		ELSIF p_stTest_DtChnToLine^.intDataState = cDataState_Retry THEN
 			intStatemachine := cSTA_SUB_Data_Retry;
-		ELSIF stJobDone_DtChnToPlc.intDataState = cDataState_Error THEN
+		ELSIF p_stTest_DtChnToLine^.intDataState = cDataState_Error THEN
 			intStatemachine := cSTA_SUB_Data_Error;
 		END_IF
 		
@@ -133,26 +131,25 @@ CASE intStatemachine OF
 END_CASE]]></ST>
     </Implementation>
     <Method Name="Create" Id="{cf51fd71-6d98-4d9f-a8a8-450d3b8fdf3a}">
-      <Declaration><![CDATA[METHOD Create
+      <Declaration><![CDATA[METHOD Create : INT
 VAR_INPUT
+	In_Test : DINT;
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Insert a new Job to send at Line controller
 // Only insert the job, if the buffer is not full, next input dosn't cross input and Outputpointer
 IF ((intPBufferInput + 1) = intPBufferOutput) OR ((intPBufferInput = cDtChnBuffer) AND (intPBufferOutput = 0)) THEN
-	Creat := -99;
+	Create := -99;
 ELSE
-	aBuffer[intPBufferInput].stDecision.uliRFID := In_stDecision.uliRFID;
-	aBuffer[intPBufferInput].stDecision.strID := In_stDecision.strID;
-	aBuffer[intPBufferInput].stDecision.dinTarget := In_stDecision.dinTarget;
-	aBuffer[intPBufferInput].dtTimestamp := In_dtTimeStamp;
+	aBuffer[intPBufferInput].dinTest := In_Test;
+
 	IF intPBufferInput < cDtChnBuffer THEN
 		intPBufferInput := intPBufferInput + 1;
 	ELSE
 		intPBufferInput := 0;
 	END_IF
-	Creat := 1;
+	Create := 1;
 END_IF]]></ST>
       </Implementation>
     </Method>

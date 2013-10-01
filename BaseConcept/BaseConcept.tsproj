@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{D5D058E2-D862-490D-9E1F-19A82A0D2277}" ModifiedGUID="{7F0ED0A1-B4F7-4C9B-9C42-783EB157678B}" Target64Bit="true">
+	<Project ProjectGUID="{D5D058E2-D862-490D-9E1F-19A82A0D2277}" ModifiedGUID="{3726E14C-A402-431B-9DF1-A9056A573A0B}" Target64Bit="true">
 		<System>
 			<Licenses>
 				<Target>
