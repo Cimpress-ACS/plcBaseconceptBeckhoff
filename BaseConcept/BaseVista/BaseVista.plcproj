@@ -134,11 +134,6 @@ Automatic Substate handling.
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <PlaceholderReference Include="CDS_MemMan">
-      <DefaultResolution>CDS_MemMan, 3.3.2.0 (3S - Smart Software Solutions GmbH)</DefaultResolution>
-      <Namespace>CDS_MemMan</Namespace>
-      <SystemLibrary>True</SystemLibrary>
-    </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Standard">
       <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc2_Standard</Namespace>
