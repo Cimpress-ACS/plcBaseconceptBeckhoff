@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -20,7 +19,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
     class Program
     {
-        private const string AdsAddress = "192.168.2.111.1.1";
+        private const string AdsAddress = "10.38.10.83.1.1";
         private const int AdsPort = 851;
 
         static void Main(string[] args)
@@ -30,7 +29,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             tagListener.RefreshRate = 200;
             tagListener.TagChanged += TagListenerTagChanged;
 
-            Tag tag = new Tag("In_bolHOR_2_Retracted_NO", "Io");
+            var tag = new Tag("In_bolHOR_2_Retracted_NO", "Io");
 
             tag.ValueChanged += TagValueChanged;
 
@@ -43,8 +42,8 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             // TagController
             ITagController tagController = new BeckhoffTagController(AdsAddress, AdsPort);
             tagController.StartConnection();
+            Console.WriteLine("PLC connection established = " + tagController.IsConnected);
             tagController.WriteTag(tag, true);
-
 
             // ControllerTreeImporter
             IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
@@ -102,7 +101,6 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             //dataChannelWriter.WaitWriteComplete();
             Console.WriteLine("wrote 14 values over DataChannelManager");
 
-
             /*
             // TagImporter
             ITagImporter tagImporter = new BeckhoffOnlineTagImporter();
@@ -120,10 +118,13 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             {
                 CoutTags(importedTag);
             }
-            */
+             * */
 
             while (true)
-                Thread.Sleep(500);
+            {
+                Thread.Sleep(1000);
+                Console.WriteLine("IsConnected = " + tagController.IsConnected);
+            }
         }
 
         static void DataChannelListenerCommunicationProblemOccured(object sender, Exception e)

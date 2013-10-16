@@ -150,6 +150,11 @@
   <ItemGroup>
     <SubObject Include="FB_CYL.Always" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="BaseVistaSample.tmc">
+      <SubType>Content</SubType>
+    </Content>
+  </ItemGroup>
   <ProjectExtensions />
   <!-- 
    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
