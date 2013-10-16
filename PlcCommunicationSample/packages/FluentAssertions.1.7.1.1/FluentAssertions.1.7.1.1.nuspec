@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>FluentAssertions</id>
+    <version>1.7.1.1</version>
+    <title>Fluent Assertions</title>
+    <authors>Dennis Doomen,  Martin Opdam</authors>
+    <owners>Dennis Doomen,  Martin Opdam</owners>
+    <licenseUrl>http://fluentassertions.codeplex.com/license</licenseUrl>
+    <projectUrl>http://fluentassertions.codeplex.com/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A very extensive set of extension methods for .NET 3.5, 4.0 and Silverlight 4.0 that allow you to more naturally specify the expected outcome of a TDD or BDD-style unit test.</description>
+    <releaseNotes>- Fixed a bug that occurs when two collections are compared for equality but the collection contains null.
+      - Fixed a stack overflow while formatting an object graph containing static cyclic references.
+      - Fixed the issue where an exception was thrown when building a failure message by dumping the values of all properties, and one of the properties throws an exception.
+      - Made the handling of cyclic references when validating equality of nested properties configurable (ignore / throw exception)
+      - Fixed some incorrect failure messages when comparing XML elements and attributes
+      - Fixed a NullReferenceException when comparing objects that have a write-only properties
+      - Fixed a potential NullReferenceException while comparing the properties of a complex graph and when a deep property contains a null object.</releaseNotes>
+    <copyright>Copyright Dennis Doomen 2010-2012</copyright>
+    <tags>MSTest xUnit NUnit MSpec TDD BDD Fluent Silverlight</tags>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Xml" targetFramework="" />
+      <frameworkAssembly assemblyName="System.Xml.Linq" targetFramework="" />
+    </frameworkAssemblies>
+  </metadata>
+</package>
