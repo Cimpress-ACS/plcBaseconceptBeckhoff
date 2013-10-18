@@ -1,13 +1,17 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_CtrlBase" Id="{b1ac081d-d4f6-4134-a9f2-1facb44ddfd2}">
     <Declaration><![CDATA[{attribute 'reflection' := ''}
 FUNCTION_BLOCK FB_CtrlBase IMPLEMENTS I_CtrlBase
 VAR
-	///Commen interface struct for public access
-	CIf: T_Ctrl_CIf;
+	///Common interface struct for public access
+	CIf				: T_Ctrl_CIf;
+
+	/// 
+	pfbAlarmCtrl	: POINTER TO FB_Alm_Man;
+ 
 	///basic local controller class struct
-	me: T_Ctrl_Class;
-	fbSimulationTimer: TON;
+	me					: T_Ctrl_Class;
+	fbSimulationTimer	: TON;
 	{attribute 'noinit' := ''}
 	{attribute 'instance-path' := ''}
 	strMyInstancePath: STRING;
@@ -101,18 +105,6 @@ END_IF;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Property Name="CtrlFB" Id="{3ca18992-3bce-43a7-9b73-b07afcf04696}">
-      <Declaration><![CDATA[PROPERTY PUBLIC CtrlFB : POINTER TO FB_CtrlBASE
-]]></Declaration>
-      <Get Name="Get" Id="{51d1308f-61e1-4a38-b6b9-6b36881af9d1}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlFB := ADR(THIS^);]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
     <Method Name="sta_EOFF" Id="{462928ac-6dbf-4aac-8633-d52af2465488}">
       <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
 VAR_INPUT
@@ -155,17 +147,6 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Property Name="CtrlCIf" Id="{4a700db5-ec99-4277-8ba6-00b3b08ee955}">
-      <Declaration><![CDATA[PROPERTY PUBLIC CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
-      <Get Name="Get" Id="{1c35a505-c9e9-4c16-b2a1-3f6ecfe67a51}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlCIf := ADR(CIf);]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
     <Method Name="CheckAllChildState" Id="{52209db5-cc26-42e5-8903-f96f556fdc74}">
       <Declaration><![CDATA[METHOD PROTECTED CheckAllChildState : BOOL;
 VAR_INPUT
@@ -359,20 +340,20 @@ me.FUBInfo.bolCycleTimeBelowMS := me.FUBInfo.udiSample_us <= 1000;]]></ST>
       </Implementation>
     </Method>
     <Method Name="AddChild" Id="{83dc619a-1931-44c4-9988-526543a4ba1b}">
-      <Declaration><![CDATA[METHOD PROTECTED AddChild : BOOL
+      <Declaration><![CDATA[METHOD PROTECTED AddChild : POINTER TO T_Ctrl_CIf;
 VAR_INPUT
 	p_fbChild			: I_CtrlBase;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[AddChild := FALSE;
+        <ST><![CDATA[AddChild := 0;
 
 IF CIf.Info.uinChildNbr <= Base_Const.cMaxNrOfChilds THEN
 	CIf.Info.p_afbChild[CIf.Info.uinChildNbr] := p_fbChild.CtrlFB;
 	CIf.Info.p_aCIf[CIf.Info.uinChildNbr] := CIf.Info.p_afbChild[CIf.Info.uinChildNbr]^.CtrlCIf;
 	CIf.Info.p_aCIf[CIf.Info.uinChildNbr]^.Info.intParentCtrlId := CIf.Info.intCtrlId;
 	CIf.Info.uinChildNbr := CIf.Info.uinChildNbr + 1;
-	AddChild := TRUE;
+	AddChild := p_fbChild.CtrlCIf;
 END_IF
 ]]></ST>
       </Implementation>
@@ -991,6 +972,48 @@ END_IF]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlFB" Id="{3ca18992-3bce-43a7-9b73-b07afcf04696}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlFB : POINTER TO FB_CtrlBASE
+]]></Declaration>
+      <Get Name="Get" Id="{51d1308f-61e1-4a38-b6b9-6b36881af9d1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlFB := ADR(THIS^);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="CtrlCIf" Id="{4a700db5-ec99-4277-8ba6-00b3b08ee955}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
+      <Get Name="Get" Id="{1c35a505-c9e9-4c16-b2a1-3f6ecfe67a51}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlCIf := ADR(CIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="AlarmCtrl" Id="{324cebe3-37e3-43e6-8fbe-01f047ea1a50}">
+      <Declaration><![CDATA[PROPERTY PUBLIC AlarmCtrl : POINTER TO FB_Alm_Man]]></Declaration>
+      <Set Name="Set" Id="{4dc3c835-40c1-4b65-b430-e60aba7f947b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[pfbAlarmCtrl := AlarmCtrl;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{6e6a2933-e7c4-4ded-8dec-e75026695387}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <ObjectProperties />
   </POU>
 </TcPlcObject>

@@ -15,9 +15,10 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.2.0</ProjectVersion>
+    <ProjectVersion>0.3.3.0</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.2.0 - Del getCtrlCIF,iniCtrlArray; Set cmds to child EOFF,OFF,PON; EOFF State; Check child ALM EOFF     
+    <Description>0.3.3.0 - Added pfbAlarmCtrl and the "zugehörige" property to allow clean alarm calls also from controllers in libraries.
+0.3.2.0 - Del getCtrlCIF,iniCtrlArray; Set cmds to child EOFF,OFF,PON; EOFF State; Check child ALM EOFF     
 0.3.1.3 - Bugfix
 0.3.1.2 - Added iniAllCtrlArrays - this is iniCtrlArray + the cif array
 0.3.1 - Added the automatic EOff propagation.
