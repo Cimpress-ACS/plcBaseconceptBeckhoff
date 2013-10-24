@@ -158,7 +158,6 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
         static void TagValueChanged(Tag sender, TagValueChangedEventArgs e)
         {
-
         }
 
 
