@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -45,6 +46,12 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             Console.WriteLine("PLC connection established = " + tagController.IsConnected);
             tagController.WriteTag(tag, true);
 
+            var test = new Tag("strTest", "SlowPRG_1", "STRING(80)");
+            tagController.WriteTag(test, "123456789abcdefghijklmnopqrstuvwxyz");
+            tagController.WriteTag(test, "123");
+            tagController.WriteTag(test, "01234567890123456789012345678901234567890123456789012345678901234567890123456789");
+
+            
             // ControllerTreeImporter
             IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
             IController rootController = controllerTreeImporter.ImportControllerTree(AdsAddress, AdsPort);
@@ -101,7 +108,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             //dataChannelWriter.WaitWriteComplete();
             Console.WriteLine("wrote 14 values over DataChannelManager");
 
-            /*
+            
             // TagImporter
             ITagImporter tagImporter = new BeckhoffOnlineTagImporter();
             ICollection<Tag> importedTags = tagImporter.ImportTags(AdsAddress, AdsPort);
@@ -118,7 +125,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             {
                 CoutTags(importedTag);
             }
-             * */
+            
 
             while (true)
             {
