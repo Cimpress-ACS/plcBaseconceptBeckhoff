@@ -1,6 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <POU Name="GetInUint" Id="{d475b944-8df7-4335-9a88-bf0929b960fc}">
-    <Declaration><![CDATA[FUNCTION GetInUint : UINT
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="getInUint" Id="{d475b944-8df7-4335-9a88-bf0929b960fc}">
+    <Declaration><![CDATA[FUNCTION getInUint : UINT
 VAR_INPUT
 	bol_GlobalEnableForce		: BOOL;
 	p_Input						: POINTER TO T_Ctrl_IoUint;

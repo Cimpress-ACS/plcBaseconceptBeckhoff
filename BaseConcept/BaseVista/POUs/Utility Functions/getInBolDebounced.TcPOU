@@ -1,0 +1,47 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="getInBolDebounced" Id="{bc4aebbb-02bc-4a2c-9b1a-e8cc602626a6}">
+    <Declaration><![CDATA[FUNCTION getInBolDebounced : BOOL
+VAR_INPUT
+	bol_GlobalEnableForce: BOOL;
+	udiSample_ms: UDINT;		// Sample time from me.FUBInfo.udiSample_ms
+	udiDebounceTime_ms: UDINT;	// Wait time for debouncing in ms
+	p_Input: POINTER TO T_Ctrl_IoBoolDebounced;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// The input is accepted only after the debounce time (udiDebounceTime_ms)
+// If the signal changes during this time, the timer will be restarted
+
+p_Input^.state := p_Input^.map;
+
+IF (p_Input^.EnForce AND bol_GlobalEnableForce) THEN	// Forced signal, no debouncing neccessary
+	p_Input^.intern := p_Input^.force;
+ELSE													// Debounce signal
+	IF p_Input^.intern <> p_Input^.map THEN
+		p_Input^.udinDebouncedTimeCounter_ms := 0;
+	END_IF
+	IF p_Input^.udinDebouncedTimeCounter_ms < udiDebounceTime_ms THEN
+		p_Input^.udinDebouncedTimeCounter_ms := p_Input^.udinDebouncedTimeCounter_ms + udiSample_ms;
+	ELSE
+		p_Input^.intern := p_Input^.map;		
+	END_IF
+END_IF;
+
+getInBolDebounced := p_Input^.intern;]]></ST>
+    </Implementation>
+    <ObjectProperties>﻿<XmlArchive>
+  <Data>
+    <o xml:space="preserve" t="POUImageProperty">
+      <n n="ImageData" />
+      <v n="TransparencyColor">"White"</v>
+      <v n="MakeTransparent">false</v>
+    </o>
+  </Data>
+  <TypeList>
+    <Type n="Boolean">System.Boolean</Type>
+    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+    <Type n="String">System.String</Type>
+  </TypeList>
+</XmlArchive></ObjectProperties>
+  </POU>
+</TcPlcObject>

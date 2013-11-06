@@ -37,6 +37,7 @@ Version		Date			Author		Comment
 0.00.1		25.04.2013		AVME/KVO	Start history
 
 
+
 ___________________________________________________________________________________________________*)
 
 
@@ -997,14 +998,6 @@ END_VAR
     </Property>
     <Property Name="AlarmCtrl" Id="{324cebe3-37e3-43e6-8fbe-01f047ea1a50}">
       <Declaration><![CDATA[PROPERTY PUBLIC AlarmCtrl : POINTER TO FB_Alm_Man]]></Declaration>
-      <Set Name="Set" Id="{4dc3c835-40c1-4b65-b430-e60aba7f947b}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[pfbAlarmCtrl := AlarmCtrl;]]></ST>
-        </Implementation>
-      </Set>
       <Get Name="Get" Id="{6e6a2933-e7c4-4ded-8dec-e75026695387}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -1013,6 +1006,14 @@ END_VAR
           <ST><![CDATA[]]></ST>
         </Implementation>
       </Get>
+      <Set Name="Set" Id="{4dc3c835-40c1-4b65-b430-e60aba7f947b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[pfbAlarmCtrl := AlarmCtrl;]]></ST>
+        </Implementation>
+      </Set>
     </Property>
     <ObjectProperties />
   </POU>
