@@ -8,7 +8,7 @@ VAR
 	jj:INT;
 	bolCtrlRst: BOOL;
 	
-	strTest	: STRING;
+	fbAlm_Man: FB_Alm_Man; // alarm manager
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -28,14 +28,18 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		24.05.2013		AVME/KVO	Start history
-
+0.00.2		07.11.2013		AVME/KVO	Add local variabel fbAlm_Man, Add set all initialized controller FB the property of the alarm manager adress 
 
 ___________________________________________________________________________________________________*)
+
 
 // -----------------------------------------------------------------------------------------------
 // Initialize the PLC Parameter and check the PLC health
 // -----------------------------------------------------------------------------------------------
 IF (NOT bolPlcStartupDone) THEN
+
+	// set all initialized controller FB the property of the alarm manager adress 
+	Base_PLC.setAllCtrlAlarmFB(pCtrlInst := ADR(g_a_pCtrlInst[0]), pAlarmCtrl := ADR(fbAlm_Man), uinCtrlInstLength := INT_TO_UINT(E_CtrlId.E_CtrlIdMax));
 	bolPlcStartupDone := TRUE;	
 END_IF
 // -----------------------------------------------------------------------------------------------
@@ -70,7 +74,7 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 	// cyclic controller calls
 	//****************************************************************************************************
 	// call alarm message handler
-	g_fbAlm_Man(bolCtrlRst:= bolCtrlRst);
+	fbAlm_Man(bolCtrlRst:= bolCtrlRst);
 	IF (bolCtrlRst) THEN
 		FOR jj:=0 TO E_CtrlId.E_CtrlIdMax BY 1 DO
 			IF (g_a_pCtrlCIf[jj]<>0) THEN // check if entry exist

@@ -292,20 +292,20 @@ CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 CIf.Info.strType := 'FB_MOD'; 
 
 // set alarm class
-SIf.Alm[1].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[1].strText := 'not used';
-SIf.Alm[2].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[2].strText := 'not used';
-SIf.Alm[3].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[3].strText := 'not used';
-SIf.Alm[4].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[4].strText := 'not used';
-SIf.Alm[5].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[5].strText := 'not used';
-SIf.Alm[6].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[6].strText := 'not used';
-SIf.Alm[7].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[7].strText := 'Data Channel Error Receive Data';
+SIf.Alm[E_ALM_MOD.NotUsed1].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[E_ALM_MOD.NotUsed1].strText := 'not used';
+SIf.Alm[E_ALM_MOD.NotUsed2].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[E_ALM_MOD.NotUsed2].strText := 'not used';
+SIf.Alm[E_ALM_MOD.NotUsed3].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[E_ALM_MOD.NotUsed3].strText := 'not used';
+SIf.Alm[E_ALM_MOD.NotUsed4].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[E_ALM_MOD.NotUsed4].strText := 'not used';
+SIf.Alm[E_ALM_MOD.NotUsed5].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[E_ALM_MOD.NotUsed5].strText := 'not used';
+SIf.Alm[E_ALM_MOD.NotUsed6].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[E_ALM_MOD.NotUsed6].strText := 'not used';
+SIf.Alm[E_ALM_MOD.DataChannel_ReceiveData].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_MOD.DataChannel_ReceiveData].strText := 'Data Channel Error Receive Data';
 
 // Configuration defaults of class
 CIf.SwCfg.bolExist := TRUE;
@@ -695,7 +695,7 @@ CASE intStatemachine OF
 		//IF stDataChannelTest_DtChnToPlc.stDecision.uliRFID <= 0 THEN
 		//		bolDataBad := TRUE;
 		//		// Set Alarm: SIf.Alm[3].strText := 'False Job Parameter';
-		//		g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);					
+		//		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);					
 		//END_IF
  
 		// ------------------------------------------------------------------------------------
@@ -735,7 +735,7 @@ CASE intStatemachine OF
 	cSTA_SUB_Data_Error:
 		SIf.DtChnToPLC.intDataState := cDataState_Error;
 		// Set Alarm: SIf.Alm[7].strText := 'Data Channel Error Receive Dat
-		g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,7,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);										
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.DataChannel_ReceiveData,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);										
 		IF CIf.Job.bolAlmReset = TRUE THEN
 			intStatemachine := cSTA_SUB_Data_Init;
 		END_IF

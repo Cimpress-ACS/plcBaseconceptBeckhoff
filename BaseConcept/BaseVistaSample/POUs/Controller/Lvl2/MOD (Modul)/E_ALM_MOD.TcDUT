@@ -1,0 +1,19 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_ALM_MOD" Id="{72bc4949-b6e9-4080-941c-8eb828e4123e}">
+    <Declaration><![CDATA[{attribute 'qualified_only' := ''}
+TYPE E_ALM_MOD :
+(
+	NotUsed1	:= 1,
+	NotUsed2	:= 2,
+	NotUsed3	:= 3,
+	NotUsed4	:= 4,
+	NotUsed5	:= 5,
+	NotUsed6 := 6,	
+	DataChannel_ReceiveData := 7,	
+	MAX_E_ALM
+) UINT;
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

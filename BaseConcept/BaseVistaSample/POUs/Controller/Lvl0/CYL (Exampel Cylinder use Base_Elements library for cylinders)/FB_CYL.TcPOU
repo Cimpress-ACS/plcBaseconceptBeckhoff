@@ -260,7 +260,7 @@ END_CASE;]]></ST>
 				// sensor retract always on
 				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			ELSE
-				// timeout extend
+				// SIf.Alm[E_ALM_CYL.SensorExtendNotReached].strText := 'timeout extend - sensor extend not reached'
 				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendNotReached,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			END_IF
 			me.StateMachine.intStateNext :=  cSTA_ERROR;

@@ -60,6 +60,9 @@
     <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\T_Ctrl_SIf_CYL_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl2\MOD (Modul)\E_ALM_MOD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl2\MOD %28Modul%29\FB_DtChnToLine_Test.TcPOU">
       <SubType>Code</SubType>
     </Compile>

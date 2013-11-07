@@ -36,11 +36,10 @@ ________________________________________________________________________________
 // Initialize the PLC Parameter and check the PLC health
 // -----------------------------------------------------------------------------------------------
 IF (NOT bolPlcStartupDone) THEN
-	
-	
 	// init
 	//Driver
 	
+	//Lvl1
 	fbHOR_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.HOR_2); // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
 	
 	fbVER_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VER_2); // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
@@ -50,8 +49,6 @@ IF (NOT bolPlcStartupDone) THEN
 	// add childs
 	fbMOD_2.In_p_fbHOR := g_a_pCtrlInst[E_CtrlId.HOR_2];
 	fbMOD_2.In_p_fbVER := g_a_pCtrlInst[E_CtrlId.VER_2];
-	
-	Base_PLC.setAllCtrlAlarmFB(pCtrlInst := ADR(g_a_pCtrlInst[0]), pAlarmCtrl := ADR(g_fbAlm_Man), uinCtrlInstLength := INT_TO_UINT(E_CtrlId.E_CtrlIdMax));
 
 	bolPlcStartupDone := TRUE;	
 END_IF

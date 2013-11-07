@@ -10,7 +10,7 @@ STRUCT
 	Cur: T_Ctrl_SIf_MOD_Cur;
 	///In: T_Ctrl_SIf_MOD_In;
 	///Out: T_Ctrl_SIf_MOD_Out;
-	Alm: ARRAY[1..7] OF T_Ctrl_Alm;
+	Alm: ARRAY[1..(E_ALM_MOD.MAX_E_ALM-1)] OF T_Ctrl_Alm;
 	
 	///Data Channel from LineControl to PLC
 	DtChnToPLC: T_Ctrl_SIf_MOD_DtChnToPLC;
