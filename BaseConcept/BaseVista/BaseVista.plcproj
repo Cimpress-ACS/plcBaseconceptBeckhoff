@@ -17,7 +17,10 @@
     <Title>Base_PLC</Title>
     <ProjectVersion>0.3.3.2</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.3.2 - Added function setAllCtrlAlarmFB -&gt; all controller init pointer of alarmhandler; Rename GetInUint -&gt;getInUint
+    <Description>0.3.3.2 - New function setAllCtrlAlarmFB -&gt; all controller init pointer of alarmhandler; 
+- Rename GetInUint -&gt;getInUint; 
+- New function ScaleINT (scale integer variable p.e. analog increment to 0.1mm)
+
 0.3.3.1  Added getInBolDebounced(FUN) and T_Ctrl_IoBoolDebounced(STRUCT) for debouncing inputs
 0.3.3.0 - Added pfbAlarmCtrl and the "zugehörige" property to allow clean alarm calls also from controllers in libraries.
 0.3.2.0 - Del getCtrlCIF,iniCtrlArray; Set cmds to child EOFF,OFF,PON; EOFF State; Check child ALM EOFF     

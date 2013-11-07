@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <GVL Name="Global_Version" Id="{e6734f89-296e-4157-b7a9-54ec623a5068}">
+  <GVL Name="Global_Version" Id="{b795c68b-65f1-4945-8c22-cb2697adbdf4}">
     <Declaration><![CDATA[// This function has been automatically generated from the project information.
 VAR_GLOBAL CONSTANT
 	{attribute 'const_non_replaced'}
