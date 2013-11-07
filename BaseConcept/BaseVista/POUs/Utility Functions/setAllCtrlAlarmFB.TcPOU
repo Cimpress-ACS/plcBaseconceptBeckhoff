@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="setAllCtrlAlarmFB" Id="{01e890ee-bb18-40ff-8ac2-e9543639c36b}">
+    <Declaration><![CDATA[FUNCTION setAllCtrlAlarmFB : BOOL
+VAR_INPUT
+	pCtrlInst			: POINTER TO POINTER TO FB_CtrlBase;
+	pAlarmCtrl			: POINTER TO FB_Alm_Man;
+	uinCtrlInstLength	: UINT;
+END_VAR
+VAR
+	uinIdx	: UINT;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR uinIdx := 0 TO uinCtrlInstLength DO
+	IF pCtrlInst[uinIdx] <> 0 THEN
+		pCtrlInst[uinIdx]^.AlarmCtrl := pAlarmCtrl;
+	END_IF
+END_FOR
+]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

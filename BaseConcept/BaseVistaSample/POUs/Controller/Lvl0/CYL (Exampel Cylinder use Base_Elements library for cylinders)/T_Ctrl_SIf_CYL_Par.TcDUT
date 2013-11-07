@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_CYL_Par" Id="{2c7e069b-1122-4cfd-976a-4b55a838ebae}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_Par :
+STRUCT
+	///[ms] until failure to long time for extend
+	udiExtendTime_ms: UDINT;
+	///[ms] until failure to long time for retract
+	udiRetractTime_ms: UDINT;
+	///[ms] simulation time for extend or /2 of timeout time?
+	udiSimExtendTime_ms: UDINT;
+	///[ms] simulation time for retract or /2 of timeout time?
+	udiSimRetractTime_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

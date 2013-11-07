@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <DUT Name="T_Ctrl_SIf_CYL_Out" Id="{e7639b28-ad4e-4a06-8255-aab8f98b0808}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_CYL_Out" Id="{90bb2602-f323-43d7-b729-cb87f43b059e}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_Out :
 STRUCT
 	///switch valve retract

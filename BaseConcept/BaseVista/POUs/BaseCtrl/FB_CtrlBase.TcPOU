@@ -3,14 +3,14 @@
     <Declaration><![CDATA[{attribute 'reflection' := ''}
 FUNCTION_BLOCK FB_CtrlBase IMPLEMENTS I_CtrlBase
 VAR
-	///Common interface struct for public access
+	// common interface struct for public access
 	CIf				: T_Ctrl_CIf;
 
-	/// 
+	// pointer to global alarm handler function block 
 	pfbAlarmCtrl	: POINTER TO FB_Alm_Man;
  
-	///basic local controller class struct
-	me					: T_Ctrl_Class;
+	// basic local controller class struct
+	me	: T_Ctrl_Class;
 	fbSimulationTimer	: TON;
 	{attribute 'noinit' := ''}
 	{attribute 'instance-path' := ''}
@@ -35,7 +35,6 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		25.04.2013		AVME/KVO	Start history
-
 
 
 ___________________________________________________________________________________________________*)
@@ -998,14 +997,6 @@ END_VAR
     </Property>
     <Property Name="AlarmCtrl" Id="{324cebe3-37e3-43e6-8fbe-01f047ea1a50}">
       <Declaration><![CDATA[PROPERTY PUBLIC AlarmCtrl : POINTER TO FB_Alm_Man]]></Declaration>
-      <Get Name="Get" Id="{6e6a2933-e7c4-4ded-8dec-e75026695387}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Get>
       <Set Name="Set" Id="{4dc3c835-40c1-4b65-b430-e60aba7f947b}">
         <Declaration><![CDATA[VAR
 END_VAR

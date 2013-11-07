@@ -1,0 +1,27 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="ScaleINT" Id="{2c248646-da48-488e-8029-ad68edeff49e}">
+    <Declaration><![CDATA[FUNCTION ScaleINT : INT //Output signal.
+VAR_INPUT
+	x: INT; 	// Input signal. Allowed values: -32768..+32767.
+	x1 : INT;	// Abscissa for the 1st coordinate. Allowed values: -32768..+32767
+	x2 : INT;	// Abscissa for the 2nd coordinate. Allowed values: -32768..+32767.
+	y1 : INT;	// Ordinate for the 1st coordinate. First limit of the value range. Allowed values: –32768..+32767.
+	y2: INT;	// Ordinate for the 2nd coordinate. Second limit of the value range. Allowed values: -32768..+32767.
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+(*	IF x1 = x2, THEN 0 is output *)
+
+// Scale value 
+IF (x1=x2) THEN // -> zero division!
+	ScaleINT := 0;
+ELSE
+	ScaleINT := (((x - x1) * (y2-y1))/(x2-x1)) + y1;
+END_IF]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

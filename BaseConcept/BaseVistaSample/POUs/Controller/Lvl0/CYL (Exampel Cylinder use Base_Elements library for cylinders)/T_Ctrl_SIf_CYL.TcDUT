@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <DUT Name="T_Ctrl_SIf_CYL" Id="{f442344e-b9ca-4c0c-adfb-3930faa454cd}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_CYL" Id="{7a24c616-9f9c-4691-85f0-4e6f2e7effc7}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL :
 STRUCT
 	///configuration
@@ -13,7 +13,7 @@ STRUCT
 	///io output
 	Out: T_Ctrl_SIf_CYL_Out;
 	///alarm number used in this controller
-	Alm: ARRAY[1..6] OF T_Ctrl_Alm;
+	Alm: ARRAY[1..(E_ALM_CYL.MAX_E_ALM-1)] OF T_Ctrl_Alm;
 	///interlock of output/movements
 	Ilk: T_Ctrl_SIf_CYL_Ilk;
 END_STRUCT

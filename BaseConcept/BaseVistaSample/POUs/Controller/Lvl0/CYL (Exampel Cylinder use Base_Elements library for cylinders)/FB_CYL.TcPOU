@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
-  <POU Name="FB_CYL" Id="{7f6d4e15-a324-46d3-9c01-947902791507}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="FB_CYL" Id="{737d0ef7-e1b0-4ebc-93e3-5294ee4a3127}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CYL EXTENDS FB_CtrlBase
 
 VAR_INPUT
@@ -35,7 +35,10 @@ Version		Date			Author		Comment
 0.00.1		25.04.2013		AVME/KVO	Start history
 0.00.2		03.07.2013		AVME/KVO	Always call Super.always, no change to off when switch to automatic
 										alarm evt EOFF, OFF or cmd off detection in Always
-
+0.00.3		05.11.2013		AVME/KVO	integrate in BaseElements library, 
+										FB alarm pointer used, alarm definition over ENUM
+0.00.4		05.11.2013		AVME/KVO	this controller is only an example for a level0 controller
+										use Base_Elements library for cylinder/valve implementations
 ___________________________________________________________________________________________________*)
 
 
@@ -55,7 +58,7 @@ IF (me.bolActivate) THEN // cyclic call enabled
 END_IF;
 ]]></ST>
     </Implementation>
-    <Method Name="sta_RETRACTBusy" Id="{0af88407-8388-4046-a117-31cb83181d96}">
+    <Method Name="sta_RETRACTBusy" Id="{49759eab-4a0b-44af-ba4f-190d63c6d182}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RETRACTBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -91,11 +94,11 @@ END_IF;
 		// State Change Condition
 		IF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiRetractTime_ms) THEN
 			IF (SIf.In.bolExtended.intern) THEN
-				// sensor retract always on 
-				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				// sensor extend always on 
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			ELSE
-				// timeout extend cylinder
-				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				// timeout retract cylinder
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractNotReached,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			END_IF
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolRetracted.intern) AND(SIf.In.bolExtended.intern=FALSE) THEN
@@ -117,7 +120,7 @@ END_IF;
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="StateMachine" Id="{15e55f40-23c8-45ac-a57f-c1af6c0ca4ad}">
+    <Method Name="StateMachine" Id="{4ffaf879-3ba6-4f07-861c-fe09e9967dd0}">
       <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
 ]]></Declaration>
       <Implementation>
@@ -140,7 +143,7 @@ CASE me.StateMachine.intState OF
 END_CASE;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_PON" Id="{209dc2b9-f6bb-4c14-b4cd-6ae40461b9b5}">
+    <Method Name="sta_PON" Id="{eb929956-f658-49d3-b05f-2071ebdcc2c8}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
 ]]></Declaration>
       <Implementation>
@@ -179,7 +182,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ERROR" Id="{2e091a15-e7e4-4b3f-949f-ce7d5f52799a}">
+    <Method Name="sta_ERROR" Id="{b8510dd4-13c9-4fbe-b96c-0becef1f2fd5}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
 ]]></Declaration>
       <Implementation>
@@ -216,7 +219,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_EXTENDBusy" Id="{33baa2b0-7d6d-4300-801a-24de78b46729}">
+    <Method Name="sta_EXTENDBusy" Id="{3b168bb9-a863-4bc6-ae4b-3b0e9b16e776}">
       <Declaration><![CDATA[METHOD PROTECTED sta_EXTENDBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -255,10 +258,10 @@ END_CASE;]]></ST>
 		IF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiExtendTime_ms) THEN
 			IF (SIf.In.bolRetracted.intern) THEN
 				// sensor retract always on
-				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			ELSE
 				// timeout extend
-				g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,2,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendNotReached,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			END_IF
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolExtended.intern) AND (SIf.In.bolRetracted.intern=FALSE) THEN
@@ -280,7 +283,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_OFF" Id="{34743465-8d4a-4521-ae71-97a8e6567ae2}">
+    <Method Name="sta_OFF" Id="{322bdbb7-0b7f-4ad4-8eab-2577b3fb486a}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
 ]]></Declaration>
       <Implementation>
@@ -322,7 +325,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_EXTEND" Id="{45aa160f-657a-4796-8e97-bd8e47040536}">
+    <Method Name="sta_EXTEND" Id="{7a9aba2f-5635-4f1c-a39a-c1b3d993f846}">
       <Declaration><![CDATA[METHOD PROTECTED sta_EXTEND : BOOL
 ]]></Declaration>
       <Implementation>
@@ -347,7 +350,7 @@ END_CASE;]]></ST>
 		// State Change Condition
 		IF (SIf.In.bolRetracted.intern) THEN
 			// sensor retract always on
-			g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolExtended.intern = FALSE) THEN // wait time until error?
 			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
@@ -367,7 +370,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ERRORQuit" Id="{4a3f28b0-ea2b-4bb5-97c9-02ae18d5580d}">
+    <Method Name="sta_ERRORQuit" Id="{61b9299d-71ce-459d-8978-132e921106a2}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
 ]]></Declaration>
       <Implementation>
@@ -415,7 +418,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="IoInBridge" Id="{669c6d49-2405-42e2-aa35-6031b1cbbed4}">
+    <Method Name="IoInBridge" Id="{1a1841f5-d9d3-4cec-abb4-aa384c6b5472}">
       <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
 ]]></Declaration>
       <Implementation>
@@ -432,7 +435,7 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_OFFBusy" Id="{6ee930e2-8d91-422d-8759-852cda70e629}">
+    <Method Name="sta_OFFBusy" Id="{3f83ecbc-a282-4f17-8fc6-7079c773506d}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -478,14 +481,14 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCtrlSIf" Id="{708ca0d5-43c5-4860-bf01-9e3091eae13d}">
+    <Method Name="getCtrlSIf" Id="{30e501b6-8c97-4304-a96a-42e63b787840}">
       <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_CYL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCmdState" Id="{7f9b24a5-3c0b-4869-9926-ee58b4b3a659}">
+    <Method Name="getCmdState" Id="{3cc12842-92b2-40e3-acee-7144bf90e142}">
       <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
 VAR_INPUT
 	intCmdState: INT;
@@ -526,7 +529,7 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_STOPBusy" Id="{80e521fa-08df-4b96-8026-dd2278df20a8}">
+    <Method Name="sta_STOPBusy" Id="{793279a7-f53f-4c40-9ff7-e53abf833e13}">
       <Declaration><![CDATA[METHOD PROTECTED sta_STOPBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -572,7 +575,7 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="FB_init" Id="{821c7ab4-e1f8-4a80-8a13-a5994dc82e86}">
+    <Method Name="FB_init" Id="{6cfa0fd4-0741-4a03-8098-1e8615c9dfcb}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
 	///if TRUE, the retain variables are initialized (warm start / cold start)
@@ -594,6 +597,7 @@ FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
 		EXIT;
 	END_IF
 END_FOR
+
 CIf.Job.aCmdList[ii].intCmd := cCMD_STOP;
 CIf.Job.aCmdList[ii].strName := 'Stop'; 
 CIf.Job.aCmdList[ii].bolAvailable := TRUE;
@@ -610,18 +614,18 @@ CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 CIf.Info.strType := 'FB_CYL'; 
 
 // set alarm class
-SIf.Alm[1].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[1].strText := 'sensor retract always on'; 
-SIf.Alm[2].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[2].strText := 'timeout extend - sensor extend not reached';
-SIf.Alm[3].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[3].strText := 'sensor retract always on';
-SIf.Alm[4].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[4].strText := 'timeout retract cylinder - sensor retract not reached';
-SIf.Alm[5].eAlmClass := E_AlmClass.OFF;
-SIf.Alm[5].strText := 'interlock extend - movement stopped';
-SIf.Alm[6].eAlmClass := E_AlmClass.OFF;
-SIf.Alm[6].strText := 'interlock retract - movement stopped';
+SIf.Alm[E_ALM_CYL.SensorRetractAlwaysOn].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_CYL.SensorRetractAlwaysOn].strText := 'sensor retract always on'; 
+SIf.Alm[E_ALM_CYL.SensorExtendNotReached].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_CYL.SensorExtendNotReached].strText := 'timeout extend - sensor extend not reached';
+SIf.Alm[E_ALM_CYL.SensorExtendAlwaysOn].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_CYL.SensorExtendAlwaysOn].strText := 'sensor extend always on';
+SIf.Alm[E_ALM_CYL.SensorRetractNotReached].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_CYL.SensorRetractNotReached].strText := 'timeout retract - sensor retract not reached';
+SIf.Alm[E_ALM_CYL.InterlockExtend].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_CYL.InterlockExtend].strText := 'interlock extend - movement stopped';
+SIf.Alm[E_ALM_CYL.InterlockRetract].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_CYL.InterlockRetract].strText := 'interlock retract - movement stopped';
 
 //*******************************************************************************
 // initial values
@@ -629,7 +633,8 @@ SIf.Alm[6].strText := 'interlock retract - movement stopped';
 
 // Configuration defaults of class
 CIf.SwCfg.bolExist := TRUE;
-CIf.SwCfg.bolSimulation := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
 
 // Parameter defaults of class
 SIf.Par.udiExtendTime_ms := 10000;
@@ -638,7 +643,7 @@ SIf.Par.udiSimExtendTime_ms := SIf.Par.udiExtendTime_ms/2;
 SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_STOP" Id="{95dd6e07-0649-4a6c-991d-1ec304327ee6}">
+    <Method Name="sta_STOP" Id="{949b2121-4415-435d-9934-8162cf92f3de}">
       <Declaration><![CDATA[METHOD PROTECTED sta_STOP : BOOL
 ]]></Declaration>
       <Implementation>
@@ -676,15 +681,7 @@ SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CtrlInit" Id="{b4c496ae-7522-4c54-b498-cbc031d961f4}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.CtrlInit();
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="IoOutBridge" Id="{bee2e6f6-9ee6-469c-aabd-3ad2e2a0d195}">
+    <Method Name="IoOutBridge" Id="{9eb7dfbc-a97c-4a98-8041-59ed784bdd31}">
       <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
 VAR
 	bolSwitchValvesOff: BOOL;
@@ -709,7 +706,7 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 				// bistable valve ->  switch both off
 				bolSwitchValvesOff := TRUE;
 				IF (SIf.Out.bolExtend.map=1) THEN
-					g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.InterlockExtend,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 				END_IF
 			END_IF
 		END_IF
@@ -724,7 +721,7 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 				// bistable valve -> switch both off
 				bolSwitchValvesOff := TRUE;
 				IF (SIf.Out.bolRetract.map=1) THEN
-					g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,6,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.InterlockRetract,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 				END_IF;
 			END_IF
 		END_IF
@@ -742,7 +739,7 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_RETRACT" Id="{e21f85cf-a0ab-4d22-91b3-204b668b0674}">
+    <Method Name="sta_RETRACT" Id="{ca69179f-e0cb-4219-bf7a-eda5c31eaab5}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RETRACT : BOOL
 ]]></Declaration>
       <Implementation>
@@ -767,7 +764,7 @@ END_IF]]></ST>
 		// State Change Condition
 		IF (SIf.In.bolExtended.intern) THEN
 			// sensor retract always on
-			g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolRetracted.intern = FALSE) THEN // wait time until error?
 			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
@@ -788,7 +785,7 @@ END_IF]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="Always" Id="{e882caab-58e9-414f-a061-1e802538cdeb}">
+    <Method Name="Always" Id="{f991da10-5343-4634-b55a-33f8f2d15035}">
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
 ]]></Declaration>
       <Implementation>
@@ -815,7 +812,8 @@ IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
 	ELSE // stay in OFF
 		me.StateMachine.intStateNext := cSTA_OFFBusy;
 	END_IF
-END_IF]]></ST>
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <ObjectProperties />

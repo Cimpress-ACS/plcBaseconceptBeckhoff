@@ -27,34 +27,37 @@
     <Compile Include="GVLs\Io.TcGVL">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\CYL_CmdState.TcGVL">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\CYL_CmdState.TcGVL">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\E_Typ_CYL.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\E_ALM_CYL.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\FB_CYL.TcPOU">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\E_Typ_CYL.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\T_Ctrl_SIf_CYL.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\FB_CYL.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\T_Ctrl_SIf_CYL_Cfg.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\T_Ctrl_SIf_CYL.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\T_Ctrl_SIf_CYL_Cur.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\T_Ctrl_SIf_CYL_Cfg.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\T_Ctrl_SIf_CYL_Ilk.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\T_Ctrl_SIf_CYL_Cur.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\T_Ctrl_SIf_CYL_In.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\T_Ctrl_SIf_CYL_Ilk.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\T_Ctrl_SIf_CYL_Out.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\T_Ctrl_SIf_CYL_In.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\T_Ctrl_SIf_CYL_Par.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\T_Ctrl_SIf_CYL_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\T_Ctrl_SIf_CYL_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\MOD %28Modul%29\FB_DtChnToLine_Test.TcPOU">
@@ -112,7 +115,7 @@
     <Folder Include="POUs\" />
     <Folder Include="POUs\Controller\" />
     <Folder Include="POUs\Controller\Lvl0\" />
-    <Folder Include="POUs\Controller\Lvl0\CYL %28Cylinder%29" />
+    <Folder Include="POUs\Controller\Lvl0\CYL %28Exampel Cylinder use Base_Elements library for cylinders%29" />
     <Folder Include="POUs\Controller\Lvl1\" />
     <Folder Include="POUs\Controller\Lvl2\" />
     <Folder Include="POUs\Controller\Lvl2\MOD %28Modul%29" />
@@ -140,15 +143,12 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.2.0,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.3.2,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
     </LibraryReference>
-  </ItemGroup>
-  <ItemGroup>
-    <SubObject Include="FB_CYL.Always" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="BaseVistaSample.tmc">

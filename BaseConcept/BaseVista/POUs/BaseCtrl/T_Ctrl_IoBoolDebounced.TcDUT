@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_IoBoolDebounced" Id="{975c362b-5a6a-4f9a-9257-28650cabca97}">
+  <DUT Name="T_Ctrl_IoBoolDebounced" Id="{1a20c7ad-aa4d-40cd-b5d2-36c5c457c62b}">
     <Declaration><![CDATA[TYPE T_Ctrl_IoBoolDebounced :
 STRUCT
 	///mapped io variable to hardware

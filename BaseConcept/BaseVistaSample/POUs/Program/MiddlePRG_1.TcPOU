@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="MiddlePRG_1" Id="{fc4c9c72-f24d-4184-a857-29a82ecbaa1c}">
     <Declaration><![CDATA[PROGRAM MiddlePRG_1
 VAR
@@ -50,6 +50,8 @@ IF (NOT bolPlcStartupDone) THEN
 	// add childs
 	fbMOD_2.In_p_fbHOR := g_a_pCtrlInst[E_CtrlId.HOR_2];
 	fbMOD_2.In_p_fbVER := g_a_pCtrlInst[E_CtrlId.VER_2];
+	
+	Base_PLC.setAllCtrlAlarmFB(pCtrlInst := ADR(g_a_pCtrlInst[0]), pAlarmCtrl := ADR(g_fbAlm_Man), uinCtrlInstLength := INT_TO_UINT(E_CtrlId.E_CtrlIdMax));
 
 	bolPlcStartupDone := TRUE;	
 END_IF
