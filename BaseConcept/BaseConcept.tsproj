@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{D5D058E2-D862-490D-9E1F-19A82A0D2277}" ModifiedGUID="{866EB078-4284-4BE4-86F9-47739959C368}">
+	<Project ProjectGUID="{D5D058E2-D862-490D-9E1F-19A82A0D2277}" ModifiedGUID="{A98D7980-B18E-4A1E-A072-C126EA786069}">
 		<System>
 			<Licenses>
 				<Target>
@@ -26,7 +26,7 @@
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 				</Instance>
 			</Project>
-			<Project GUID="{BEA43F75-96A6-4F54-AD09-F559F9B95FA9}" Name="BaseVista" PrjFilePath="BaseVista\BaseVista.plcproj" TmcFilePath="BaseVista\BaseVista.tmc" ReloadTmc="true" AmsPort="852">
+			<Project Disabled="true" GUID="{BEA43F75-96A6-4F54-AD09-F559F9B95FA9}" Name="BaseVista" PrjFilePath="BaseVista\BaseVista.plcproj" TmcFilePath="BaseVista\BaseVista.tmc" ReloadTmc="true" AmsPort="852">
 				<Instance Id="#x01010020" TcSmClass="TComPlcObjDef">
 					<Name>BaseVista Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
