@@ -12,12 +12,10 @@ END_VAR
       <ST><![CDATA[// The input is accepted only after the debounce time (udiDebounceTime_ms)
 // If the signal changes during this time, the timer will be restarted
 
-p_Input^.state := p_Input^.map;
-
 IF (p_Input^.EnForce AND bol_GlobalEnableForce) THEN	// Forced signal, no debouncing neccessary
 	p_Input^.intern := p_Input^.force;
 ELSE													// Debounce signal
-	IF p_Input^.intern <> p_Input^.map THEN
+	IF p_Input^.state <> p_Input^.map THEN
 		p_Input^.udinDebouncedTimeCounter_ms := 0;
 	END_IF
 	IF p_Input^.udinDebouncedTimeCounter_ms < udiDebounceTime_ms THEN
@@ -26,6 +24,8 @@ ELSE													// Debounce signal
 		p_Input^.intern := p_Input^.map;		
 	END_IF
 END_IF;
+
+p_Input^.state := p_Input^.map;
 
 getInBolDebounced := p_Input^.intern;]]></ST>
     </Implementation>

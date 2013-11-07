@@ -15,9 +15,11 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.3.2</ProjectVersion>
+    <ProjectVersion>0.3.3.3</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.3.2 - New function setAllCtrlAlarmFB -&gt; all controller init pointer of alarmhandler; 
+    <Description>0.3.3.3 - Bug fixed in getInBolDebounced(FUN)
+
+0.3.3.2 - New function setAllCtrlAlarmFB -&gt; all controller init pointer of alarmhandler; 
 - Rename GetInUint -&gt;getInUint; 
 - New function ScaleINT (scale integer variable p.e. analog increment to 0.1mm)
 

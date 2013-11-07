@@ -1,9 +1,9 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <GVL Name="Global_Version" Id="{b795c68b-65f1-4945-8c22-cb2697adbdf4}">
+  <GVL Name="Global_Version" Id="{0811d865-5f72-4e4a-83af-75138a6fc11c}">
     <Declaration><![CDATA[// This function has been automatically generated from the project information.
 VAR_GLOBAL CONSTANT
 	{attribute 'const_non_replaced'}
-	stLibVersion_Base_PLC : ST_LibVersion := (iMajor := 0, iMinor := 3, iBuild := 3, iRevision := 2, sVersion := '0.3.3.2');
+	stLibVersion_Base_PLC : ST_LibVersion := (iMajor := 0, iMinor := 3, iBuild := 3, iRevision := 3, sVersion := '0.3.3.3');
 END_VAR
 ]]></Declaration>
     <ObjectProperties />
