@@ -1,0 +1,11 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="Test" Id="{a0e3f84f-fcc8-4f32-ace5-ed43414fb32e}">
+    <Declaration><![CDATA[// This file does not demonstrate the PLC BaseVista concept. It's used for PlcCommunication testing.
+VAR_GLOBAL
+	strDefaultString	: STRING;
+	strLongString		: STRING(160);
+	strShortString		: STRING(5);
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>
