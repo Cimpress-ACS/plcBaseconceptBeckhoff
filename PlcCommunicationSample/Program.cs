@@ -46,11 +46,17 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             Console.WriteLine("PLC connection established = " + tagController.IsConnected);
             tagController.WriteTag(tag, true);
 
-            var test = new Tag("strTest", "SlowPRG_1", "STRING(80)");
-            tagController.WriteTag(test, "123456789abcdefghijklmnopqrstuvwxyz");
-            tagController.WriteTag(test, "123");
-            tagController.WriteTag(test, "01234567890123456789012345678901234567890123456789012345678901234567890123456789");
+            // string tests
+            var defaultStringTestTag = new Tag("strDefaultString", "Test", "STRING(80)");
+            tagController.WriteTag(defaultStringTestTag, "123456789abcdefghijklmnopqrstuvwxyz");
+            tagController.WriteTag(defaultStringTestTag, "123");
+            tagController.WriteTag(defaultStringTestTag, "01234567890123456789012345678901234567890123456789012345678901234567890123456789");
 
+            var longStringTestTag = new Tag("strLongString", "Test", "STRING(160)");
+            tagController.WriteTag(longStringTestTag, "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789");
+
+            var shortStringTestTag = new Tag("strShortString", "Test", "STRING(5)");
+            tagController.WriteTag(shortStringTestTag, "12345");
             
             // ControllerTreeImporter
             IControllerTreeImporter controllerTreeImporter = new BeckhoffOnlineControllerTreeImporter();
@@ -70,8 +76,8 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             Console.WriteLine(s.Name + " Command fired");
 
             // AlarmsImporter
-            //IAlarmsImporter alarmsImporter = new BeckhoffOnlineAlarmsImporter();
-            //IAlarmManager alarmManager = alarmsImporter.ImportAlarms(rootController, AdsAddress, AdsPort);
+            IAlarmsImporter alarmsImporter = new BeckhoffOnlineAlarmsImporter(AdsAddress, AdsPort);
+            var alarmManager = alarmsImporter.ImportAlarms(rootController);
 
 
 

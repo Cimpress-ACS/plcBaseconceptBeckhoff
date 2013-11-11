@@ -27,6 +27,9 @@
     <Compile Include="GVLs\Io.TcGVL">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="GVLs\Test.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl0\CYL (Exampel Cylinder use Base_Elements library for cylinders)\CYL_CmdState.TcGVL">
       <SubType>Code</SubType>
     </Compile>
