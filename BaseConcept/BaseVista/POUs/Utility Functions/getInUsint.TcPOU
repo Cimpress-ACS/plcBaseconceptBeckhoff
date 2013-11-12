@@ -1,0 +1,37 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="getInUsint" Id="{d14befb2-e4e1-4e32-b4ed-195913a07eec}">
+    <Declaration><![CDATA[FUNCTION getInUsint : USINT
+VAR_INPUT
+	bol_GlobalEnableForce		: BOOL;
+	p_Input						: POINTER TO T_Ctrl_IoUsint;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[p_Input^.state := p_Input^.map;
+
+IF (p_Input^.EnForce AND bol_GlobalEnableForce) THEN
+	p_Input^.intern := p_Input^.force;
+ELSE
+	p_Input^.intern := p_Input^.map;
+END_IF;
+
+getInUsint := p_Input^.intern;]]></ST>
+    </Implementation>
+    <ObjectProperties>﻿<XmlArchive>
+  <Data>
+    <o xml:space="preserve" t="POUImageProperty">
+      <n n="ImageData" />
+      <v n="TransparencyColor">"White"</v>
+      <v n="MakeTransparent">false</v>
+    </o>
+  </Data>
+  <TypeList>
+    <Type n="Boolean">System.Boolean</Type>
+    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+    <Type n="String">System.String</Type>
+  </TypeList>
+</XmlArchive></ObjectProperties>
+  </POU>
+</TcPlcObject>
