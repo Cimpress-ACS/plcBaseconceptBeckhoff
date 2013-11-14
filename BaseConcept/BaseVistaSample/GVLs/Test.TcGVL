@@ -5,6 +5,8 @@ VAR_GLOBAL
 	strDefaultString	: STRING;
 	strLongString		: STRING(160);
 	strShortString		: STRING(5);
+	
+	bolTest		: BOOL;
 END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>

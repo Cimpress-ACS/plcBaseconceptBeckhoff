@@ -31,11 +31,14 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             tagListener.TagChanged += TagListenerTagChanged;
 
             var tag = new Tag("In_bolHOR_2_Retracted_NO", "Io");
+            var test = new Tag("bolTest", "Test");
+            test.ValueChanged += test_ValueChanged;
 
             tag.ValueChanged += TagValueChanged;
 
             tagListener.AddUdtHandler<TestData>("T_Ctrl_SIf_MOD_DtChnToPLC");
             tagListener.AddTag(tag);
+            tagListener.AddTag(test);
 
             tagListener.RefreshAll();
             tagListener.StartListening();
@@ -138,6 +141,11 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
                 Thread.Sleep(1000);
                 Console.WriteLine("IsConnected = " + tagController.IsConnected);
             }
+        }
+
+        static void test_ValueChanged(Tag sender, TagValueChangedEventArgs e)
+        {
+            Console.WriteLine(sender.Value);
         }
 
         static void DataChannelListenerCommunicationProblemOccured(object sender, Exception e)
