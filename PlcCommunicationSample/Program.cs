@@ -28,6 +28,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             // TagListener
             ITagListener tagListener = new BeckhoffPollingTagListener(AdsAddress, AdsPort);
             tagListener.RefreshRate = 200;
+            tagListener.CommunicationProblemOccured += tagListener_CommunicationProblemOccured;
             tagListener.TagChanged += TagListenerTagChanged;
 
             var tag = new Tag("In_bolHOR_2_Retracted_NO", "Io");
@@ -143,6 +144,12 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             }
         }
 
+        static void tagListener_CommunicationProblemOccured(object sender, Exception e)
+        {
+            Console.WriteLine("TagListener CommunicationProblemOccured");
+            Console.WriteLine(e);
+        }
+
         static void test_ValueChanged(Tag sender, TagValueChangedEventArgs e)
         {
             Console.WriteLine(sender.Value);
@@ -150,6 +157,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
         static void DataChannelListenerCommunicationProblemOccured(object sender, Exception e)
         {
+            Console.WriteLine("DataChannelListener CommunicationProblemOccured");
             Console.WriteLine(e);
         }
 
@@ -174,7 +182,6 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
         static void TagListenerTagChanged(object sender, TagChangedEventArgs e)
         {
-
         }
 
         static void TagValueChanged(Tag sender, TagValueChangedEventArgs e)
