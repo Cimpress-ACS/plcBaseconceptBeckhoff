@@ -20,7 +20,7 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
     class Program
     {
-        private const string AdsAddress = "10.38.10.83.1.1";
+        private const string AdsAddress = "192.168.2.111.1.1";
         private const int AdsPort = 851;
 
         static void Main(string[] args)
