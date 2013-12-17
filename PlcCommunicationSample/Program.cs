@@ -20,7 +20,8 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
 
     class Program
     {
-        private const string AdsAddress = "192.168.2.111.1.1";
+        //private const string AdsAddress = "192.168.2.111.1.1";
+        private const string AdsAddress = "10.38.10.83.1.1";
         private const int AdsPort = 851;
 
         static void Main(string[] args)
@@ -78,6 +79,14 @@ namespace VP.FF.PT.CommonPlc.PlcCommunicationSample
             // start root controller, otherwise the DataChannes would not work
             s.Fire();
             Console.WriteLine(s.Name + " Command fired");
+
+            // partial controller import
+            var singleController = controllerTreeImporter.ImportController(AdsAddress, "MiddlePRG_1.fbVER_2", AdsPort);
+            Console.WriteLine(DateTime.Now.ToLongTimeString() + " Imported single controller " + singleController.Name);
+            singleController = controllerTreeImporter.ImportController(AdsAddress, "MiddlePRG_1.fbVER_2", AdsPort);
+            Console.WriteLine(DateTime.Now.ToLongTimeString() + " Imported single controller " + singleController.Name);
+            singleController = controllerTreeImporter.ImportController(AdsAddress, "MiddlePRG_1.fbVER_2", AdsPort);
+            Console.WriteLine(DateTime.Now.ToLongTimeString() + " Imported single controller " + singleController.Name);
 
             // AlarmsImporter
             IAlarmsImporter alarmsImporter = new BeckhoffOnlineAlarmsImporter(AdsAddress, AdsPort);
