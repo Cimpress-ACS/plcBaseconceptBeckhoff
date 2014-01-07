@@ -5,6 +5,7 @@ VAR
 	bolPlcStartupDone: BOOL := FALSE;
 	bolHostInitDone : BOOL := FALSE;
 	bolInitDone : BOOL := FALSE;
+	uinTaskNbr : UINT := 3; // SlowTask is Task Nr 3
 	jj:INT;
 	bolCtrlRst: BOOL;
 	
@@ -36,12 +37,13 @@ ________________________________________________________________________________
 // -----------------------------------------------------------------------------------------------
 // Initialize the PLC Parameter and check the PLC health
 // -----------------------------------------------------------------------------------------------
-IF (NOT bolPlcStartupDone) THEN
+IF ((NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1))) THEN
 
 	// set all initialized controller FB the property of the alarm manager adress 
 	Base_PLC.setAllCtrlAlarmFB(pCtrlInst := ADR(g_a_pCtrlInst[0]), pAlarmCtrl := ADR(fbAlm_Man), uinCtrlInstLength := INT_TO_UINT(E_CtrlId.E_CtrlIdMax));
 	g_p_fbAlm_Man := ADR(fbAlm_Man);
 	bolPlcStartupDone := TRUE;	
+	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -50,8 +52,9 @@ END_IF
 // The host system is downloading all parameter at startup. 
 // bolPlcStartupDone will be set to true after the Host is done with the initialization
 // -----------------------------------------------------------------------------------------------
-IF (bolPlcStartupDone AND (NOT bolHostInitDone) AND NOT bolInitDone) THEN
+IF (bolPlcStartupDone AND (NOT bolHostInitDone) AND NOT bolInitDone AND (g_uinStartProzess>=(uinTaskNbr-1)+10)) THEN
 	bolHostInitDone := TRUE;
+	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -59,17 +62,18 @@ END_IF
 // -----------------------------------------------------------------------------------------------
 // Start PLC code initialization
 // -----------------------------------------------------------------------------------------------
-IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone THEN
+IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(uinTaskNbr-1)+20) THEN
 	
 	// init	
 	bolInitDone := TRUE;
+	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------------------------
 // Normal Run mode after all the initialization is done
 // -----------------------------------------------------------------------------------------------
-IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
+IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(20+c_uinCntTaskClass))) THEN
 	
 	//****************************************************************************************************
 	// cyclic controller calls

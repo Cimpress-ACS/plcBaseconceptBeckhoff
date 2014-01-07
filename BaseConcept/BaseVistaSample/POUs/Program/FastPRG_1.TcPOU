@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FastPRG_1" Id="{cef9ae2e-c547-4599-8a76-ee84fec7c7c9}">
     <Declaration><![CDATA[PROGRAM FastPRG_1
 VAR
@@ -33,6 +33,8 @@ ________________________________________________________________________________
 // -----------------------------------------------------------------------------------------------
 IF (NOT bolPlcStartupDone) THEN
 	bolPlcStartupDone := TRUE;	
+	g_uinStartProzess:=1; // For StartUp order
+
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -41,8 +43,9 @@ END_IF
 // The host system is downloading all parameter at startup. 
 // bolPlcStartupDone will be set to true after the Host is done with the initialization
 // -----------------------------------------------------------------------------------------------
-IF (bolPlcStartupDone AND (NOT bolHostInitDone) AND NOT bolInitDone) THEN
+IF (bolPlcStartupDone AND (NOT bolHostInitDone) AND NOT bolInitDone AND (g_uinStartProzess>=c_uinCntTaskClass)) THEN
 	bolHostInitDone := TRUE;
+	g_uinStartProzess := 11; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -50,10 +53,11 @@ END_IF
 // -----------------------------------------------------------------------------------------------
 // Start PLC code initialization
 // -----------------------------------------------------------------------------------------------
-IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone THEN
+IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(10+c_uinCntTaskClass)) THEN
 	
 	// init	
 	bolInitDone := TRUE;
+	g_uinStartProzess := 21; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -61,7 +65,7 @@ END_IF
 // -----------------------------------------------------------------------------------------------
 // Normal Run mode after all the initialization is done
 // -----------------------------------------------------------------------------------------------
-IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
+IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(20+c_uinCntTaskClass))) THEN
 	
 	;
 END_IF

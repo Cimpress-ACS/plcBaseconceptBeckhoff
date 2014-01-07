@@ -35,7 +35,7 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		25.04.2013		AVME/KVO	Start history
-
+0.00.2		06.01.2014		AVME/PRE	Alarmclasses EOFF, OFF and STOP are send to parent and childs
 
 ___________________________________________________________________________________________________*)
 
@@ -559,7 +559,7 @@ VAR_INPUT
 ;
 END_VAR
 VAR
-	uinIdx: UINT;
+;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------
@@ -571,6 +571,9 @@ IF CheckAllChildAlmClass(E_AlmClass.EOFF) THEN
 ELSIF CheckAllChildAlmClass(E_AlmClass.OFF) THEN
 	CIf.Job.eMe_ActivAlmClass := E_AlmClass.OFF;
 	me.Alarm.bolfp := TRUE;
+ELSIF CheckAllChildAlmClass(E_AlmClass.STOP) THEN
+	CIf.Job.eMe_ActivAlmClass := E_AlmClass.STOP;
+	me.Alarm.bolfp := TRUE;	
 ELSE
 	IF (me.Alarm.bolfp) THEN
 		CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // no reset necessary
@@ -579,10 +582,10 @@ ELSE
 END_IF
 
 //------------------------------------------------------------------------------------------------------
-// set alarm class parent of childs in the case of a parent EOFF or me=OFF or EOFF
-IF (CIf.Job.eParent_ActivAlmClass=E_AlmClass.EOFF) THEN
+// set alarm class parent of childs in the case of a parent or me=OFF or EOFF or STOP
+IF (CIf.Job.eParent_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eParent_ActivAlmClass=E_AlmClass.OFF) OR (CIf.Job.eParent_ActivAlmClass=E_AlmClass.STOP) THEN
 	SetAllChildAlmClass(CIf.Job.eParent_ActivAlmClass);
-ELSIF(CIf.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.OFF) THEN
+ELSIF(CIf.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.OFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.STOP) THEN
 	SetAllChildAlmClass(CIf.Job.eMe_ActivAlmClass);
 ELSE
 	// no important alarm for child active
@@ -685,7 +688,9 @@ END_IF]]></ST>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
-		SetAllChildCmd(cCMD_OFF); // set acmd off all childs 
+		// Set commandos not only in entry action because of possible errors or manual/auto changes
+		// PRE/AVME 06.01.2014
+		//SetAllChildCmd(cCMD_OFF); // set acmd off all childs 
 	END_IF
 
 
@@ -693,8 +698,7 @@ END_IF]]></ST>
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		;
-		
+		SetAllChildCmd(cCMD_OFF); // set acmd off all childs 
 		
 		// State Change Condition
 		IF (FALSE) THEN
@@ -774,8 +778,9 @@ END_VAR
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		EOFF_EntryAction(); // used for special events in EOFF
-
-		SetAllChildCmd(cCMD_EOFF); // set acmd off all childs 
+		// Set commandos not only in entry action because of possible errors or manual/auto changes
+		// PRE/AVME 06.01.2014
+		//SetAllChildCmd(cCMD_EOFF); // set acmd off all childs 
 	END_IF
 
 
@@ -783,6 +788,7 @@ END_VAR
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
+		SetAllChildCmd(cCMD_EOFF); // set acmd off all childs 
 	
 		// check if all childs have reached the state
 		IF CheckAllChildState(cSTA_EOFF) THEN

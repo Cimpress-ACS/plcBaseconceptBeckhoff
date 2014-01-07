@@ -5,8 +5,13 @@
 	g_a_pCtrlCIf: ARRAY[0..E_CtrlId.E_CtrlIdMax] OF POINTER TO T_Ctrl_CIf; // common interface array of all controllers (main use for PLC)
 	g_p_fbAlm_Man: POINTER TO FB_Alm_Man; // common access variabel for UI
 
+	g_uinStartProzess : UINT; // For StartUp order
+  	
 END_VAR
-]]></Declaration>
+
+VAR_GLOBAL CONSTANT
+	c_uinCntTaskClass : UINT := 3;	// Count of Task Classes
+END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>
 </TcPlcObject>

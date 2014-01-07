@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_Alm_Man" Id="{f11424bb-ec66-4e73-9805-32f741f5aee1}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Alm_Man
 VAR_INPUT
@@ -42,6 +42,8 @@ VAR
 	dinTestInfo: DINT;
 	aCtrlAlm: ARRAY[1..6] OF T_Ctrl_Alm;
 	eActiveAlmClass: E_AlmClass;
+
+	aCntActiveAlmPerClass: ARRAY[0..(E_AlmClass.Max_E_AlmClass-1)] OF UINT; // count off all active alarms per class, idx=0 all active alarms
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -66,7 +68,7 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		29.04.2013		AVME/KVO	Start history
-
+0.00.2		06.01.2014		AVME/PRE	Implement the counted active messages array
 
 ___________________________________________________________________________________________________*)
 
@@ -100,6 +102,10 @@ CASE intState OF
 
 END_CASE
 
+//count all active alarms
+FOR jj:= 1 TO INT_TO_UINT(E_AlmClass.Max_E_AlmClass-1) BY 1 DO
+	aCntActiveAlmPerClass[0] := aCntActiveAlmPerClass[0] + aCntActiveAlmPerClass[jj];
+END_FOR
 
 
 //**********************************************************************************************
@@ -193,6 +199,11 @@ FOR ii:= 0 TO c_uinMaxAlmElements BY 1 DO
 		
 	ELSIF (InAlmElement.intState=E_AlmState.CLR) THEN
 		IF(InAlmElement.udiNr = aAlm[ii].udiNr) THEN	// existing entry found
+			//count alarms per class
+			IF (aCntActiveAlmPerClass[aAlm[ii].eClass]>0) THEN
+				aCntActiveAlmPerClass[aAlm[ii].eClass] := aCntActiveAlmPerClass[aAlm[ii].eClass] - 1; 
+			END_IF
+			
 			IF (c_uinModeAlarm=1) THEN // no history on PLC
 				aAlm[ii] := EmptyAlmElement; // clear entry
 			ELSE
@@ -212,8 +223,11 @@ END_IF
 IF (bolEmptyIndexFound) THEN
 	IF ((InAlmElement.intState=E_AlmState.SET) OR (InAlmElement.intState=E_AlmState.RST)) THEN 
 		aAlm[uinEmptyIndex] := InAlmElement;
+		//count alarms per class
+		aCntActiveAlmPerClass[aAlm[ii].eClass] := aCntActiveAlmPerClass[aAlm[ii].eClass] + 1; 
 	END_IF;
-END_IF]]></ST>
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="clearAlarm" Id="{566bb9f2-31de-4b0c-b09c-2372a2547b1e}">
@@ -229,7 +243,10 @@ VAR
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[
+        <ST><![CDATA[FOR ii:= 0 TO INT_TO_UINT(E_AlmClass.Max_E_AlmClass-1) BY 1 DO
+	aCntActiveAlmPerClass[ii] := 0; // reset alarm counter
+END_FOR
+
 FOR ii:= 0 TO c_uinMaxAlmElements BY 1 DO
 	
 	IF (aAlm[ii].udiNr>0) THEN 
@@ -238,12 +255,28 @@ FOR ii:= 0 TO c_uinMaxAlmElements BY 1 DO
 			((aAlm[ii].intState=E_AlmState.CLR) AND (bolClear_CLR)))THEN
 			
 			aAlm[ii] := EmptyAlmElement; // clear entry
+		ELSE
+			//count alarms per class
+			aCntActiveAlmPerClass[aAlm[ii].eClass] := aCntActiveAlmPerClass[aAlm[ii].eClass] + 1; 
 		END_IF
 		
 	END_IF
-END_FOR]]></ST>
+END_FOR
+
+]]></ST>
       </Implementation>
     </Method>
+    <Property Name="aCntPerClass" Id="{ecee5144-fdae-4cf0-b5ee-61344d30b2ed}">
+      <Declaration><![CDATA[PROPERTY PUBLIC aCntPerClass : ARRAY[0..(E_AlmClass.Max_E_AlmClass-1)] OF UINT]]></Declaration>
+      <Get Name="Get" Id="{f61a836b-b316-47dd-a092-48de6bf46c1d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[aCntPerClass := aCntActiveAlmPerClass;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <ObjectProperties />
   </POU>
 </TcPlcObject>
