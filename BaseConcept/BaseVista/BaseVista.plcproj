@@ -15,9 +15,10 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.3.6</ProjectVersion>
+    <ProjectVersion>0.3.3.7</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.3.6 - FB_Alm_Man Property CntPerClass added, alarm classes EOFF, OFF and STOP from parent to child, in EOFFBusy and OFF busy command in cyclic action (not entry action)
+    <Description>0.3.3.7 - CheckParentAlmClass OFF and STOP added -&gt; reaction of Controller
+0.3.3.6 - FB_Alm_Man Property CntPerClass added, alarm classes EOFF, OFF and STOP from parent to child, in EOFFBusy and OFF busy command in cyclic action (not entry action)
 
 0.3.3.4 - Added IO support for USINT datatype
 

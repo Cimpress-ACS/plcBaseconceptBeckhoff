@@ -36,7 +36,7 @@ Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		25.04.2013		AVME/KVO	Start history
 0.00.2		06.01.2014		AVME/PRE	Alarmclasses EOFF, OFF and STOP are send to parent and childs
-
+0.00.3		08.01.2014		AVME/KVO	CheckParentAlmClass OFF and STOP added -> reaction of Controller
 ___________________________________________________________________________________________________*)
 
 
@@ -933,6 +933,10 @@ IF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.EOFF) THEN
 	// prevent automatic restart in manual or automatic
 	CIf.job.intACmd := cCMD_DONE;
 	CIf.job.intMCmd  := cCMD_DONE;
+ELSIF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.OFF) THEN
+	me.Alarm.eParent_ActivAlmClass := E_AlmClass.OFF;
+ELSIF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.STOP) THEN
+	me.Alarm.eParent_ActivAlmClass := E_AlmClass.STOP;
 ELSE
 	me.Alarm.eParent_ActivAlmClass := E_AlmClass.NONE;
 END_IF]]></ST>
