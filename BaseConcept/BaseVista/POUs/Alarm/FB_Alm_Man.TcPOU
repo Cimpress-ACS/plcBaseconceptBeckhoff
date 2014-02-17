@@ -44,6 +44,8 @@ VAR
 	eActiveAlmClass: E_AlmClass;
 
 	aCntActiveAlmPerClass: ARRAY[0..(E_AlmClass.Max_E_AlmClass-1)] OF UINT; // count off all active alarms per class, idx=0 all active alarms
+	bolTimeReadDone : BOOL;
+	bolTimeStampValid : BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -69,15 +71,27 @@ Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		29.04.2013		AVME/KVO	Start history
 0.00.2		06.01.2014		AVME/PRE	Implement the counted active messages array
-
+0.00.3		17.02.2014		AVME/KVO	New Property IsInitDone 
+										feedback at least one valid time stamp read out 
+										-> check at startup before cyclic call of FB's to avoid alarms without valid timestamp
 ___________________________________________________________________________________________________*)
 
-// read out actual time
+// read out actual TIME
 fbGetLocalTime.NETID := '';
-fbGetLocalTime.START := NOT fbGetLocalTime.START;
+fbGetLocalTime.START := NOT bolTimeReadDone;
 fbGetLocalTime.TMOUT := T#5S;
 fbGetLocalTime();
-strActTime := TC2_UTILITIES.SYSTEMTIME_TO_STRING(fbGetLocalTime.TIMESTR); // YYYY-MM-DD-hh:mm:ss.xxx
+
+IF (fbGetLocalTime.START=TRUE) THEN
+	IF  ((fbGetLocalTime.Busy=FALSE) AND (fbGetLocalTime.ERR=FALSE)) THEN
+		bolTimeReadDone := TRUE;
+		strActTime := TC2_UTILITIES.SYSTEMTIME_TO_STRING(fbGetLocalTime.TIMESTR); // YYYY-MM-DD-hh:mm:ss.xxx
+		bolTimeStampValid := TRUE; // -> entry alarms with valid time stamp
+	END_IF
+ELSE
+	bolTimeReadDone := FALSE;
+END_IF
+
 
 // interface for UI access
 CASE intState OF
@@ -274,6 +288,19 @@ END_VAR
 ]]></Declaration>
         <Implementation>
           <ST><![CDATA[aCntPerClass := aCntActiveAlmPerClass;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="IsInitDone" Id="{bc6c8230-f503-4835-8d3c-f70d83d308fb}">
+      <Declaration><![CDATA[PROPERTY IsInitDone : BOOL]]></Declaration>
+      <Get Name="Get" Id="{46dca853-2382-4716-a384-73b491945fe9}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[// feedback at least one valid time stamp read out 
+//-> check at startup before cyclic call of FB's to avoid alarms without valid timestamp
+IsInitDone := bolTimeStampValid;]]></ST>
         </Implementation>
       </Get>
     </Property>

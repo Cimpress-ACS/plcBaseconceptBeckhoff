@@ -634,7 +634,7 @@ SIf.Alm[E_ALM_CYL.InterlockRetract].strText := 'interlock retract - movement sto
 // Configuration defaults of class
 CIf.SwCfg.bolExist := TRUE;
 CIf.SwCfg.bolEnable := TRUE;
-CIf.SwCfg.bolSimulation := FALSE;
+CIf.SwCfg.bolSimulation := TRUE;
 
 // Parameter defaults of class
 SIf.Par.udiExtendTime_ms := 10000;
@@ -800,19 +800,20 @@ SUPER^.Always();
 // cyclic actions outside of statemachine
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	
-	; // always error supervision
+	// always error supervision
 	
-END_IF
-
-// ----------------------------------------------------------------------------------
-// overrule error always from base -> no EOFF State!! in EOFF go to OFF
-IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
-	IF (me.StateMachine.intState=cSTA_OFF) THEN
-		me.StateMachine.intStateNext := cSTA_OFF;
-	ELSE // stay in OFF
-		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	// ----------------------------------------------------------------------------------
+	// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+	IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+		IF (me.StateMachine.intState=cSTA_OFF) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		ELSE // stay in OFF
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		END_IF
 	END_IF
 END_IF
+
+
 ]]></ST>
       </Implementation>
     </Method>

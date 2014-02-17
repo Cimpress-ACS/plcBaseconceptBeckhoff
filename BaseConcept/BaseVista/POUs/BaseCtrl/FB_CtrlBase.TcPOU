@@ -37,6 +37,11 @@ Version		Date			Author		Comment
 0.00.1		25.04.2013		AVME/KVO	Start history
 0.00.2		06.01.2014		AVME/PRE	Alarmclasses EOFF, OFF and STOP are send to parent and childs
 0.00.3		08.01.2014		AVME/KVO	CheckParentAlmClass OFF and STOP added -> reaction of Controller
+0.00.4		04.02.2014		AVME/KVO	New CheckAllChildState also true feedback if check state of 
+										child OFF or EOFF and child in ERROR
+0.00.5		17.02.2014		AVME/KVO	Bug fix Always Single-answer and startup with wait on PON before change 
+										state to EOFFBusy and so on
+										Bug fix in CheckParentAlmClass not reset command PON
 ___________________________________________________________________________________________________*)
 
 
@@ -160,7 +165,12 @@ END_VAR]]></Declaration>
 CheckAllChildState := TRUE;
 IF (CIf.Info.uinChildNbr > 0) THEN
 	FOR uinIdx := 0 TO CIf.Info.uinChildNbr - 1 DO
-		CheckAllChildState := CheckAllChildState AND (CIf.Info.p_aCIf[uinIdx]^.Job.intState = In_intCheckState);
+		IF ((In_intCheckState<>cSTA_EOFF) AND (In_intCheckState<>cSTA_OFF)) THEN
+			CheckAllChildState := CheckAllChildState AND (CIf.Info.p_aCIf[uinIdx]^.Job.intState = In_intCheckState);
+		ELSE
+			// if controlled state is OFF or EOFF and child is in ERROR -> answer state reached
+			CheckAllChildState := (CheckAllChildState AND ((CIf.Info.p_aCIf[uinIdx]^.Job.intState = In_intCheckState) OR (CIf.Info.p_aCIf[uinIdx]^.Job.intState = cSTA_ERROR)));
+		END_IF
 		IF (CheckAllChildState=FALSE) THEN	// at least one child has not whished state reached
 			EXIT ;
 		END_IF 
@@ -459,7 +469,7 @@ END_VAR
 		IF (FALSE) THEN
 			;
 		ELSIF (me.intCmd<>cCMD_PON) AND (me.intCmd<>cCMD_DONE) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
+			me.StateMachine.intStateNext := cSTA_EOFFBusy;
 		END_IF
 	END_IF
 
@@ -864,22 +874,29 @@ IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off con
 	me.bolChangeBackToAUTO := FALSE;
 END_IF
 
-IF (CIf.SwCfg.bolExist=FALSE) AND (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN // hardware of controller does not exist
+IF (CIf.SwCfg.bolExist=FALSE) THEN // hardware of controller does not exist
 	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
-ELSIF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.intCmd=cCMD_EOFF)) 
-		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
-		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN
-	me.StateMachine.intStateNext := cSTA_EOFFBusy;
-ELSIF (((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) 
+ELSE
+	IF (((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) 
 		AND (me.StateMachine.intState<>cSTA_PONBusy) AND (me.StateMachine.intState<>cSTA_PON)
 		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
 		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN // switch after startup to PONBusy
-	me.StateMachine.intStateNext := cSTA_PONBusy;
-ELSIF (((me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
+		me.StateMachine.intStateNext := cSTA_PONBusy;
+		
+	ELSIF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.intCmd=cCMD_EOFF)) 
+		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
+		AND (me.StateMachine.intState>cSTA_PON)) THEN
+		me.StateMachine.intStateNext := cSTA_EOFFBusy;
+	
+	ELSIF (((me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
 		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
 		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
-		AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
-	me.StateMachine.intStateNext := cSTA_OFFBusy;	
+		AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
+		AND (me.StateMachine.intState>cSTA_PON)) THEN
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	
+	END_IF
 END_IF
 		]]></ST>
       </Implementation>
@@ -931,8 +948,13 @@ END_IF
 IF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.EOFF) THEN
 	me.Alarm.eParent_ActivAlmClass := E_AlmClass.EOFF;
 	// prevent automatic restart in manual or automatic
-	CIf.job.intACmd := cCMD_DONE;
-	CIf.job.intMCmd  := cCMD_DONE;
+	IF (CIf.job.intACmd<>cCMD_PON) THEN // wait on startup until power on is ok
+		CIf.job.intACmd := cCMD_DONE;
+	END_IF
+	
+	IF (CIf.job.intMCmd<>cCMD_PON) THEN // wait on startup until power on is ok
+		CIf.job.intMCmd := cCMD_DONE;
+	END_IF
 ELSIF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.OFF) THEN
 	me.Alarm.eParent_ActivAlmClass := E_AlmClass.OFF;
 ELSIF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.STOP) THEN

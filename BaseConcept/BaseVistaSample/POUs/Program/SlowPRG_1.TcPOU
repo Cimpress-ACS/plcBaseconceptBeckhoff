@@ -31,6 +31,7 @@ Version		Date			Author		Comment
 0.00.1		24.05.2013		AVME/KVO	Start history
 0.00.2		07.11.2013		AVME/KVO	Add local variabel fbAlm_Man, Add set all initialized controller FB the property of the alarm manager adress 
 0.00.3		08.11.2013		AVME/KVO	global g_p_fbAlm_Man adress assigned
+0.00.4		17.02.2014		AVME/KVO	startup check init FB_Alarm IsInitDone
 ___________________________________________________________________________________________________*)
 
 
@@ -63,10 +64,14 @@ END_IF
 // Start PLC code initialization
 // -----------------------------------------------------------------------------------------------
 IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(uinTaskNbr-1)+20) THEN
+	// init call alarm FB until init is done
+	fbAlm_Man(bolCtrlRst:= bolCtrlRst);
 	
 	// init	
-	bolInitDone := TRUE;
-	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
+	IF (fbAlm_Man.IsInitDone = TRUE) THEN
+		bolInitDone := TRUE;
+		g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
+	END_IF
 END_IF
 // -----------------------------------------------------------------------------------------------
 
