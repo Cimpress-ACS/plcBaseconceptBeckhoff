@@ -42,6 +42,8 @@ Version		Date			Author		Comment
 0.00.5		17.02.2014		AVME/KVO	Bug fix Always Single-answer and startup with wait on PON before change 
 										state to EOFFBusy and so on
 										Bug fix in CheckParentAlmClass not reset command PON
+0.00.6		26.02.2014		AVME/DSC	State single answer. Reset pending alarm class to NONE.
+
 ___________________________________________________________________________________________________*)
 
 
@@ -79,6 +81,9 @@ END_IF;]]></ST>
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
+		// Reset pending alarm class
+		CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE;
+	
 		IF ((me.intCmd<>cCMD_INITIALIZED) AND (me.intCmd<>cCMD_DONE)) THEN
 			IF (THIS^.CheckCmdValid()=TRUE) THEN
 				IF (me.intCmd<>me.intCmdLast) THEN
