@@ -1,0 +1,159 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="FB_DLL" Id="{27da95ab-ef8b-4085-87ac-3d26d946b2e6}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DLL
+VAR
+	bDoDataWipe: BOOL := FALSE;
+	pFirstElement: POINTER TO T_Element;
+	pLastElement: POINTER TO T_Element;
+	uiNumberOfElements: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="deleteElement" Id="{67c9efe4-074f-437f-800f-9aeca53e4ed9}">
+      <Declaration><![CDATA[METHOD deleteElement : POINTER TO BYTE
+VAR_INPUT
+	In_pDeleteElement: POINTER TO T_Element;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[deleteElement := In_pDeleteElement^.pData;
+
+IF bDoDataWipe THEN
+	IF (In_pDeleteElement^.pData <> TC3_MEMMAN.NULL) THEN
+		__DELETE(In_pDeleteElement^.pData);
+	END_IF
+	deleteElement := TC3_MEMMAN.NULL;
+END_IF
+
+IF (In_pDeleteElement = pFirstElement AND In_pDeleteElement = pLastElement) THEN
+	pFirstElement := TC3_MEMMAN.NULL;
+	pLastElement := TC3_MEMMAN.NULL;
+ELSIF (In_pDeleteElement = pFirstElement) THEN
+	pFirstElement := In_pDeleteElement^.pNextElement;
+	In_pDeleteElement^.pNextElement^.pPrevElement := TC3_MEMMAN.NULL;
+ELSIF (In_pDeleteElement = pLastElement) THEN
+	pLastElement := In_pDeleteElement^.pPrevElement;
+	In_pDeleteElement^.pPrevElement^.pNextElement := TC3_MEMMAN.NULL;
+ELSE
+	In_pDeleteElement^.pPrevElement^.pNextElement := In_pDeleteElement^.pNextElement;
+	In_pDeleteElement^.pNextElement^.pPrevElement := In_pDeleteElement^.pPrevElement;
+END_IF
+
+__DELETE(In_pDeleteElement);
+
+uiNumberOfElements := uiNumberOfElements - 1;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="searchElement" Id="{84f75359-5be7-42dd-8362-d63b175b040b}">
+      <Declaration><![CDATA[METHOD searchElement : POINTER TO T_Element
+VAR_INPUT
+	In_uliKey: ULINT;
+END_VAR
+VAR
+	pCurrentElement: POINTER TO T_Element;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[searchElement := TC3_MEMMAN.NULL;
+pCurrentElement := pFirstElement;
+
+WHILE (pCurrentElement <> TC3_MEMMAN.NULL) DO
+	IF (pCurrentElement^.uliKey = In_uliKey) THEN
+		searchElement := pCurrentElement;
+		EXIT;
+	END_IF
+	pCurrentElement := pCurrentElement^.pNextElement;
+END_WHILE]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="FB_init" Id="{b139a589-32a7-4e6c-9399-5df40a220e0b}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	/// if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	/// if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+	/// if TRUE, the stored data object are automatically deleted
+	In_bDoDataWipe: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pFirstElement := TC3_MEMMAN.NULL;
+pLastElement := TC3_MEMMAN.NULL;
+uiNumberOfElements := 0;
+
+bDoDataWipe := In_bDoDataWipe;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="addElement" Id="{6c0fab46-114b-4801-8bf3-0b2484a1c797}">
+      <Declaration><![CDATA[METHOD addElement : POINTER TO T_Element
+VAR_INPUT
+	In_pData: POINTER TO BYTE;
+	In_uliKey: ULINT;
+END_VAR
+VAR
+	pCurrentElement: POINTER TO T_Element;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[addElement := TC3_MEMMAN.NULL;
+
+IF (pFirstElement = TC3_MEMMAN.NULL) THEN
+	pCurrentElement := __NEW(T_Element);
+	pFirstElement := pCurrentElement;
+	pLastElement := pCurrentElement;
+	pCurrentElement^.pPrevElement := TC3_MEMMAN.NULL;
+	pCurrentElement^.pNextElement := TC3_MEMMAN.NULL;
+	pCurrentElement^.pData := In_pData;
+	pCurrentElement^.uliKey := In_uliKey;
+	addElement := pCurrentElement;
+ELSE
+	pCurrentElement := __NEW(T_Element);
+	pCurrentElement^.pPrevElement := pLastElement;
+	pCurrentElement^.pNextElement := TC3_MEMMAN.NULL;
+	pCurrentElement^.pData := In_pData;
+	pCurrentElement^.uliKey := In_uliKey;
+	pLastElement^.pNextElement := pCurrentElement;
+	pLastElement := pCurrentElement;
+	addElement := pCurrentElement;
+END_IF
+
+uiNumberOfElements := uiNumberOfElements + 1;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="firstElement" Id="{8998017c-1c0c-438a-b7c0-232ba0301198}">
+      <Declaration><![CDATA[METHOD firstElement : POINTER TO T_Element
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[firstElement := pFirstElement;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="deleteAll" Id="{bcbc057a-518d-46d5-bd7c-2efb77b9c086}">
+      <Declaration><![CDATA[METHOD deleteAll : POINTER TO T_Element
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[WHILE (pFirstElement <> TC3_MEMMAN.NULL) DO
+	__DELETE(pFirstElement^.pData);
+	deleteElement(pFirstElement);
+END_WHILE]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="numberOfElements" Id="{dc455191-2fd7-42cd-a75a-dde2ac3803b5}">
+      <Declaration><![CDATA[METHOD numberOfElements : UINT
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[numberOfElements := uiNumberOfElements;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

@@ -15,7 +15,7 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.4.2</ProjectVersion>
+    <ProjectVersion>0.3.4.3</ProjectVersion>
     <Released>True</Released>
     <Description>0.3.4.2 - Changed the Pramas Text in FB_CtrlBase
 0.3.4.1 - State single answer. Reset pending alarm class to NONE.
@@ -125,40 +125,46 @@ Automatic Substate handling.
     <Compile Include="POUs\BaseCtrl\T_fbInfo.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\getInBol.TcPOU">
+    <Compile Include="POUs\Utility\DLL (Double Linked List)\FB_DLL.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\getInBolDebounced.TcPOU">
+    <Compile Include="POUs\Utility\DLL (Double Linked List)\T_Element.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\getInInt.TcPOU">
+    <Compile Include="POUs\Utility\getInBol.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\getInUint.TcPOU">
+    <Compile Include="POUs\Utility\getInBolDebounced.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\getInUsint.TcPOU">
+    <Compile Include="POUs\Utility\getInInt.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\getStrInstanceName.TcPOU">
+    <Compile Include="POUs\Utility\getInUint.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\setAllCtrlAlarmFB.TcPOU">
+    <Compile Include="POUs\Utility\getInUsint.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\ScaleINT.TcPOU">
+    <Compile Include="POUs\Utility\getStrInstanceName.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\setOutBol.TcPOU">
+    <Compile Include="POUs\Utility\setAllCtrlAlarmFB.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\setOutInt.TcPOU">
+    <Compile Include="POUs\Utility\ScaleINT.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\setOutUint.TcPOU">
+    <Compile Include="POUs\Utility\setOutBol.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Utility Functions\setOutUsint.TcPOU">
+    <Compile Include="POUs\Utility\setOutInt.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\setOutUint.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\setOutUsint.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Version\Global_Version.TcGVL">
@@ -169,7 +175,8 @@ Automatic Substate handling.
     <Folder Include="POUs\" />
     <Folder Include="POUs\Alarm\" />
     <Folder Include="POUs\BaseCtrl\" />
-    <Folder Include="POUs\Utility Functions\" />
+    <Folder Include="POUs\Utility" />
+    <Folder Include="POUs\Utility\DLL %28Double Linked List%29" />
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
@@ -204,6 +211,9 @@ Automatic Substate handling.
   <ItemGroup>
     <LibraryReference Include="Tc2_Utilities,newest,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_MemMan,newest,Beckhoff Automation GmbH">
+      <Namespace>Tc3_MemMan</Namespace>
     </LibraryReference>
   </ItemGroup>
   <ProjectExtensions />

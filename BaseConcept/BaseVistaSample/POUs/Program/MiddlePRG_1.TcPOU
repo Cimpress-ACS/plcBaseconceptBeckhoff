@@ -10,6 +10,8 @@ VAR
 	fbVER_2: FB_CYL;
 	fbHOR_2: FB_CYL;
 	
+	fbDLL_1: BASE_PLC.FB_DLL(In_bDoDataWipe:=FALSE);
+	
 END_VAR
 ]]></Declaration>
     <Implementation>

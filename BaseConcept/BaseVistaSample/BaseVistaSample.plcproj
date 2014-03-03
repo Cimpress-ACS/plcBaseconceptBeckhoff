@@ -149,11 +149,14 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.4.1,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.4.3,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_Utilities,newest,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
+      <Namespace>Tc3_MemMan</Namespace>
     </LibraryReference>
   </ItemGroup>
   <ItemGroup>
