@@ -131,32 +131,26 @@
     <Folder Include="POUs\Utility Functions\" />
   </ItemGroup>
   <ItemGroup>
-    <PlaceholderReference Include="Tc2_Standard">
-      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc2_Standard</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Tc2_System">
-      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc2_System</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Tc3_Interfaces">
-      <DefaultResolution>Tc3_Interfaces, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc3_Interfaces</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Tc3_Module">
-      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc3_Module</Namespace>
-    </PlaceholderReference>
-  </ItemGroup>
-  <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.4.3,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.4.4,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_Utilities,newest,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_Standard</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_System,3.3.5.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_System</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_Utilities,3.3.7.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc3_Interfaces</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_MemMan</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_Module,3.3.5.0,Beckhoff Automation GmbH">
+      <Namespace>Tc3_Module</Namespace>
     </LibraryReference>
   </ItemGroup>
   <ItemGroup>

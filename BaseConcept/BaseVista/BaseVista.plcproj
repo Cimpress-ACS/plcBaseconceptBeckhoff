@@ -15,7 +15,7 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.4.3</ProjectVersion>
+    <ProjectVersion>0.3.4.4</ProjectVersion>
     <Released>True</Released>
     <Description>0.3.4.2 - Changed the Pramas Text in FB_CtrlBase
 0.3.4.1 - State single answer. Reset pending alarm class to NONE.
@@ -180,24 +180,6 @@ Automatic Substate handling.
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <PlaceholderReference Include="Tc2_Standard">
-      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc2_Standard</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Tc2_System">
-      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc2_System</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Tc3_Interfaces">
-      <DefaultResolution>Tc3_Interfaces, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc3_Interfaces</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Tc3_Module">
-      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc3_Module</Namespace>
-    </PlaceholderReference>
-  </ItemGroup>
-  <ItemGroup>
     <SubObject Include="FB_CtrlBase.CheckAllChildAlmClass_1" />
     <SubObject Include="FB_CtrlBase.CheckAllChildState_1" />
     <SubObject Include="FB_CtrlBase.CheckChildAlmClass" />
@@ -209,11 +191,23 @@ Automatic Substate handling.
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Tc2_Utilities,newest,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_Standard</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_System,3.3.5.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_System</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_Utilities,3.3.7.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc3_MemMan,newest,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc3_Interfaces</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_MemMan</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_Module,3.3.5.0,Beckhoff Automation GmbH">
+      <Namespace>Tc3_Module</Namespace>
     </LibraryReference>
   </ItemGroup>
   <ProjectExtensions />
