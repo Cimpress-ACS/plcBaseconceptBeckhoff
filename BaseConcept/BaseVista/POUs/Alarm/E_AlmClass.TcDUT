@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <DUT Name="E_AlmClass" Id="{82a4a8f0-7c0b-4aae-9acb-8c95c51b0bfc}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="E_AlmClass" Id="{9564e666-48ec-4909-a84d-5c1c0066f49f}">
     <Declaration><![CDATA[TYPE E_AlmClass :
 (
 	///no alarm active

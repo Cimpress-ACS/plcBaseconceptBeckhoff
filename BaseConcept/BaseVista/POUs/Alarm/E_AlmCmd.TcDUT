@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
-  <DUT Name="E_AlmCmd" Id="{9a8c5e4d-6db7-4453-ad1a-00911a08a9f5}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="E_AlmCmd" Id="{f7db89ab-8f06-4067-ac37-ded4a58b9a71}">
     <Declaration><![CDATA[TYPE E_AlmCmd :
 (
 	DONE := -1,

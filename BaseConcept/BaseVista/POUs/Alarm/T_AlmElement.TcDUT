@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <DUT Name="T_AlmElement" Id="{9def8861-4bd0-4bfd-9cab-5879a3bed286}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_AlmElement" Id="{3e894be3-c181-4f30-b7e0-837e592d1145}">
     <Declaration><![CDATA[TYPE T_AlmElement :
 STRUCT
 	///unique alarm number := 100000*udiMachineNr + intCtrlId*100 + udiAlarmNr
