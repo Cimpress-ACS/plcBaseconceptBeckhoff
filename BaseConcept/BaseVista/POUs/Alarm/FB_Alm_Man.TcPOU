@@ -76,6 +76,7 @@ Version		Date			Author		Comment
 										-> check at startup before cyclic call of FB's to avoid alarms without valid timestamp
 0.00.4		16.05.2014		AVME/DSC	-> Inserted new "setAlarm" Method from Patrik C. (code review)									
 										-> BugFix, build sum of all active alarms
+0.00.5		07.07.2014		AVME/KVO	-> BugFix Method setAlarm , clr and reset -> also possibel if one entry is zero possibel
 ___________________________________________________________________________________________________*)
 
 // read out actual TIME
@@ -225,6 +226,7 @@ END_VAR
 VAR
 	InAlmElement: T_AlmElement;
 	ii: UINT;
+	uinFirstEmptyIdx : UINT;
 	e_LocAlmClass: E_AlmClass;
 END_VAR
 ]]></Declaration>
@@ -249,10 +251,20 @@ InAlmElement.strDTEntry := strActTime;
 InAlmElement.strText := p_Ctrl_Alm[udiAlarmNr-1].strText;
 
 ii := 0;
-WHILE (ii <= c_uinMaxAlmElements) AND (aAlm[ii].udiNr <> 0) AND (InAlmElement.udiNr <> aAlm[ii].udiNr) DO
+uinFirstEmptyIdx := c_uinMaxAlmElements + 1;
+//KVO 7.7.2014 AND (aAlm[ii].udiNr <> 0) removed from while because there could be entries above a cleared alarm!
+WHILE (ii <= c_uinMaxAlmElements)  AND (InAlmElement.udiNr <> aAlm[ii].udiNr) DO
+	IF (aAlm[ii].udiNr = 0) AND (uinFirstEmptyIdx>c_uinMaxAlmElements) THEN // entry first empty index
+		uinFirstEmptyIdx := ii;
+	END_IF
 	ii := ii + 1;              
 END_WHILE
- 
+
+// set ii to first empty place (new entry) in array if entry not allready exists in array
+IF (uinFirstEmptyIdx<= c_uinMaxAlmElements) AND (InAlmElement.udiNr <> aAlm[ii].udiNr) THEN
+	ii := uinFirstEmptyIdx;
+END_IF
+
 IF (ii <= c_uinMaxAlmElements) THEN
 	
 	// Alarm already exist
