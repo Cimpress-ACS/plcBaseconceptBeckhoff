@@ -1,8 +1,9 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <GVL Name="Base_Const" Id="{f42e0853-8ea7-40ac-ab02-2078e6e00b3d}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///number of child access possible in one controller class
-	cMaxNrOfChilds: UINT := 25;
+	cMaxNrOfChilds: UINT := 30;
 	///maximal number of commands implemented in one controller class
 	cMaxCmdPerCtrl: UINT := 15;
 	///maximal number of commands implemented in one controller class

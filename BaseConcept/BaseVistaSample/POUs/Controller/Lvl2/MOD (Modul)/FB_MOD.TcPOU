@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_MOD" Id="{ce39c9c5-f1f6-48a4-885d-15a7f8be770f}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MOD EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -59,23 +60,7 @@ Version		Date			Author		Comment
 
 ___________________________________________________________________________________________________*)
 
-// check if child pointer valid
-IF (me.bolActivate) AND (In_p_fbHOR<>0) AND (In_p_fbVER<>0) THEN // cyclic call enabled
-	
-	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
-		CtrlInit();
-		CIf.Info.bolInitDone := TRUE;
-	ELSE
-		CycleStartDuty();
-	
-		Always();
-		
-		StateMachine();
-		
-		CycleEndDuty();
-	END_IF
-	
-END_IF;]]></ST>
+SUPER^();]]></ST>
     </Implementation>
     <Method Name="sta_ERRORQuit" Id="{06630e5b-a1d1-445c-ae3c-6895aea5b0cc}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
@@ -638,7 +623,7 @@ END_IF
       </Implementation>
     </Method>
     <Method Name="CtrlInit" Id="{fa45c37c-8fb5-43fd-999f-238e463548c4}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
+      <Declaration><![CDATA[METHOD PUBLIC CtrlInit : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.CtrlInit();

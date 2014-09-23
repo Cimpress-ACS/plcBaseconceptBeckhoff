@@ -15,10 +15,13 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.4.8</ProjectVersion>
+    <ProjectVersion>0.3.4.9</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.4.8 - BugFix setAlarm (rst,clr &amp; set)
-0.3.4.7 - Increased the maxchildnumber to 40
+    <Description>0.3.4.9 - Increased maxchildnumber to 30
+            - CtrlInit made Public
+            - New CtrlInit call only once flag
+0.3.4.8 - BugFix setAlarm (rst,clr &amp; set)
+0.3.4.7 - Increased the maxchildnumber to 25
 0.3.4.6 - Increased the maxchildnumber to 40
 0.3.4.5 - BugFix in alarm manager
 0.3.4.2 - Changed the Pramas Text in FB_CtrlBase
