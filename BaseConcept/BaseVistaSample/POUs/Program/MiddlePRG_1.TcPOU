@@ -1,10 +1,8 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="MiddlePRG_1" Id="{fc4c9c72-f24d-4184-a857-29a82ecbaa1c}">
     <Declaration><![CDATA[PROGRAM MiddlePRG_1
 VAR
-	bolPlcStartupDone: BOOL := FALSE;
-	bolHostInitDone : BOOL := FALSE;
-	bolInitDone : BOOL := FALSE;
 	uinTaskNbr : UINT := 2; // MiddleTask is Task Nr. 2
 	fbMOD_2: FB_MOD;
 	fbVER_2: FB_CYL;
@@ -38,13 +36,12 @@ ________________________________________________________________________________
 // -----------------------------------------------------------------------------------------------
 // Initialize the PLC Parameter and check the PLC health
 // -----------------------------------------------------------------------------------------------
-IF ((NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1))) THEN
+IF (g_uinStartProzess=(uinTaskNbr-1)) THEN
 	// init
 	//Driver
 	
 	//Lvl1
 	fbHOR_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.HOR_2); // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
-	
 	fbVER_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VER_2); // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
 
 	//Lvl2
@@ -52,8 +49,7 @@ IF ((NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1))) THEN
 	// add childs
 	fbMOD_2.In_p_fbHOR := g_a_pCtrlInst[E_CtrlId.HOR_2];
 	fbMOD_2.In_p_fbVER := g_a_pCtrlInst[E_CtrlId.VER_2];
-
-	bolPlcStartupDone := TRUE;	
+	
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
@@ -63,8 +59,7 @@ END_IF
 // The host system is downloading all parameter at startup. 
 // bolPlcStartupDone will be set to true after the Host is done with the initialization
 // -----------------------------------------------------------------------------------------------
-IF (bolPlcStartupDone AND (NOT bolHostInitDone) AND NOT bolInitDone AND (g_uinStartProzess>=(uinTaskNbr-1)+10)) THEN
-	bolHostInitDone := TRUE;
+IF (g_uinStartProzess=(uinTaskNbr-1)+10) THEN
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
@@ -73,12 +68,11 @@ END_IF
 // -----------------------------------------------------------------------------------------------
 // Start PLC code initialization
 // -----------------------------------------------------------------------------------------------
-IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(uinTaskNbr-1)+20) THEN
+IF (g_uinStartProzess=(uinTaskNbr-1)+20) THEN
 	
 	// init
 	fbMOD_2.CtrlCIf^.Job.intACmd := cCMD_RUN;
 	
-	bolInitDone := TRUE;
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
@@ -88,7 +82,7 @@ END_IF
 // -----------------------------------------------------------------------------------------------
 // Normal Run mode after all the initialization is done
 // -----------------------------------------------------------------------------------------------
-IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(20+c_uinCntTaskClass))) THEN
+IF (g_uinStartProzess>=(20+c_uinCntTaskClass)) THEN
 	
 	//****************************************************************************************************
 	// cyclic controller calls
@@ -105,7 +99,7 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 	fbHOR_2();
 	Out_bolHOR_2_Retract := fbHOR_2.Out_bolRetract;
 	Out_bolHOR_2_Extend := fbHOR_2.Out_bolExtend;
-	
+
 END_IF
 // -----------------------------------------------------------------------------------------------
 

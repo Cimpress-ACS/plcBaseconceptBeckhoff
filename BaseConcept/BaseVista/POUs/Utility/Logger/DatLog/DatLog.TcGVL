@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="DatLog" Id="{9e64d1ce-eb5d-4741-ad5a-feec77a8073a}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	// internal
+	cVAR_TYPE_BOOL : USINT := 1; (*Variable hat den Datentyp BOOL*)
+	cVAR_TYPE_SINT : USINT := 2; (*Variable hat den Datentyp SINT*)
+	cVAR_TYPE_INT : USINT := 3; (*Variable hat den Datentyp INT*)
+	cVAR_TYPE_DINT : USINT := 4; (*Variable hat den Datentyp DINT*)
+	cVAR_TYPE_USINT : USINT := 5; (*Variable hat den Datentyp USINT*)
+	cVAR_TYPE_UINT : USINT := 6; (*Variable hat den Datentyp UINT*)
+	cVAR_TYPE_UDINT : USINT := 7; (*Variable hat den Datentyp UDINT*)
+	cVAR_TYPE_LREAL : USINT := 10; (*Variable hat den Datentyp REAL*)
+	cVAR_TYPE_REAL : USINT := 8; (*Variable hat den Datentyp REAL*)
+	cVAR_TYPE_STRING : USINT := 9; (*Variable hat den Datentyp STRING*)
+	cVAR_TYPE_DATE_AND_TIME : USINT := 11; (*Variable hat den Datentyp DATE_AND_TIME*)
+	cCTRL_ID : INT := 32001; // control ID from data log
+
+	// limits	
+	cMAX_SYS_NAME_LENGTH : USINT := 30; //max name length of system data log name
+	cMAX_VAR_NAME_LEN : USINT := 50; // max len of variable name
+	cMAX_NR_OF_VAR : UINT := 20; // max number of variables definable to log
+
+	// error number	
+	cERR_MEM_ALLOC : UINT := 53001; // error on allocating memory 
+	cERR_NO_HANDLE : UINT := 53002; // no handle received => fbGetHandle()
+	cERR_NO_DATE : UINT := 53003; // no valid data pointer received
+	cERR_INIT_FAILED : UINT := 53006; // 
+	cERR_NO_ITEMS : UINT := 53004; // 
+	cERR_UNSUPPORTED_TYPE : UINT := 53005; // the system support this datatyp not
+	cERR_UNSUPPORTED_TYPE_STRING_TOO_LONG : UINT := 53006; // defined string in base log shorter then log string
+END_VAR
+]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

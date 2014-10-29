@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Bl_LibSingleClient" Id="{7da0ba37-98fc-4625-9c21-2885d89955f9}">
+    <Declaration><![CDATA[TYPE T_Bl_LibSingleClient :
+STRUCT
+	strName : STRING(Queue.cMAX_NAME_LENGTH); // name of declared client
+	udiMask : UDINT; // filter mask for selection
+	udiNrOfElements: UDINT; // number of elements
+	bolUseLocalTimeStamp : BOOL; // definition if using local time or UTC
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

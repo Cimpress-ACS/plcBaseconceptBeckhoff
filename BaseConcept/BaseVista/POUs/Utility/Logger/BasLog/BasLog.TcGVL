@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="BasLog" Id="{26775918-0c60-4dda-8767-a2e84872beca}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	// internal
+	cCLIENT_NAME_PF : STRING(10) := '__logClnt'; //Prefix for client name
+	cVAR_TYPE_CMD_NEW_REC : USINT := 201; // command for log-records (collect multiple base log entries)
+	cVAR_TYPE_CMD_END_REC : USINT := 202; // command for log-records (collect multiple base log entries)
+	
+	// limits
+	cMAX_CLIENTS : USINT := 5; // maximal number of clients 
+	cMAX_CHAR_TEXT1: USINT := 80;	// maximal number of chars for information text1
+	cMAX_CHAR_TEXT2: USINT := 80;	// maximal number of chars for information text2	
+	
+	// log types
+	cLOGTYPE_ALARM : UDINT:=1; //logtyp alarm
+	cLOGTYPE_WARNING : UDINT:=2; //logtyp warning
+	cLOGTYPE_INFO : UDINT:=4; //logtyp info
+	cLOGTYPE_STATELOG : UDINT:=8; //logtyp state log (for statmachine diagnostic)
+	cLOGTYPE_PV_EVENT : UDINT:=16; //logtyp triggered value log
+	cLOGTYPE_PV_CYCLIC : UDINT:=32; //logtyp cyclic value log 
+	cLOGTYPE_DATA : UDINT:=64; //logtyp data logger
+	
+	// error number
+	cERR_TOO_MANY_CLIENTS : UINT := 51001; // max number of clients connected
+	cERR_SYSTEM_NOT_FOUND : UINT := 51002; // the system with this name does not exist
+	cERR_INVALID_LOGTYPE : UINT := 51003; // log type is not correct bit coded
+	cERR_NO_WRITE_TASK : UINT := 51004; // no client added (no handle from a task)
+	cERR_NO_HANDLE : UINT := 51005; // no handle received => fbGetHandle()
+	cERR_NO_FB_TIME_STAMP_POINTER : UINT := 51006; // no pointer for FB_TimeStamp
+	cERR_NO_FB_TIME_STAMP_INIT_NOT_OK : UINT := 51007; // time stamp value not ready for read out
+END_VAR
+]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

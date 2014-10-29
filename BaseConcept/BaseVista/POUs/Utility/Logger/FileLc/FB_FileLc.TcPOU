@@ -1,0 +1,754 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_FileLc" Id="{5b3041bf-f9fa-4694-a41b-1dbb2b9cde3c}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FileLc
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	stFileLogClientLibInfo : T_FileLc_LibInfo;
+	strInfo: Tc2_System.T_MaxString;	// additional debug Info
+	bolExecute_old : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+File client read out informations from BaseLog system and writes based on a config file the log entries to a file.
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		18.08.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{46c167f9-a6a2-4c24-bc25-faa5729288dd}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Init : BOOL
+VAR_INPUT
+	In_strCfgFileName: STRING(FileLc.cFILENAME_LENGTH); // name of the config/template file
+	In_strPath: STRING(FileLc.cPATH_LENGTH);  // path of the config/template file
+	In_p_fbBasLog: POINTER TO FB_BasLog; // only one central FB_BasLog instance allowed per PLC!!!
+	In_bolExecute : BOOL;
+	In_p_uinFLcIdx : POINTER TO UINT; // actual file client id
+END_VAR
+VAR_OUTPUT
+	Out_pHandle: POINTER TO T_FileLc_SysInfo; // handle for cyclic call	
+	Out_udiStatus: UDINT; 	// 0 => successful done, <>0 => error
+	Out_bolDone: BOOL;		// Done
+END_VAR
+
+VAR
+	strClientName : STRING(255);
+	uinFLcIdxForArr : UINT;
+	udiStatus : UDINT;
+	udiMask : UDINT;
+	uinInitStatus : UINT;
+	pQueueInfoHandle : POINTER TO POINTER TO T_Queue_Info;
+	fbGETCURTASKINDEX: Tc2_System.GETCURTASKINDEX;
+	udiTaskCnt : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// only one client init at the same on PLC possibel!!!
+IF (In_p_uinFLcIdx<>Tc3_MemMan.NULL) THEN // valid actual id reference
+	IF (In_bolExecute=TRUE) THEN
+		// wait until release init rom other clients...
+		IF  ((stFileLogClientLibInfo.uinActClientInitActive=0) OR (stFileLogClientLibInfo.uinActClientInitActive=In_p_uinFLcIdx^)) THEN
+			IF (stFileLogClientLibInfo.uinActClientInitActive=0) THEN
+				stFileLogClientLibInfo.uinActClientInitActive := stFileLogClientLibInfo.uinActNbrOfFileClients + 1; // lock init of other clients!!!
+				In_p_uinFLcIdx^ := stFileLogClientLibInfo.uinActClientInitActive;
+				
+				Out_bolDone := 0;
+				Out_udiStatus := 0;
+				Out_pHandle := 0;
+				//reset statemachine
+				(* check input parameter *)
+				IF (stFileLogClientLibInfo.uinActNbrOfFileClients >= FileLc.cMAX_NBR_OF_FILECLIENTS) THEN
+					Out_udiStatus := FileLc.cERR_NBR_OF_FC_EXEEDED;
+					RETURN;
+				END_IF
+				
+				IF (In_strCfgFileName='') THEN
+					Out_udiStatus := FileLc.cERR_FILENAME_MISSING;
+					RETURN;
+				END_IF
+				
+				IF (In_strPath='') THEN
+					Out_udiStatus := FileLc.cERR_PATH_MISSING;
+					RETURN;
+				END_IF
+				
+				IF (In_p_fbBasLog=TC3_MEMMAN.NULL) THEN
+					Out_udiStatus := FileLc.cERR_NO_BASELOG;
+					RETURN;
+				END_IF
+		
+				stFileLogClientLibInfo.p_fbBasLog := In_p_fbBasLog;
+				
+				// actual client init
+				stFileLogClientLibInfo.stSysInfo[stFileLogClientLibInfo.uinActNbrOfFileClients].stStatemachine.uinState := 1;
+				stFileLogClientLibInfo.stSysInfo[stFileLogClientLibInfo.uinActNbrOfFileClients].stStatemachine.uinState_old := 0;
+				stFileLogClientLibInfo.stSysInfo[stFileLogClientLibInfo.uinActNbrOfFileClients].fbFileLc_WorkOnFile(In_bolExecute:=FALSE); // reset statemachine on next positive edge!
+				
+				// increment client number
+				stFileLogClientLibInfo.uinActNbrOfFileClients := stFileLogClientLibInfo.uinActNbrOfFileClients + 1;
+				
+				
+			END_IF
+		
+			// valid client idx
+			IF (In_p_uinFLcIdx^>0) THEN
+				uinFLcIdxForArr := In_p_uinFLcIdx^-1; // access idx for arrays!
+			
+				CASE stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].stStatemachine.uinState OF
+					1:
+						// check template/config file */
+						stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].fbFileLc_WorkOnFile(In_bolExecute:=TRUE,In_strPath:=In_strPath,In_strCfgFileName:=In_strCfgFileName,In_pstSysInfo := ADR(stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr]));
+						IF (stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].fbFileLc_WorkOnFile.Out_udiStatus<>0) OR (stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].fbFileLc_WorkOnFile.Out_bolDone=1) THEN
+							stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].stStatemachine.uinState := 2;
+						END_IF
+						
+					2:
+						IF (stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].fbFileLc_WorkOnFile.Out_udiStatus<>0) THEN // error in template/config file
+							stFileLogClientLibInfo.uinActNbrOfFileClients := stFileLogClientLibInfo.uinActNbrOfFileClients - 1;
+							Out_udiStatus := stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].fbFileLc_WorkOnFile.Out_udiStatus;
+							RETURN;
+						END_IF
+						  
+						// register as client on base log system
+						strClientName := BasLog.cCLIENT_NAME_PF;
+						strClientName := Tc2_Standard.CONCAT(strClientName,'.fileclient');
+						strClientName := Tc2_Standard.CONCAT(strClientName,UINT_TO_STRING(uinFLcIdxForArr));
+						
+						//LOG TYPE Maske --> PVLog Event und Cyclic 
+						CASE (stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].uinLogTyp) OF
+							FileLc.cLOGTYP_DATA:
+								udiMask := BasLog.cLOGTYPE_DATA;
+							FileLc.cLOGTYP_PV:
+								udiMask := (BasLog.cLOGTYPE_PV_EVENT OR BasLog.cLOGTYPE_PV_CYCLIC);
+							FileLc.cLOGTYP_BL, FileLc.cLOGTYP_OPEN:
+								udiMask := stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].udiMask;
+						END_CASE
+						
+						stFileLogClientLibInfo.fbTimeStamp.In_strNetId := stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].stConfig.strLogNetId; // use system time of log target system
+						stFileLogClientLibInfo.fbTimeStamp.In_t_CycleTimeRefreshTimeZone := T#0S; // cyclic check time zone settings - not needed using LocalTime_FileTime_BaseWin for log system and local time
+						stFileLogClientLibInfo.p_fbBasLog^.M_ClientInit(In_strClientName:=strClientName,In_udiMask := udiMask, In_uinNrOfElement:= UDINT_TO_UINT(stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].stConfig.udiQueueLen),In_p_fbTimeStamp:=ADR(stFileLogClientLibInfo.fbTimeStamp),In_bolUseLocalTimeStamp:=stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].stConfig.bolUseLocalTimeStamp,Out_pHandle=>pQueueInfoHandle,Out_uinStatus=>udiStatus);
+						
+						IF (udiStatus<>0) THEN // check if init base log ok
+							stFileLogClientLibInfo.uinActNbrOfFileClients := stFileLogClientLibInfo.uinActNbrOfFileClients - 1;
+							Out_udiStatus := udiStatus;
+							RETURN;
+						END_IF
+				
+						//---------------------------------------------------------------------------------------------------------------
+						// set SysInfo parameter
+						stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].pBaseLogHandle := pQueueInfoHandle;
+						//DeviceName auf SysInfo Struktur ablegen
+						stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].strPathName := In_strPath;
+						
+						// get cycle time
+						// number of tasksudiTaskCnt := TwinCAT_SystemInfoVarList._AppInfo.TaskCnt;
+						fbGETCURTASKINDEX();
+						udiTaskCnt := fbGETCURTASKINDEX.index;
+						stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].udiCylceTimeMs := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10000; //[ms] X[100ns]/10000 -> [ms]
+			
+						// init filehandler
+						//automatic read out infos about FUB
+						udiStatus := stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].stFileHandler.FB_FileLc_FileHdl.M_Init(In_pstSysInfo:=ADR(stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr]));
+						IF (udiStatus<>0) THEN // check if init base log ok
+							stFileLogClientLibInfo.uinActNbrOfFileClients := stFileLogClientLibInfo.uinActNbrOfFileClients - 1;
+							Out_udiStatus := udiStatus;
+							RETURN;
+						END_IF
+						
+						// finished
+						stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].stStatemachine.uinState := 3;
+					3:
+						// wait for time stamp init ok (synchronize windows time, get time zone information!)
+						stFileLogClientLibInfo.fbTimeStamp();
+						IF (stFileLogClientLibInfo.fbTimeStamp.Out_bolInitOk) THEN
+							stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].stStatemachine.uinState := 4;
+						END_IF
+					4: 
+						stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr].stStatemachine.usiInitDone := 1;
+						Out_bolDone := TRUE; // init done
+						stFileLogClientLibInfo.uinActClientInitActive := 0; // release init of other clients!!!
+						// return adresse on actual SysInfo struct
+						Out_pHandle := ADR(stFileLogClientLibInfo.stSysInfo[uinFLcIdxForArr]);
+				END_CASE
+			END_IF
+		END_IF
+	ELSE
+		IF (stFileLogClientLibInfo.uinActClientInitActive=In_p_uinFLcIdx^) THEN // reset own flag
+			stFileLogClientLibInfo.uinActClientInitActive := 0; // release init of other clients!!!
+		END_IF
+	END_IF
+ELSE
+	Out_pHandle := 0;
+	Out_udiStatus := FileLc.cERR_NO_FLCIDX;
+	RETURN;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_PutPvIdInList" Id="{5aa4bbab-b7e9-4f8f-b62c-39052b6528e9}">
+      <Declaration><![CDATA[METHOD PROTECTED M_PutPvIdInList : UINT
+VAR_INPUT
+	In_pstSysInfo: POINTER TO T_FileLc_SysInfo;
+	In_pstData : POINTER TO T_Bl_BaseStruc;
+END_VAR
+VAR
+	pstItemDataList : POINTER TO T_FileLc_ItemData;
+  	pstItemCfgList: POINTER TO T_FileLc_ItemCfg;
+	pstItemCfgListItem: T_FileLc_ItemCfg;
+	bolItemFound : BOOL;
+	uinActItemIdx : UINT;
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Methode check received base log message and fill up the data to the item list
+pstItemCfgList := In_pstSysInfo^.stItemInfo.p_bytItemCfgList;
+
+bolItemFound := FALSE;
+
+// has the id to be overworked?
+FOR ii := 0 TO (In_pstSysInfo^.stItemInfo.uinActNbrOfItems-1) BY 1 DO
+	pstItemCfgListItem := pstItemCfgList[ii];
+	IF (pstItemCfgList[ii].dinPvId=In_pstData^.dinPar1) THEN
+	 	bolItemFound := TRUE;
+		uinActItemIdx := ii;
+		EXIT;
+	END_IF
+END_FOR
+
+// this PvId is not in list
+IF (bolItemFound=FALSE) THEN
+	M_PutPvIdInList := 0;
+	RETURN;
+END_IF
+
+(* ---------------------------------*/
+/* check reference list      */
+/* and write data to the list */
+/* ---------------------------------*)
+FOR ii := 0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+
+	(* Is the received record in reference list?*)
+	IF (In_pstSysInfo^.stItemInfo.stItemRecordData[ii].udiRecIdx = DINT_TO_UDINT(In_pstData^.dinPar4)) THEN
+			
+	  // reference to item list
+	  pstItemDataList := In_pstSysInfo^.stItemInfo.a_p_bytItemDataList[ii];
+	
+	  (* write data to item list *)
+	  IF (In_pstData^.dinPar3 = FileLc.cVAR_TYPE_STRING) THEN// data definition
+		M_WriteActItemIdx(In_pstItemDataList :=pstItemDataList,In_dinDataTyp:= FileLc.cVAR_TYPE_STRING, In_pValue:=ADR(In_pstData^.strText2), In_udiRecIdx:=DINT_TO_UDINT(In_pstData^.dinPar4), In_uinActItemIdx:=uinActItemIdx);
+	  ELSE
+		M_WriteActItemIdx(In_pstItemDataList:=pstItemDataList, In_dinDataTyp := In_pstData^.dinPar3, In_pValue := ADR(In_pstData^.dinPar2),In_udiRecIdx := DINT_TO_UDINT(In_pstData^.dinPar4), In_uinActItemIdx := uinActItemIdx);
+	  END_IF
+	  EXIT;
+	END_IF
+END_FOR		
+
+M_PutPvIdInList := 0;
+RETURN;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Cyclic" Id="{64a6c141-0a17-4b9f-b9b3-8466a96c8ce0}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Cyclic : UDINT
+VAR_INPUT
+	In_pHandle: POINTER TO T_FileLc_SysInfo; // handle for cyclic call
+END_VAR
+VAR
+	pstSysInfo : POINTER TO T_FileLc_SysInfo;
+ 	pstItemDataList : POINTER TO T_FileLc_ItemData;
+  	pstItemCfgList: POINTER TO T_FileLc_ItemCfg;
+	stData : T_Bl_BaseStruc; // Data struct for read out
+	uinReadStatus : UINT;
+	ii : UINT;
+	jj : UINT;
+	bolWriteRecord : BOOL;
+	pstrTmp : POINTER TO T_MaxString;
+	strTmp:T_MaxString;
+	p_Tmp_bytTmpFileBuffer : POINTER TO BYTE;
+	bolKVO:BOOL;
+	udiStatus : UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// check handle ok
+IF (In_pHandle=TC3_MEMMAN.NULL) THEN
+	M_Cyclic := FileLc.cERR_HANDLE;
+	RETURN;
+END_IF
+
+// handle=SysInfo
+pstSysInfo := In_pHandle;
+
+// call time stamp asynchronous synchronisation
+stFileLogClientLibInfo.fbTimeStamp();
+
+// write data after a defined time to file
+IF (pstSysInfo^.stFileHandler.udiWriteTimer<pstSysInfo^.stConfig.udiMaxTimeWriteToFile) THEN
+	pstSysInfo^.stFileHandler.udiWriteTimer := pstSysInfo^.stFileHandler.udiWriteTimer + pstSysInfo^.udiCylceTimeMs; // add cycle time
+ELSE
+	pstSysInfo^.stFileHandler.udiWriteTimer := 0; // reset timer
+	pstSysInfo^.stFileHandler.usiCmd := FileLc.cCMD_FLUSHBUF; // write entries to file
+END_IF
+
+// call file handler
+M_Cyclic := pstSysInfo^.stFileHandler.FB_FileLc_FileHdl.M_Cyclic(In_pstSysInfo:=pstSysInfo);
+
+(* ------------------------------------------------------------------------
+Baselog buffer read out
+--------------------------------------------------------------------------*)
+//20 perhaps dynamic define over Level????
+IF (pstSysInfo^.stItemInfo.uinActNbrOfItems>0) THEN
+	FOR ii := 0 TO ((pstSysInfo^.stItemInfo.uinActNbrOfItems-1) * 20) BY 1 DO
+		// Move record buffer to file buffer
+		IF ((pstSysInfo^.stFileHandler.usiCmd=0) AND (pstSysInfo^.bolTmpRecordFull)) THEN
+			
+			// enough space in file buffer?
+			IF ((pstSysInfo^.stFileHandler.udiTmpFileBufferOffset+pstSysInfo^.udiTmpRecordLen) < pstSysInfo^.stFileHandler.udiTmpFileBufferSize) THEN
+			(* ----------------------------------------------------------------------------------------------------
+			/* Filesize and count of records check. If the file is getting to big with the current temp buffer
+			/* or the number of records in file exceed the configurated number --> Create a new file
+			/* udiMaxFileSize = 0 -> no limit
+			/* udiMaxEntriesInFile = 0 --> no limit
+	
+			/* record counter udiRecordCnt is reseted  by filhandler (new file)
+			/* ----------------------------------------------------------------------------------------------------*)
+	
+				IF (((pstSysInfo^.stConfig.udiMaxFileSize <> 0) AND
+				((pstSysInfo^.stFileHandler.udiTmpFileBufferOffset + pstSysInfo^.udiTmpRecordLen + pstSysInfo^.stFileHandler.FB_FileLc_FileHdl.ActFileSize) > pstSysInfo^.stConfig.udiMaxFileSize)) OR 
+				((pstSysInfo^.stConfig.udiMaxEntriesInFile <> 0) AND (pstSysInfo^.stFileHandler.udiRecordCnt >= pstSysInfo^.stConfig.udiMaxEntriesInFile))) THEN
+						
+					// write to file and create new file
+					pstSysInfo^.stFileHandler.usiCmd := FileLc.cCMD_FLUSHBUF_NEWFILE;
+		
+				ELSE 
+					p_Tmp_bytTmpFileBuffer := pstSysInfo^.stFileHandler.p_bytTmpFileBuffer + pstSysInfo^.stFileHandler.udiTmpFileBufferOffset;
+					
+					//For Debugging
+					pstrTmp := ADR(strTmp);
+					MEMSET(destAddr:=pstrTmp,fillByte:=0,n:= SIZEOF(strTmp));
+					MEMCPY(destAddr:=pstrTmp,srcAddr:=pstSysInfo^.p_bytTmpRecordText,n:= (SIZEOF(strTmp)-1)); // zero determining string
+					
+					// copy record buffer to file buffer
+					memcpy(destAddr:=p_Tmp_bytTmpFileBuffer ,srcAddr:=pstSysInfo^.p_bytTmpRecordText,n:=pstSysInfo^.udiTmpRecordLen);
+					
+					// Filebuffer Offset increment
+					pstSysInfo^.stFileHandler.udiTmpFileBufferOffset := pstSysInfo^.stFileHandler.udiTmpFileBufferOffset + pstSysInfo^.udiTmpRecordLen;
+					
+					// clear temp. record buffer
+					pstSysInfo^.bolTmpRecordFull := FALSE;
+					
+					// Record Buffer ist frei -> Offset zu Null setzen
+					pstSysInfo^.udiTmpRecordLen := 0;
+				END_IF
+			ELSE // file buffer + temp record buffer exceeds maximum
+				pstSysInfo^.stFileHandler.udiWriteTimer := 0; // reset timer
+				pstSysInfo^.stFileHandler.usiCmd := FileLc.cCMD_FLUSHBUF; // write file buffer to file
+			END_IF
+		END_IF
+		
+		// return if buffer still full
+		IF (pstSysInfo^.bolTmpRecordFull) THEN
+			RETURN;
+		END_IF
+			
+
+		// reset flag
+		bolWriteRecord := FALSE;
+		
+		// Read out from base log -> stData
+		uinReadStatus := stFileLogClientLibInfo.p_fbBasLog^.M_Read(In_pHandle:=pstSysInfo^.pBaseLogHandle,In_pData:=ADR(stData)); 
+		IF (uinReadStatus<>0) THEN // exit for if nothing to read
+			RETURN;
+		END_IF
+	
+		// base logging
+		IF(pstSysInfo^.uinLogTyp=FileLc.cLOGTYP_BL) THEN
+			//reference item list
+			pstItemCfgList := pstSysInfo^.stItemInfo.p_bytItemCfgList;
+			
+			// on BL only use first line
+			pstItemDataList := pstSysInfo^.stItemInfo.a_p_bytItemDataList[0];
+			
+			// must be worked on the PvId ?
+			 FOR jj := 0 TO (pstSysInfo^.stItemInfo.uinActNbrOfItems-1) BY 1 DO
+				 CASE (pstItemCfgList[jj].dinPvId) OF
+					FileLc.cPVTYPE_BL_LOGTYP:
+						M_WriteActItemIdx(In_pstItemDataList :=pstItemDataList,In_dinDataTyp:= FileLc.cVAR_TYPE_UDINT, In_pValue:=ADR(stData.udiLogType), In_udiRecIdx:=0, In_uinActItemIdx:=jj);
+					FileLc.cPVTYPE_BL_CTRL_ID:
+						M_WriteActItemIdx(In_pstItemDataList :=pstItemDataList,In_dinDataTyp:= FileLc.cVAR_TYPE_INT, In_pValue:=ADR(stData.intCtrlID), In_udiRecIdx:=0, In_uinActItemIdx:=jj);
+					FileLc.cPVTYPE_BL_STRING1:
+						M_WriteActItemIdx(In_pstItemDataList :=pstItemDataList,In_dinDataTyp:= FileLc.cVAR_TYPE_STRING, In_pValue:=ADR(stData.strText1), In_udiRecIdx:=0, In_uinActItemIdx:=jj);
+					FileLc.cPVTYPE_BL_STRING2:
+						M_WriteActItemIdx(In_pstItemDataList :=pstItemDataList,In_dinDataTyp:= FileLc.cVAR_TYPE_STRING, In_pValue:=ADR(stData.strText2), In_udiRecIdx:=0, In_uinActItemIdx:=jj);
+					FileLc.cPVTYPE_BL_PAR1:
+						M_WriteActItemIdx(In_pstItemDataList :=pstItemDataList,In_dinDataTyp:= FileLc.cVAR_TYPE_DINT, In_pValue:=ADR(stData.dinPar1), In_udiRecIdx:=0, In_uinActItemIdx:=jj);
+					FileLc.cPVTYPE_BL_PAR2:
+						M_WriteActItemIdx(In_pstItemDataList :=pstItemDataList,In_dinDataTyp:= FileLc.cVAR_TYPE_DINT, In_pValue:=ADR(stData.dinPar2), In_udiRecIdx:=0, In_uinActItemIdx:=jj);
+					FileLc.cPVTYPE_BL_PAR3:
+						M_WriteActItemIdx(In_pstItemDataList :=pstItemDataList,In_dinDataTyp:= FileLc.cVAR_TYPE_DINT, In_pValue:=ADR(stData.dinPar3), In_udiRecIdx:=0, In_uinActItemIdx:=jj);
+					FileLc.cPVTYPE_BL_PAR4:
+						M_WriteActItemIdx(In_pstItemDataList :=pstItemDataList,In_dinDataTyp:= FileLc.cVAR_TYPE_DINT, In_pValue:=ADR(stData.dinPar4), In_udiRecIdx:=0, In_uinActItemIdx:=jj);
+							
+				END_CASE
+			 END_FOR
+			 // general inf o add to Record list
+			pstSysInfo^.stItemInfo.stItemRecordData[0].dtActDateTime := stData.dtDateTimeEntry;
+			pstSysInfo^.stItemInfo.stItemRecordData[0].uinActMilli := stData.uinMs;
+			
+			// for BaseLog write always record 0
+			M_WriteRecord(In_pstSysInfo:=pstSysInfo,In_uinItemListIdx := 0);
+			
+			// end of IF(pstSysInfo^.uinLogTyp=FileLc.cLOGTYP_BL) THEN
+		ELSE
+			(* -----------------------------------*/
+		  /* Data- und PV - Logging             */
+		  /* -----------------------------------*)
+	
+		  (* ----------------------*/
+		  /* Check commandes     */
+		  /* ----------------------
+		  /* "cmd" in typ field *)
+		  IF (stData.dinPar3 = BasLog.cVAR_TYPE_CMD_NEW_REC) THEN
+	
+				(* search free record - list *)
+				FOR jj := 0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+				  IF ((pstSysInfo^.stItemInfo.stItemRecordData[jj].udiRecIdx = 0) OR (DINT_TO_UDINT(stData.dinPar4) = pstSysInfo^.stItemInfo.stItemRecordData[jj].udiRecIdx)) THEN
+						pstSysInfo^.stItemInfo.stItemRecordData[jj].udiRecIdx := DINT_TO_UDINT(stData.dinPar4);
+						pstSysInfo^.stItemInfo.stItemRecordData[jj].dtActDateTime := stData.dtDateTimeEntry;
+						pstSysInfo^.stItemInfo.stItemRecordData[jj].uinActMilli := stData.uinMs;
+						EXIT;
+				  END_IF
+			   END_FOR
+		  
+		  ELSIF (stData.dinPar3 = BasLog.cVAR_TYPE_CMD_END_REC) THEN
+			bolWriteRecord := TRUE;
+		  END_IF			
+	
+	
+		  (* --------------------------------------------------------------*/
+		  /* entry reached BaseLog message in record list */
+		  /* --------------------------------------------------------------*)
+		  M_PutPvIdInList(In_pstSysInfo := pstSysInfo, In_pstData := ADR(stData));
+	
+		  (* -----------------------------------------------------*/
+		  /* write the complete record to the temporar buffer */
+		  /* -----------------------------------------------------*)
+		  IF (bolWriteRecord)  THEN
+			FOR jj := 0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+			  (* Is the reached record index allready entried in referencelist *)
+			  IF (pstSysInfo^.stItemInfo.stItemRecordData[jj].udiRecIdx = DINT_TO_UDINT(stData.dinPar4)) THEN
+				M_WriteRecord(In_pstSysInfo:=pstSysInfo,In_uinItemListIdx := jj);
+				EXIT;
+			  END_IF
+			END_FOR
+		  END_IF
+    END_IF // else
+  END_FOR // FOR ii := 0 TO ((pstSysInfo^.stItemInfo.uinActNbrOfItems-1) * 20) BY 1 DO
+END_IF 	//IF (pstSysInfo^.stItemInfo.uinActNbrOfItems>0) THEN
+	
+	
+	
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_WriteActItemIdx" Id="{79ee9c23-0526-4b5d-af62-d6b6356673cd}">
+      <Declaration><![CDATA[METHOD PROTECTED M_WriteActItemIdx : UINT
+VAR_INPUT
+	In_pstItemDataList : POINTER TO T_FileLc_ItemData;
+	In_dinDataTyp: DINT;
+	In_pValue: POINTER TO BYTE;
+	In_udiRecIdx : UDINT;
+	In_uinActItemIdx : UINT;
+END_VAR
+
+VAR
+	strTmp : T_MaxString;
+	pString : POINTER TO STRING(255);
+	pBool : POINTER TO BOOL;
+	pSint : POINTER TO SINT;
+	pInt : POINTER TO INT;
+	pDint : POINTER TO DINT;
+	pUsint : POINTER TO USINT;
+	pUint : POINTER TO UINT;
+	pUdint : POINTER TO UDINT;
+	pReal : POINTER TO REAL;
+	pLreal : POINTER TO LREAL;
+	stItemDataListItem : T_FileLc_ItemData;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// write value in ItemList based on datatyp
+IF (In_pValue<>TC3_MEMMAN.NULL) THEN
+	 CASE In_dinDataTyp OF
+		FileLc.cVAR_TYPE_SINT:
+			pSint := In_pValue;
+			strTmp := SINT_TO_STRING(pSint^);	
+		FileLc.cVAR_TYPE_INT:
+			pInt := In_pValue;
+			strTmp := INT_TO_STRING(pInt^);
+		FileLc.cVAR_TYPE_DINT:
+			pDint := In_pValue;
+			strTmp := DINT_TO_STRING(pDint^);
+		FileLc.cVAR_TYPE_BOOL:
+			pBool := In_pValue;
+			strTmp := BOOL_TO_STRING(pBool^);	
+		FileLc.cVAR_TYPE_USINT:
+			pUsint := In_pValue;
+			strTmp := USINT_TO_STRING(pUsint^);
+		FileLc.cVAR_TYPE_UINT:
+			pUint := In_pValue;
+			strTmp := UINT_TO_STRING(pUint^);
+		FileLc.cVAR_TYPE_UDINT:
+			pUdint := In_pValue;
+			strTmp := UDINT_TO_STRING(pUdint^);
+		FileLc.cVAR_TYPE_REAL:
+			pReal := In_pValue;
+			strTmp := REAL_TO_STRING(pReal^);
+		FileLc.cVAR_TYPE_LREAL:
+			pLreal := In_pValue;
+			strTmp := LREAL_TO_STRING(pLreal^);
+		FileLc.cVAR_TYPE_STRING:
+			pString := In_pValue;
+			strTmp := pString^;
+		ELSE
+			strTmp := 'unknown type';
+	END_CASE
+	
+	IF (INT_TO_UINT(LEN(strTmp)) >=  FileLc.cMAX_ITEM_CHAR) THEN
+		In_pstItemDataList[In_uinActItemIdx].strValue:= 'value too long';
+	ELSE
+		MEMSET(destAddr := ADR(In_pstItemDataList[In_uinActItemIdx].strValue),0,SIZEOF(In_pstItemDataList[In_uinActItemIdx].strValue)); // string ends wit 0!
+		MEMCPY(destAddr := ADR(In_pstItemDataList[In_uinActItemIdx].strValue),srcAddr:=ADR(strTmp),SIZEOF(strTmp));
+	END_IF
+END_IF
+// entry record index
+In_pstItemDataList[In_uinActItemIdx].udiRecIdx := In_udiRecIdx;
+stItemDataListItem := In_pstItemDataList[In_uinActItemIdx]; // for Debugging]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ReleaseBuffer" Id="{9b041511-1d7e-44af-9cc4-2bb9a500920a}">
+      <Declaration><![CDATA[METHOD PROTECTED M_ReleaseBuffer : UINT
+
+VAR_INPUT
+	In_pReleaseBuffer : POINTER TO BYTE;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//delocate  allocated buffer with __NEW
+__DELETE(In_pReleaseBuffer);
+RETURN; // delete buffer with dynamic size...
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_WriteRecord" Id="{be156532-a391-4a00-8071-7ca33cf7c588}">
+      <Declaration><![CDATA[METHOD PROTECTED M_WriteRecord : UINT
+VAR_INPUT
+	In_pstSysInfo: POINTER TO T_FileLc_SysInfo;
+	In_uinItemListIdx : UINT;
+END_VAR
+VAR
+ 	pstItemDataList : POINTER TO T_FileLc_ItemData;
+  	pstItemCfgList: POINTER TO T_FileLc_ItemCfg;
+	pstItemCfgListItem: T_FileLc_ItemCfg;
+	pstItemDataListItem : T_FileLc_ItemData;
+	pstRecordData : POINTER TO T_FileLc_RecordData;
+	ii : UINT;
+	bolRecordValid : BOOL;
+	udiOffset : UDINT;
+	udiTmpLen : UDINT;
+	strTemp : STRING(30);
+	SystemTimeStruct  :TIMESTRUCT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pstItemDataList := In_pstSysInfo^.stItemInfo.a_p_bytItemDataList[In_uinItemListIdx];
+pstItemCfgList := In_pstSysInfo^.stItemInfo.p_bytItemCfgList;
+pstRecordData := ADR(In_pstSysInfo^.stItemInfo.stItemRecordData[In_uinItemListIdx]);
+
+// copy PRE - Text
+udiOffset := 0;
+udiTmpLen := INT_TO_UDINT(LEN(In_pstSysInfo^.stItemInfo.strPreItemText));
+MEMCPY(destAddr := (In_pstSysInfo^.p_bytTmpRecordText+udiOffset),srcAddr :=ADR(In_pstSysInfo^.stItemInfo.strPreItemText) , n := udiTmpLen);
+udiOffset := udiOffset + udiTmpLen;
+
+// check filled data
+bolRecordValid := FALSE;
+//at least one item has to be added before
+FOR ii := 0 TO (In_pstSysInfo^.stItemInfo.uinActNbrOfItems-1) BY 1 DO
+	pstItemCfgListItem := pstItemCfgList[ii];
+	pstItemDataListItem := pstItemDataList[ii];
+	IF ((pstItemCfgListItem.dinPvId>=0) AND (pstItemDataListItem.udiRecIdx=pstRecordData^.udiRecIdx)) THEN
+	 	bolRecordValid := TRUE;
+		 EXIT;
+	END_IF
+END_FOR
+
+// record has no valid data
+IF ((bolRecordValid=FALSE) AND (In_pstSysInfo^.uinLogTyp<>FileLc.cLOGTYP_BL)) THEN
+	// clear record data
+	pstRecordData^.udiRecIdx :=0;
+	pstRecordData^.dtActDateTime := REAL_TO_DT(0.0);
+	pstRecordData^.uinActMilli :=0;
+	
+	// reset record buffer
+	In_pstSysInfo^.udiTmpRecordLen := 0;
+	In_pstSysInfo^.bolTmpRecordFull := FALSE;
+	RETURN;
+END_IF
+
+// collect data
+FOR ii := 0 TO (In_pstSysInfo^.stItemInfo.uinActNbrOfItems-1) BY 1 DO
+	//for debugging
+	pstItemCfgListItem := pstItemCfgList[ii];
+	pstItemDataListItem := pstItemDataList[ii];
+	
+	IF (pstItemCfgListItem.dinPvId<0) THEN
+	 	CASE (pstItemCfgListItem.dinPvId) OF
+			FileLc.cPVTYPE_UNIX_DATE_TIME_STR:
+				// time and date as string
+				pstItemDataListItem.strValue := DT_TO_STRING(pstRecordData^.dtActDateTime);
+			
+			FileLc.cPVTYPE_UNIX_DATE_TIME:
+				// time and date as  s since 1.1.1970 11:00
+				pstItemDataListItem.strValue := DWORD_TO_STRING(DT_TO_DWORD(pstRecordData^.dtActDateTime));
+			
+			FileLc.cPVTYPE_EXCEL_DATE_TIME:
+				// time and date as REAL
+				pstItemDataListItem.strValue := LREAL_TO_STRING(DT_TO_LREAL(pstRecordData^.dtActDateTime));
+				(*needed ?? if (pdstRecordData->dtActDateTime > 0) {
+						tmpDouble = (double)(pdstRecordData->dtActDateTime / 86400.0) + 25569.0;
+						tmpUdint = (double)tmpDouble;  /*Ganzzahl bilden/
+						tmpDouble = (tmpDouble - tmpUdint); /*Nachkommastellen/
+						itoa(tmpUdint, (unsigned long)&pdstItemDataList[i].strValue);
+						strcat((void)&pdstItemDataList[i].strValue, ".");
+
+						// Nachkommaanteil mit 10 hoch n multipizieren
+						tmpUdint = tmpDouble * tmpPrecision;
+	
+						// Integer to ACSI Wandlung mit Vornullen!
+						tmpPrecision = tmpPrecision / 10;
+						n=0;
+						while (tmpPrecision > 1) {
+							tmpString[n] = (tmpUdint / tmpPrecision) + 0x30;  // Character Wandlung
+							tmpUdint = tmpUdint % tmpPrecision;
+							tmpPrecision = tmpPrecision / 10;
+							n++;
+						}
+						tmpString[n]=0;
+						strcat((void)&pdstItemDataList[i].strValue, (void)&tmpString);
+						ulSize = strlen(pdstItemDataList[i].strValue);
+					}*)
+			FileLc.cPVTYPE_DATE_SLASH_TIME_COLON: 
+				//english date format 2014/09/23 07:10:24
+				SystemTimeStruct := DT_TO_SYSTEMTIME(pstRecordData^.dtActDateTime);
+				pstItemDataListItem.strValue := DWORD_TO_STRING(SystemTimeStruct.wYear);
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:='/');
+				IF (SystemTimeStruct.wMonth<10) THEN
+					pstItemDataListItem.strValue := CONCAT(pstItemDataListItem.strValue , '0');
+				END_IF
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:=DWORD_TO_STRING(SystemTimeStruct.wMonth));
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:='/');
+				IF (SystemTimeStruct.wDay<10) THEN
+					pstItemDataListItem.strValue := CONCAT(pstItemDataListItem.strValue , '0');
+				END_IF
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:=DWORD_TO_STRING(SystemTimeStruct.wDay));
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:=' ');
+				IF (SystemTimeStruct.wHour<10) THEN
+					pstItemDataListItem.strValue := CONCAT(pstItemDataListItem.strValue , '0');
+				END_IF
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:=DWORD_TO_STRING(SystemTimeStruct.wHour));
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:=':');
+				IF (SystemTimeStruct.wMinute<10) THEN
+					pstItemDataListItem.strValue := CONCAT(pstItemDataListItem.strValue , '0');
+				END_IF
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:=DWORD_TO_STRING(SystemTimeStruct.wMinute));
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:=':');
+				IF (SystemTimeStruct.wSecond<10) THEN
+					pstItemDataListItem.strValue := CONCAT(pstItemDataListItem.strValue , '0');
+				END_IF
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:=DWORD_TO_STRING(SystemTimeStruct.wSecond));
+			FileLc.cPVTYPE_TIME_MILLI:
+				IF (pstRecordData^.uinActMilli<100) THEN
+					IF (pstRecordData^.uinActMilli<10) THEN
+						pstItemDataListItem.strValue := '00';
+					ELSE
+						pstItemDataListItem.strValue := '0';
+					END_IF
+				ELSE
+					pstItemDataListItem.strValue := '';
+				END_IF
+				pstItemDataListItem.strValue := CONCAT(STR1:=pstItemDataListItem.strValue,STR2:=UINT_TO_STRING(pstRecordData^.uinActMilli));
+		END_CASE
+	END_IF
+	
+	
+	(* ----------------------------------*/ 
+	/* Write data to temp buffer */
+	/* ----------------------------------*/ 
+	/* PV value *)		
+	IF ((pstItemDataListItem.udiRecIdx = pstRecordData^.udiRecIdx) OR (pstItemCfgListItem.dinPvId < 0)) THEN
+		udiTmpLen := INT_TO_UDINT(LEN(pstItemDataListItem.strValue));
+		MEMCPY(destAddr := (In_pstSysInfo^.p_bytTmpRecordText+udiOffset),srcAddr :=ADR(pstItemDataListItem.strValue) , n := udiTmpLen);
+	ELSE 
+		strTemp := 'no val.';
+		udiTmpLen := INT_TO_UDINT(LEN(strTemp)); 
+		MEMCPY(destAddr := (In_pstSysInfo^.p_bytTmpRecordText+udiOffset),srcAddr :=ADR(strTemp) , n := udiTmpLen);	
+	END_IF
+	udiOffset := udiOffset + udiTmpLen;
+	
+	IF (ii>0) AND (ii=In_pstSysInfo^.stItemInfo.uinActNbrOfItems-1) AND (udiTmpLen=0) THEN // last text empty...
+		// remove last post text...
+		udiTmpLen := INT_TO_UDINT(LEN(pstItemCfgList[ii-1].strPostText));
+		IF (udiOffset>udiTmpLen) THEN
+			MEMSET(destAddr := (In_pstSysInfo^.p_bytTmpRecordText+udiOffset-udiTmpLen),fillByte :=0 , n := udiTmpLen);
+			udiOffset := udiOffset - udiTmpLen;
+		END_IF
+	END_IF
+	
+	(* Post Text *)	
+	udiTmpLen := INT_TO_UDINT(LEN(pstItemCfgListItem.strPostText));
+	MEMCPY(destAddr := (In_pstSysInfo^.p_bytTmpRecordText+udiOffset),srcAddr :=ADR(pstItemCfgListItem.strPostText) , n := udiTmpLen);
+	udiOffset := udiOffset + udiTmpLen;
+
+END_FOR(*for (i = 0; i < pdstSysInfo->dstItemInfo.uinActNbrOfItems; i++) *)
+
+
+(* carriage return on end of record *)
+udiTmpLen := SIZEOF(FileLc.cEOL);
+MEMCPY(destAddr := (In_pstSysInfo^.p_bytTmpRecordText+udiOffset),srcAddr :=ADR(FileLc.cEOL) , n := udiTmpLen);
+udiOffset := udiOffset + udiTmpLen;
+
+// clear record data
+pstRecordData^.udiRecIdx :=0;
+pstRecordData^.dtActDateTime :=REAL_TO_DT(0.0);
+pstRecordData^.uinActMilli :=0;
+
+// mark record buffer as full
+In_pstSysInfo^.udiTmpRecordLen := udiOffset;
+In_pstSysInfo^.bolTmpRecordFull := TRUE;
+
+(*--------------------------------*/
+/* count file entries */
+/*--------------------------------*)
+In_pstSysInfo^.stFileHandler.udiRecordCnt := In_pstSysInfo^.stFileHandler.udiRecordCnt + 1;
+
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

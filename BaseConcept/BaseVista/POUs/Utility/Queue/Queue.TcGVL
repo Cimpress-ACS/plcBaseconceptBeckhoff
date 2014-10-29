@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="Queue" Id="{0a195d98-8362-44de-9371-d2764c033eac}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	// internal
+	cSECURE_CODE: UDINT := 1431655765; // alternating bit muster 0x55555555 -> for validation of queues
+	
+	// limits
+	cMAX_NAME_LENGTH : UINT := 80; // maximal string length of queue name
+	cMAX_NR_OF_TASKS: USINT := 6; // for the moment enough
+
+	// error number
+	cERR_QUEUE_FULL : UINT := 1; 
+	cERR_QUEUE_EMPTY : UINT := 2; 
+	cERR_QUEUE_NAME : UINT := 50000; // not valid or empty queue name
+	cERR_NR_OF_ELEMENTS : UINT := 50001; // number of elements =0 
+	cERR_SIZE_OF_ELEMENTS: UINT := 50002; // element size =0
+	cERR_MEM_ALLOC  : UINT := 50003; // error allocate memory
+	cERR_QUEUE_DOES_NOT_EXIST : UINT := 50004; // queue does not exist
+	cERR_Q_INFO_DOES_NOT_EXIST : UINT := 50005; // queue info does not exist
+	cERR_DATA_INVALID : UINT := 50006; // pointer to data not valid
+	cERR_HANDLE_INVALID : UINT := 50007; // handle not ok
+	cERR_TC_INVALID : UINT := 50008; // task class index not ok
+	cERR_CLEAR : UINT := 50009; // clear of queue not ok
+END_VAR
+]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

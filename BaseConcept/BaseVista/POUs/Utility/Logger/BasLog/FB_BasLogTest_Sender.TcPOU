@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_BasLogTest_Sender" Id="{0b82f8e1-5f19-42c1-982d-0312f22d2f3d}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_BasLogTest_Sender
+VAR_INPUT
+	In_p_fbBasLog: POINTER TO FB_BasLog; // only one central FB_BasLog instance allowed per PLC!!!
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	bolInit : BOOL := FALSE;
+	pHandle : POINTER TO T_Bl_LibHandleRow;
+	uinGetHandleStatus : UINT;
+	uinWriteStatus :UINT;
+	uinDoWrite : UINT;
+	dinPar1 : DINT;
+	strText1 : STRING(30):='Controller 1';
+	strText2 : STRING(30):='Alarm sub info';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Example and test programm for testing the queue system - write data to base log
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.07.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+// system init onetime after start up
+IF (bolInit=FALSE) THEN
+	uinGetHandleStatus := In_p_fbBasLog^.M_GetHandle(Out_pHandle=>pHandle);
+	
+	bolInit := TRUE;
+END_IF
+
+// write base log entries
+IF (uinDoWrite>0) THEN
+	uinDoWrite := uinDoWrite - 1;
+	dinPar1 := dinPar1 + 1;
+	uinWriteStatus := In_p_fbBasLog^.M_Log(In_pHandle:=pHandle,In_udiLogType:=BasLog.cLOGTYPE_ALARM,In_intCtrlID:=11,In_strText1:=strText1,In_strText2:=strText2,In_dinPar1:=dinPar1,In_dinPar2:=0,In_dinPar3:=0,In_dinPar4:=0) ;
+END_IF]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

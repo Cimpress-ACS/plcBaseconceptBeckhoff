@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_FileLc_LibInfo" Id="{5348543d-d269-47b1-a8f6-d25359d6c104}">
+    <Declaration><![CDATA[TYPE T_FileLc_LibInfo :
+STRUCT
+	uinActNbrOfFileClients: UINT; // number of file clients
+	uinActClientInitActive: UINT; // =0 ready for next client, actual active init of client nr
+	stSysInfo : ARRAY[0..FileLc.cMAX_NBR_OF_FILECLIENTS] OF T_FileLc_SysInfo;
+	p_fbBasLog: POINTER TO FB_BasLog; // only one central FB_BasLog instance allowed per PLC!!!
+	fbTimeStamp: FB_TimeStamp; // only one central time for time stamps
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

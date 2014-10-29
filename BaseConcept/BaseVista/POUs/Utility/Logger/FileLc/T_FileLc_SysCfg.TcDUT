@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_FileLc_SysCfg" Id="{335d876a-53b4-41b4-b6b0-9197b46aea41}">
+    <Declaration><![CDATA[TYPE T_FileLc_SysCfg :
+STRUCT
+	uinMaxNbrOfLogFiles : UINT; (*Maximale Anzahl Log-Files*)
+	udiTimeCheckMaxFileNr :UDINT; // [ms] time until check if more then max number of files exist in folder -> delete oldest
+	uinNewFileOnRestart : UINT; (*Nach Steuerungsneustart neues File anlegen, wenn Wert > 0*)
+	udiMaxTimeWriteToFile : UDINT; (*Maximale Zeit zwischen zwei File - Schreibzyklen*)
+	bolUseLocalTimeStamp : BOOL; // define if using local time or UTC
+	strLogFileNameExt : STRING[FileLc.cFILENAME_LENGTH]; (*Extension des Logfiles*)
+	strLogFileNamePraeFix : STRING[FileLc.cFILENAME_LENGTH]; (*Präfix des Logfiles*)
+	strLogPath : STRING[FileLc.cFILENAME_LENGTH]; (*Verzeichnis in welchem die Logfiles angelegt werden*)
+	strLogNetId : STRING(23); // to access foreign system drives where TinCat has to be installed!!! Is a string containing the AMS network identifier of the target device to which the ADS command is directed.
+	udiQueueLen : UDINT; (*Queue Länge der BaseLog - Queue*)
+	udiMaxFileSize : UDINT; (*Maximale Dateigrösse eines Logfiles*)
+	udiMaxEntriesInFile : UDINT; (*Maximale Anzahl Einträge in einem Logfile*)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

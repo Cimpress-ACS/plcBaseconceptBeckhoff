@@ -1,0 +1,782 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_FileHdl" Id="{bf5ec1be-b2e5-4305-b976-03c722eb8396}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FileHdl
+
+VAR_OUTPUT
+	Out_bolBusy : BOOL; // busy
+	Out_bolNewFileCreated : BOOL; // new file created -> set until next job -> possibility to write header
+	Out_udiErrId : UDINT; // error id
+	Out_strInfo : STRING; //
+END_VAR
+VAR
+	uinStep : UINT;
+	uinStep_old : UINT;
+	uinSubStep : UINT;
+	intCmd : INT;
+	bolInitDone : BOOL;
+	strNetId : STRING(23);
+	strPathName : T_MaxString; 	// Contains the path and filename for the file to be opened. Note: The path can only point to the local computer’s file system! This means that network paths can not be used here!
+	strPath : T_MaxString; 	// Contains only the path 
+	strFileName : T_MaxString;	// Contains only the filename
+	strFileExt : T_MaxString;	// Contains only the ext
+	strPathNameArchive : T_MaxString; // string name of last copied archive file
+	strTemp : T_MaxString;
+	strFileNameTemp : STRING(200);
+	strFullFileName : T_MaxString;
+	intLenTemp : INT;
+	uin_FileHandle : UINT;	//Contains the file handle created for the file when opening has been successful.
+	pWriteBuff: POINTER TO BYTE; // Write buffer adress
+	udiWriteLen : UDINT; // Write buffer len
+	lreCurFileSize : LREAL;
+	stNewestFileEntry : ST_FindFileEntry;
+	fbFileOpen_1 : FB_FileOpen;
+	fbFileClose_1 : FB_FileClose;
+	fbFileWrite_1 : FB_FileWrite;
+	fbFileDelete_1 : FB_FileDelete;
+	fbFileRename_1 : FB_FileRename;
+	fbFileCopy_1 : FB_FileCopy;
+	fbFolderHdl_1 : FB_FolderHdl;
+	lreMaxFileSize : LREAL := 10; //Bytes? maximal allowed filesize for file -> archivate and deleter or create new
+	bolNewFileCreated : BOOL;
+	bolTimeRead : BOOL;
+	strActualTime : T_MaxString;
+	fbNT_GetTime : NT_GetTime;
+END_VAR
+VAR CONSTANT
+	// specific steps definitions
+	cStep_Start: UINT := 501;
+	cStep_StartReadingFilesInFolder: UINT := 502;
+	cStep_ReadingFileInFolder: UINT := 504;
+	cStep_FileDelete: UINT := 100;
+	cStep_FileClose: UINT := 101;
+	cStep_FileOpen: UINT := 102;
+	cStep_FileWrite: UINT := 103;
+	cStep_NewFile: UINT := 104;
+	cStep_FileArchive: UINT := 105;
+	cStep_Wait4Job: UINT := 500;
+	cStep_Error: UINT := 256;
+	
+	cSubStep_Done: UINT := 0;
+	cSubStep_Finished: UINT := 100;
+	cSubStep_Error: UINT := 256;
+	
+	// configuration constants
+	usiMode : UINT := 1; // Mode = 0 logfiles with date, =1 logfile with archive and date
+	strSufixArchive : T_MaxString := '_Archive_';
+
+	// commandes constants
+	cFILE_HDL_CMD_DONE : INT := -1;
+	cFILE_HDL_CMD_WRITE : INT := 1;
+	cFILE_HDL_CMD_NEW_FILE : INT := 2;
+	cFILE_HDL_CMD_REFRESH_FILE_LIST : INT := 3;
+	cFILE_HDL_CMD_CLOSE : INT := 4;
+	cFILE_HDL_CMD_FILE_DELETE : INT := 5;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+	Manage folder with files: 
+	Cyclic Actions:
+		- todo evtl. in folder hdl... create folder
+		- open file ("a+": Opens for reading and appending; the appending operation includes the removal of the EOF marker before new data is written to the file and the EOF marker is restored after writing is complete; creates the file first if it doesn’t exist.
+					When a file is opened with the "a" or "a+" access type, all write operations occur at the end of the file. The file pointer can be repositioned using FB_FileSeek, but is always moved back to the end of the file before any write operation is carried out. Thus, existing data cannot be overwritten.)
+		- add buffer to file
+		- close file
+		- delete file
+		- archivate file
+		- supervision of active file size
+		- todo supervision of nr of entries
+		
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		13.05.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+// read out actual TIME
+fbNT_GetTime.START := FALSE;
+fbNT_GetTime();
+fbNT_GetTime.NETID := '';
+fbNT_GetTime.START := TRUE;
+fbNT_GetTime.TMOUT := T#500MS;
+fbNT_GetTime();
+
+fbFolderHdl_1(); // cyclic call for supervision of numbers of file in folder
+
+CASE uinStep OF
+	0:	
+		Out_strInfo := 'Wait for init ok -> call methode M_INIT()';
+		Out_bolBusy := TRUE;
+		IF (bolInitDone=TRUE) AND (fbFolderHdl_1.Out_bolInitDone=TRUE) THEN // refresh file list done
+			uinStep := cStep_Start;
+		END_IF
+		
+	cStep_Start: 
+		Out_strInfo := 'Start';	
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_bolBusy := TRUE;
+			Out_udiErrId := 0;
+			uinStep_old := uinStep;
+			fbFolderHdl_1(); // -> set bol busy
+		END_IF
+
+		stNewestFileEntry := fbFolderHdl_1.get_NewestFileEntry; // automatic refresh list!!!
+		
+		IF ((stNewestFileEntry.sFileName<>'') AND (FIND(stNewestFileEntry.sFileName,strFileName)<>0) AND (FIND(stNewestFileEntry.sFileName,strFileExt)<>0)) THEN // not empty -> found entry and contains IN_strFileName -> no change in config
+			IF (usiMode = 0) THEN //new file name with Date and time sufix
+				(*???intLenTemp := LEN(stNewestFileEntry.sFileName)-FIND(stNewestFileEntry.sFileName,strFileExt)-1;
+				strFileName := stNewestFileEntry.sFileName;
+				strFileName := MID (strFileName, 1,intLenTemp); // LEFT doesn't work????
+				strPathName := THIS^.M_GetPathName(In_bolSufixDateTime:=FALSE,In_strSufixBeforeDateTime:='');	*)
+				strPathName := CONCAT(STR1:=strPath,STR2:=stNewestFileEntry.sFileName);
+				lreCurFileSize := UINT64_TO_LREAL(stNewestFileEntry.fileSize); // size of existing file
+			ELSE
+				// new file name stay always the same -> get size
+				strPathName := THIS^.M_GetPathName(In_bolSufixDateTime:=FALSE,In_strSufixBeforeDateTime:='');
+				stNewestFileEntry := fbFolderHdl_1.M_getFileInfo(IN_strFileNameWithExt:=strPathName);
+				lreCurFileSize := UINT64_TO_LREAL(stNewestFileEntry.fileSize); // size of existing file
+			END_IF
+			uinStep := cStep_Wait4Job;
+		ELSE
+			// no matching filename found -> create new file	
+			IF (usiMode = 0) THEN // new file name with Date and time sufix
+				strPathName := THIS^.M_GetPathName(In_bolSufixDateTime:=TRUE,In_strSufixBeforeDateTime:='_');	
+			ELSE	// new file name stay the same but actual file archive with Date and time sufix
+				
+				strPathName := THIS^.M_GetPathName(In_bolSufixDateTime:=FALSE,In_strSufixBeforeDateTime:='');	
+			END_IF
+			lreCurFileSize := 0;
+			uinStep := cStep_NewFile; // create a new file
+		END_IF
+
+	cStep_Wait4Job:	
+		Out_strInfo := 'Wait for job';
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_bolBusy := FALSE;
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF
+		
+		
+		IF (intCmd = cFILE_HDL_CMD_FILE_DELETE) THEN
+			Out_bolBusy := TRUE;
+			Out_bolNewFileCreated := FALSE;
+			uinStep := cStep_FileDelete;
+		END_IF
+		
+		IF (intCmd = cFILE_HDL_CMD_NEW_FILE) THEN
+			Out_bolNewFileCreated := FALSE;
+			Out_bolBusy := TRUE;
+			IF ( uin_FileHandle <> 0 ) THEN // old file still open
+				uinStep := cStep_FileClose;
+			ELSE
+				uinStep := cStep_NewFile;
+			END_IF
+		END_IF
+
+		IF (intCmd = cFILE_HDL_CMD_WRITE) THEN
+			Out_bolNewFileCreated := FALSE;
+			Out_bolBusy := TRUE;
+			IF ((lreCurFileSize + UDINT_TO_LREAL(udiWriteLen)) > lreMaxFileSize) THEN // supervision of filesize
+				IF ( uin_FileHandle <> 0 ) THEN // no file open
+					uinStep := cStep_FileClose;
+				ELSE
+					uinStep := cStep_NewFile;
+				END_IF
+			ELSE
+				IF ( uin_FileHandle <> 0 ) THEN // no file open
+					uinStep := cStep_FileWrite;
+				ELSE
+					uinStep := cStep_FileOpen;
+				END_IF
+			END_IF
+		END_IF
+		
+		IF (intCmd = cFILE_HDL_CMD_CLOSE) THEN
+			Out_bolNewFileCreated := FALSE;
+			Out_bolBusy := TRUE;
+			uinStep := cStep_FileClose;
+		END_IF
+		
+	cStep_FileDelete:
+		Out_strInfo := 'Delete file busy';	
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_bolBusy := TRUE;
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF
+		
+		THIS^.M_FileDelete(strNetId,strPathName);
+		
+		IF (uinSubStep = cSubStep_Finished) THEN
+			IF (intCmd = cFILE_HDL_CMD_NEW_FILE) OR (intCmd = cFILE_HDL_CMD_WRITE) THEN
+				uinStep := cStep_NewFile;
+			ELSE
+				uinStep := cStep_Wait4Job; 
+			END_IF
+		ELSIF (uinSubStep = cSubStep_Error) THEN
+			intCmd := cFILE_HDL_CMD_DONE;
+			uinStep := cStep_Error;
+		END_IF
+		
+	cStep_NewFile:
+		Out_strInfo := 'New file busy';
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_bolBusy := TRUE;
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF	
+		
+		lreCurFileSize := 0;
+		
+		IF (usiMode = 0) THEN // new file name with Date and time sufix
+			strPathName := THIS^.M_GetPathName(In_bolSufixDateTime:=TRUE,In_strSufixBeforeDateTime:='');	
+		ELSE
+			// new file name stay the same but actual file archive with Date and time sufix
+			strPathName := THIS^.M_GetPathName(In_bolSufixDateTime:=FALSE,In_strSufixBeforeDateTime:='');	
+		END_IF
+		
+		bolNewFileCreated := TRUE;
+		
+		IF (intCmd = cFILE_HDL_CMD_WRITE) OR (intCmd = cFILE_HDL_CMD_NEW_FILE) THEN
+			IF (usiMode = 0) THEN // new file name with Date and time sufix
+				uinStep := cStep_FileOpen;
+			ELSE
+				uinStep := cStep_FileArchive;
+			END_IF
+		ELSE
+			uinStep := cStep_FileOpen;
+		END_IF	
+	
+	cStep_FileOpen:	
+		Out_strInfo := 'Open file busy';
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_bolBusy := TRUE;
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF	
+
+		THIS^.M_FileOpen(strNetId,strPathName);
+		
+		IF (uinSubStep = cSubStep_Finished) THEN
+			IF (bolNewFileCreated) THEN
+				Out_bolNewFileCreated := TRUE;
+				bolNewFileCreated := FALSE;
+			END_IF
+			IF (intCmd = cFILE_HDL_CMD_NEW_FILE) OR (intCmd = cFILE_HDL_CMD_WRITE)THEN
+				uinStep := cStep_FileWrite; // refresh actual file list
+			ELSE
+				intCmd := cFILE_HDL_CMD_DONE;
+				uinStep := cStep_Wait4Job;
+			END_IF
+		ELSIF (uinSubStep = cSubStep_Error) THEN
+			intCmd := cFILE_HDL_CMD_DONE;
+			uinStep := cStep_Error;
+		END_IF	
+	
+	cStep_FileWrite:	
+		Out_strInfo := 'Write file busy';
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_bolBusy := TRUE;
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF	
+		
+		THIS^.M_FileWrite();
+		
+		IF (uinSubStep = cSubStep_Finished) THEN
+			intCmd := cFILE_HDL_CMD_DONE;
+			uinStep := cStep_FileClose;
+		ELSIF (uinSubStep = cSubStep_Error) THEN
+			intCmd := cFILE_HDL_CMD_DONE;
+			uinStep := cStep_Error;
+		END_IF
+		
+	cStep_FileClose:
+		Out_strInfo := 'Close file busy';
+		// entry action
+		IF (uinStep<>uinStep_old) THEN	
+			Out_bolBusy := TRUE;
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF	
+		
+		THIS^.M_FileClose();
+		
+		IF (uinSubStep = cSubStep_Finished) THEN
+			IF (intCmd = cFILE_HDL_CMD_NEW_FILE) OR (intCmd = cFILE_HDL_CMD_WRITE) THEN
+				uinStep := cStep_NewFile;
+			ELSE
+				uinStep := cStep_Wait4Job;
+			END_IF
+			
+		ELSIF (uinSubStep = cSubStep_Error) THEN
+			intCmd := cFILE_HDL_CMD_DONE;
+			uinStep := cStep_Error;
+		END_IF	
+		
+	cStep_FileArchive:	
+		// entry action
+		Out_strInfo := 'Archive file busy';
+		IF (uinStep<>uinStep_old) THEN	
+			Out_bolBusy := TRUE;
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+			strPathNameArchive :=  THIS^.M_GetPathName(In_bolSufixDateTime:=TRUE,In_strSufixBeforeDateTime:=strSufixArchive);
+		END_IF	
+
+		// copy takes a lot of time!!! THIS^.M_FileCopy(In_strPathNameSrc := strPathName, In_strPathNameDst :=strPathNameArchive);
+		THIS^.M_FileRename(In_strNetId := strNetId,In_strPathNewName:=strPathNameArchive,In_strPathOldName:=strPathName);
+		
+		IF (uinSubStep = cSubStep_Finished) THEN
+			uinStep :=  cStep_FileOpen; // open "new file"// after copy delete original file cStep_FileDelete;
+		ELSIF (uinSubStep = cSubStep_Error) THEN
+			intCmd := cFILE_HDL_CMD_DONE;
+			uinStep := cStep_Error;
+		END_IF	
+	
+	cStep_Error:	
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_strInfo := CONCAT(STR1:='Error - ',STR2:= Out_strInfo);
+			Out_bolBusy := FALSE;
+			uinStep_old := uinStep;
+		END_IF
+		
+		
+		IF (intCmd<>cFILE_HDL_CMD_DONE) THEN
+			Out_udiErrId := 0;
+			uinSubStep := cSubStep_Done;
+			IF ( uin_FileHandle <> 0 ) THEN
+				uinStep := cStep_FileClose; (* Close the source file *)
+			ELSE
+				uinStep := cStep_Wait4Job;
+			END_IF
+		END_IF	
+				
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="M_FileRename" Id="{046f2565-dcc8-4e8a-85ec-2baa35995c37}">
+      <Declaration><![CDATA[METHOD PROTECTED M_FileRename : BOOL
+VAR_INPUT
+	 In_strNetId : STRING(23);
+	 In_strPathOldName : T_MaxString;
+	 In_strPathNewName : T_MaxString;
+END_VAR
+VAR
+	strMyName : STRING := 'M_FileRename: ';
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE uinSubStep OF
+	cSubStep_Done:	
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'start');
+		
+		fbFileRename_1.sNetId := In_strNetId;
+		fbFileRename_1.sOldName := In_strPathOldName;
+		fbFileRename_1.sNewName := In_strPathNewName;
+		fbFileRename_1.ePath := PATH_GENERIC;
+		fbFileRename_1.tTimeout := T#3S;
+		fbFileRename_1(bExecute:= FALSE);
+		fbFileRename_1(bExecute:= TRUE);
+		
+		uinSubStep := 1;
+		
+	1: 
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'busy');	
+
+		(* wait until function block not busy *)
+		fbFileRename_1( bExecute := FALSE );
+		IF NOT fbFileRename_1.bBusy THEN
+			IF NOT fbFileRename_1.bError THEN
+				uinSubStep := cSubStep_Finished;
+			ELSE 
+				Out_udiErrId := fbFileRename_1.nErrID;
+				uinSubStep := cSubStep_Error;
+			END_IF
+		END_IF
+		
+	cSubStep_Finished: 
+		// succesfully finished
+		
+	cSubStep_Error:
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , CONCAT('error active - number:' , DWORD_TO_HEXSTR( fbFileRename_1.nErrID, 0, FALSE )));
+		Out_udiErrId := fbFileRename_1.nErrID;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_FileWrite" Id="{11a3c86f-8418-403e-8b15-7ac434a88c59}">
+      <Declaration><![CDATA[METHOD PROTECTED M_FileWrite : BOOL
+VAR_INPUT
+	 
+END_VAR
+VAR
+	strMyName : STRING := 'M_FileClose: ';
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE uinSubStep OF
+	cSubStep_Done:	
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'start');
+		
+		fbFileWrite_1.sNetId := fbFileOpen_1.sNetId;
+		fbFileWrite_1.hFile := uin_FileHandle; // file handle from file open
+		fbFileWrite_1.pWriteBuff := pWriteBuff; // Write buffer adress
+		fbFileWrite_1.cbWriteLen := udiWriteLen; // Write buffer len
+		fbFileWrite_1.tTimeout := T#3S;
+		fbFileWrite_1(bExecute:= FALSE);
+		fbFileWrite_1(bExecute:= TRUE);
+		
+		uinSubStep := 1;
+		
+	1: 
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'busy');	
+
+		(* wait until function block not busy *)
+		fbFileWrite_1( bExecute := FALSE );
+		IF NOT fbFileWrite_1.bBusy THEN
+			lreCurFileSize := lreCurFileSize + fbFileWrite_1.cbWrite;
+			IF NOT fbFileWrite_1.bError THEN
+				uinSubStep := cSubStep_Finished;
+			ELSE 
+				Out_udiErrId := fbFileWrite_1.nErrID; // 0x703 	Invalid or unknown file handle., 0x70E 	File was opened with wrong method ( e.g. with 'obsolete' FILEOPEN function block ). 
+				uinSubStep := cSubStep_Error;
+			END_IF
+		END_IF
+		
+	cSubStep_Finished: 
+		// succesfully finished
+		
+	cSubStep_Error:
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , CONCAT('error active - number:' , DWORD_TO_HEXSTR( fbFileWrite_1.nErrID, 0, FALSE )));
+		Out_udiErrId := fbFileOpen_1.nErrID;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_FileDelete" Id="{1b41e8a3-ec8d-467e-95bc-7ec1bb5620e3}">
+      <Declaration><![CDATA[METHOD PROTECTED M_FileDelete : BOOL
+VAR_INPUT
+	In_strNetId : STRING(23);
+	In_strPathName : T_MaxString;  
+END_VAR
+VAR
+	strMyName : STRING := 'M_FileDelete: ';
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+CASE uinSubStep OF
+	cSubStep_Done:	
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'start');
+		
+		fbFileDelete_1.sNetId :=In_strNetId;
+		fbFileDelete_1.sPathName := In_strPathName;
+		fbFileDelete_1.ePath := PATH_GENERIC;
+		fbFileDelete_1.tTimeout := T#3S;
+		fbFileDelete_1(bExecute:= FALSE);
+		fbFileDelete_1(bExecute:= TRUE);
+		
+		uinSubStep := 1;
+		
+	1: 
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'busy');	
+
+		(* wait until function block not busy *)
+		fbFileDelete_1( bExecute := FALSE );
+		IF NOT fbFileDelete_1.bBusy THEN
+			IF NOT fbFileDelete_1.bError THEN
+				uinSubStep := cSubStep_Finished;
+			ELSE 
+				Out_udiErrId := fbFileDelete_1.nErrID;
+				uinSubStep := cSubStep_Error;
+			END_IF
+		END_IF
+		
+	cSubStep_Finished: 
+		// succesfully finished
+		
+	cSubStep_Error:
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , CONCAT('error active - number:' , DWORD_TO_HEXSTR( fbFileDelete_1.nErrID, 0, FALSE )));
+		Out_udiErrId := fbFileDelete_1.nErrID;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Cmd_NewFile" Id="{414f97c7-e04b-494c-818d-f06b4d523918}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Cmd_NewFile : BOOL
+VAR_INPUT
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pWriteBuff := 0;
+udiWriteLen := 0;
+intCmd := cFILE_HDL_CMD_NEW_FILE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_FileClose" Id="{45b58451-500a-4b07-a81a-2027243f2afc}">
+      <Declaration><![CDATA[METHOD PROTECTED M_FileClose : BOOL
+VAR_INPUT
+	 
+END_VAR
+VAR
+	strMyName : STRING := 'M_FileClose: ';
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE uinSubStep OF
+	cSubStep_Done:	
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'start');
+		
+		fbFileClose_1.sNetId := fbFileOpen_1.sNetId;
+		fbFileClose_1.hFile := uin_FileHandle;
+		fbFileClose_1.tTimeout := T#3S;
+		fbFileClose_1(bExecute:= FALSE);
+		fbFileClose_1(bExecute:= TRUE);
+		
+		uinSubStep := 1;
+		
+	1: 
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'busy');	
+
+		(* wait until function block not busy *)
+		fbFileClose_1( bExecute := FALSE );
+		IF NOT fbFileClose_1.bBusy THEN
+			uin_FileHandle := 0;
+			IF NOT fbFileClose_1.bError THEN
+				uinSubStep := cSubStep_Finished;
+			ELSE 
+				Out_udiErrId := fbFileClose_1.nErrID; // 0x703 	Invalid or unknown file handle., 0x70E 	File was opened with wrong method ( e.g. with 'obsolete' FILEOPEN function block ). 
+				uinSubStep := cSubStep_Error;
+			END_IF
+		END_IF
+		
+	cSubStep_Finished: 
+		// succesfully finished
+		
+	cSubStep_Error:
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , CONCAT('error active - number:' , DWORD_TO_HEXSTR( fbFileClose_1.nErrID, 0, FALSE )));
+		Out_udiErrId := fbFileClose_1.nErrID;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Cmd_WriteBuffer" Id="{66bc4301-638c-49a7-95e0-707fff6458a0}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Cmd_WriteBuffer : BOOL
+VAR_INPUT
+	In_p_bytWriteBuff: POINTER TO BYTE;
+	In_udiWriteLen : UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pWriteBuff := In_p_bytWriteBuff;
+udiWriteLen := In_udiWriteLen;
+intCmd := cFILE_HDL_CMD_WRITE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Cmd_FileDelete" Id="{8350dbf0-5af7-4373-b9e0-9d8d0cea9dff}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Cmd_FileDelete : BOOL
+VAR_INPUT
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[intCmd := cFILE_HDL_CMD_FILE_DELETE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{87372386-6950-4363-8d5f-52eb0c3f8ae2}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Init : BOOL
+VAR_INPUT
+	In_strNetId: STRING(23); // NetId to write to foreign system drives
+	IN_strPath : Tc2_System.T_MaxString; 	// Contains only the path 
+	IN_strFileName : Tc2_System.T_MaxString;// Contains only the filename
+	IN_strFileExt : Tc2_System.T_MaxString;	// Contains only the ext
+	IN_uinMaxNrOfFilesInFolder:UINT; // max number of files in folder
+	IN_timFileSupervisionPeriod : TIME;// time periode for checking max file nuimber in folder
+	IN_lreMaxFileSize : LREAL;// maximal allowed filesize for file -> archivate and deleter or create new
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[strNetId := In_strNetId;
+strPath := IN_strPath;
+strFileName := IN_strFileName;
+strFileExt := IN_strFileExt;
+lreMaxFileSize := IN_lreMaxFileSize; // maximal allowed filesize for file -> archivate and deleter or create new
+
+fbFolderHdl_1.M_INIT(IN_strPath := strPath,IN_strPrefixFileName:=strFileName,IN_strFileExt:=strFileExt,In_strNetId:=strNetId);
+fbFolderHdl_1.MaxNrOfFilesInFolder := IN_uinMaxNrOfFilesInFolder;
+fbFolderHdl_1.FileSupervisionPeriod := IN_timFileSupervisionPeriod;
+bolInitDone := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_FileOpen" Id="{92fd4cf6-c6be-45c8-93a6-a9eac8792d25}">
+      <Declaration><![CDATA[METHOD PROTECTED M_FileOpen : BOOL
+VAR_INPUT
+	In_strNetId : STRING(23);
+	In_strPathName : T_MaxString;  
+END_VAR
+VAR
+	strMyName : STRING := 'M_FileOpen: ';
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE uinSubStep OF
+	cSubStep_Done:	
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'start');
+		
+		fbFileOpen_1.sNetId := In_strNetId;
+		fbFileOpen_1.sPathName := In_strPathName;
+		fbFileOpen_1.nMode := FOPEN_MODEAPPEND OR FOPEN_MODEPLUS OR FOPEN_MODEBINARY;      // "a+": Opens for reading and appending; the appending operation includes the removal of the EOF marker before new data is written to the file and the EOF marker is restored after writing is complete; creates the file first if it doesn’t exist.
+																					// When a file is opened with the "a" or "a+" access type, all write operations occur at the end of the file. The file pointer can be repositioned using FB_FileSeek, but is always moved back to the end of the file before any write operation is carried out. Thus, existing data cannot be overwritten.                       
+
+		fbFileOpen_1.ePath := PATH_GENERIC;
+		fbFileOpen_1.tTimeout := T#3S;
+		fbFileOpen_1(bExecute:= FALSE);
+		fbFileOpen_1(bExecute:= TRUE);
+		
+		uinSubStep := 1;
+		
+	1: 
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'busy');	
+
+		(* wait until function block not busy *)
+		fbFileOpen_1( bExecute := FALSE );
+		IF NOT fbFileOpen_1.bBusy THEN
+			uin_FileHandle := fbFileOpen_1.hFile;
+			IF NOT fbFileOpen_1.bError THEN
+				uinSubStep := cSubStep_Finished;
+			ELSE 
+				Out_udiErrId := fbFileOpen_1.nErrID;
+				uinSubStep := cSubStep_Error;
+			END_IF
+		END_IF
+		
+	cSubStep_Finished: 
+		// succesfully finished
+		
+	cSubStep_Error:
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , CONCAT('error active - number:' , DWORD_TO_HEXSTR( fbFileOpen_1.nErrID, 0, FALSE )));
+		Out_udiErrId := fbFileOpen_1.nErrID;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_FileCopy" Id="{b8980186-2487-41d1-b24d-25336cada0ab}">
+      <Declaration><![CDATA[METHOD PROTECTED M_FileCopy : BOOL
+VAR_INPUT
+	 In_strNetIdSrc : STRING(23);
+	 In_strPathNameSrc : T_MaxString;
+	 In_strNetIdDst : STRING(23);
+	 In_strPathNameDst : T_MaxString;
+END_VAR
+VAR
+	strMyName : STRING := 'M_FileCopy: ';
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE uinSubStep OF
+	cSubStep_Done:	
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'start');
+		
+		fbFileCopy_1.srcNetId := In_strNetIdSrc; // only local access
+		fbFileCopy_1.destNetId := In_strNetIdDst; // only local access
+		fbFileCopy_1.srcFileName := In_strPathNameSrc;
+		fbFileCopy_1.destFileName := In_strPathNameDst;
+		fbFileCopy_1.tAdsTimeOut := T#3S;
+		fbFileCopy_1(bExecute:= FALSE);
+		fbFileCopy_1(bExecute:= TRUE);
+		
+		uinSubStep := 1;
+		
+	1: 
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'busy');	
+
+		(* wait until function block not busy *)
+		fbFileCopy_1( bExecute := FALSE );
+		IF NOT fbFileCopy_1.bBusy THEN
+			uin_FileHandle := 0;
+			IF NOT fbFileCopy_1.bError THEN
+				uinSubStep := cSubStep_Finished;
+			ELSE 
+				Out_udiErrId := fbFileCopy_1.nErrID; 
+				uinSubStep := cSubStep_Error;
+			END_IF
+		END_IF
+		
+	cSubStep_Finished: 
+		// succesfully finished
+		
+	cSubStep_Error:
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , CONCAT('error active - number:' , DWORD_TO_HEXSTR( fbFileCopy_1.nErrID, 0, FALSE )));
+		Out_udiErrId := fbFileCopy_1.nErrID;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_GetPathName" Id="{c0a08dac-bd5c-4a7e-8ad8-79f91d24d5d5}">
+      <Declaration><![CDATA[METHOD PRIVATE M_GetPathName : T_MaxString
+VAR_INPUT
+	In_strSufixBeforeDateTime : T_MaxString;
+	In_bolSufixDateTime : BOOL;
+END_VAR
+VAR
+	strTemp: Tc2_System.T_MaxString;
+	strTempDateTime: Tc2_System.T_MaxString;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+//strPathName := CONCAT(CONCAT(CONCAT(CONCAT(strPath , '\') , strFileName ), '.' ), strFileExt);
+
+
+strTemp := strPath; //CONCAT(strPath , '\');
+strTemp := CONCAT(strTemp , strFileName);
+strTemp := CONCAT(strTemp , In_strSufixBeforeDateTime);
+IF (In_bolSufixDateTime = TRUE) THEN
+	strTempDateTime := '';
+	strTempDateTime := CONCAT(strTempDateTime , WORD_TO_STRING(fbNT_GetTime.TIMESTR.wYear));
+	IF (fbNT_GetTime.TIMESTR.wMonth<10) THEN
+		strTempDateTime := CONCAT(strTempDateTime , '0');
+	END_IF
+	strTempDateTime := CONCAT(strTempDateTime , WORD_TO_STRING(fbNT_GetTime.TIMESTR.wMonth));
+	IF (fbNT_GetTime.TIMESTR.wDay<10) THEN
+		strTempDateTime := CONCAT(strTempDateTime , '0');
+	END_IF
+	strTempDateTime := CONCAT(strTempDateTime , WORD_TO_STRING(fbNT_GetTime.TIMESTR.wDay));
+	strTempDateTime := CONCAT(strTempDateTime , '_');
+	IF (fbNT_GetTime.TIMESTR.wHour<10) THEN
+		strTempDateTime := CONCAT(strTempDateTime , '0');
+	END_IF
+	strTempDateTime := CONCAT(strTempDateTime , WORD_TO_STRING(fbNT_GetTime.TIMESTR.wHour));
+	IF (fbNT_GetTime.TIMESTR.wMinute<10) THEN
+		strTempDateTime := CONCAT(strTempDateTime , '0');
+	END_IF
+	strTempDateTime := CONCAT(strTempDateTime , WORD_TO_STRING(fbNT_GetTime.TIMESTR.wMinute));
+	IF (fbNT_GetTime.TIMESTR.wSecond<10) THEN
+		strTempDateTime := CONCAT(strTempDateTime , '0');
+	END_IF
+	strTempDateTime := CONCAT(strTempDateTime , WORD_TO_STRING(fbNT_GetTime.TIMESTR.wSecond));
+	strTemp := CONCAT(strTemp , strTempDateTime);
+END_IF
+strTemp := CONCAT(strTemp , '.');
+M_GetPathName := CONCAT(strTemp , strFileExt);]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="ActFileSize" Id="{fe008f31-fdb4-44df-87aa-b86fa58c92f9}">
+      <Declaration><![CDATA[PROPERTY PUBLIC ActFileSize : UDINT]]></Declaration>
+      <Get Name="Get" Id="{f6cb6759-4139-4a98-8e15-c755de7936b3}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ActFileSize := LREAL_TO_UDINT(lreCurFileSize);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

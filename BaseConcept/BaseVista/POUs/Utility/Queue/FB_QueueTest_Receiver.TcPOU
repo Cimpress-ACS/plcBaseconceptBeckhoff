@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_QueueTest_Receiver" Id="{4459ed8f-1366-4f54-ad64-39e57186d99b}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_QueueTest_Receiver
+VAR_INPUT
+	In_p_fbQueue: POINTER TO FB_Queue; // only one central FB_QUEUE instance allowed per PLC!!!
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	stData : T_Queue_TestData;
+	bolInit : BOOL := FALSE;
+	pQueueHandle : POINTER TO T_Queue_SysInfo;
+	pQueueHandleRead : POINTER TO T_Queue_Info;
+	uinInitStatus : UINT;
+	uinGetHandleStatus :UINT;
+	uinReadStatus : UINT;
+	ii:UINT;
+	udiRxCounter : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Example and test programm for testing the queue system - read data from queue
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.07.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+// system init onetime after start up
+IF (bolInit=FALSE) THEN
+	//init queue system, one time should be called per queue system
+	In_p_fbQueue^.M_Init(In_strQueueName:='bReceiver',In_uinNrOfElement := 25, In_udiSizeOfElement:= SIZEOF(stData),In_uinMode:=0,Out_pHandle=>pQueueHandle,Out_uinStatus=>uinInitStatus);
+	
+	// for every task class has to call this methode handle is needed for read
+	uinGetHandleStatus := In_p_fbQueue^.M_GetHandle(In_strQueueName:='bReceiver',Out_pQueueHandle=>pQueueHandleRead);
+	bolInit := TRUE;
+END_IF
+
+// because more than one task function writes to the logsystem it is better to read out more than one elment per cycle!
+FOR ii:=0 TO 9 BY 1 DO
+	uinReadStatus := In_p_fbQueue^.M_Read(In_pQueueHandle:=pQueueHandleRead,In_pData:=ADR(stData));
+	IF (uinReadStatus<>0) THEN
+		EXIT;
+	END_IF
+	udiRxCounter := udiRxCounter + 1;
+END_FOR
+]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

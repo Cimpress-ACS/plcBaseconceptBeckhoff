@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_StateLogger" Id="{6f473df8-4e2b-404c-833a-c28561ae606c}">
+    <Declaration><![CDATA[TYPE T_StateLogger :
+STRUCT
+	pfbBaseLog : POINTER TO FB_BasLog; // should be set from outside over property
+	uinStatus_Handle : UINT; // =0 handle ok or not allready requested 
+	pHandle : POINTER TO T_Bl_LibHandleRow; // pointer to base logger system
+	uinStatusWrite : UDINT; // feedback if write was successfully
+	bolDoLog : BOOL; // state change detected or application cmd to log infos
+	strText1: STRING(BasLog.cMAX_CHAR_TEXT1); // set in CycleEndDuty
+	
+	// free usable for application
+	strText2: STRING(BasLog.cMAX_CHAR_TEXT2); // free usable from application task for additional debug informations
+	dinPar3: DINT;	 // free usable from application task for additional debug informations
+	dinPar4: DINT;	 // free usable from application task for additional debug informations
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

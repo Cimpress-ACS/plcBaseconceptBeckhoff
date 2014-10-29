@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_FileLc_StateLogger" Id="{c5f2405b-decd-40f9-b0cd-85e547b0b1e6}">
+    <Declaration><![CDATA[
+FUNCTION_BLOCK FB_FileLc_StateLogger
+VAR_INPUT
+	In_p_fbBasLog: POINTER TO FB_BasLog; // only one central FB_BasLog instance allowed per PLC!!!
+	In_p_fbFileLC: POINTER TO FB_FileLc; // only one central FB_FileLc instance allowed per PLC!!!
+END_VAR
+VAR_OUTPUT
+	Out_bolInitDone : BOOL;
+	Out_udiStatus : UDINT;
+END_VAR
+VAR
+	uinActFLcClientIdx : UINT; // file client index for init
+	bolInit : BOOL := FALSE; // FALSE: autostart with init
+	bolGetFirstHandle : BOOL;
+	bolDone : BOOL;
+	udiInitStatus : UDINT;
+	udiStatus : UDINT;
+	pHandle : POINTER TO T_FileLc_SysInfo;
+	// for test send
+	pHandleBaseLog : POINTER TO T_Bl_LibHandleRow;
+	uinGetHandleBaseLogStatus : UINT;
+	intDoWrite : INT;
+	dinPar1 : DINT;
+	strText1 : STRING(BasLog.cMAX_CHAR_TEXT1):='Statelogger test - Controller 1';
+	strText2 : STRING(BasLog.cMAX_CHAR_TEXT2):='Statelogger test - sub info';
+	uinWriteStatus : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Function block capsule the state logger file client call in the application.
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.10.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+IF (In_p_fbFileLC<>TC3_MEMMAN.NULL) AND (g_bolLogEnableState=TRUE) THEN // check if pointer valid
+	
+	// system init onetime after start up
+	IF (Out_bolInitDone=FALSE) THEN
+		In_p_fbFileLC^.M_Init(In_bolExecute := TRUE,In_p_uinFLcIdx := ADR(uinActFLcClientIdx),In_strCfgFileName:='StateLogCsv.cfg',In_strPath:='C:\Vistaprint\Log\',In_p_fbBasLog := In_p_fbBasLog,Out_pHandle=>pHandle,Out_udiStatus=>udiInitStatus,Out_bolDone=>bolDone);
+		IF (bolDone OR (udiInitStatus<>0)) THEN
+			// negative edge -> reinit possibel and release init next file client!!!
+			In_p_fbFileLC^.M_Init(In_bolExecute := FALSE,In_p_uinFLcIdx := ADR(uinActFLcClientIdx),In_strCfgFileName:='StateLogCsv.cfg',In_strPath:='C:\Vistaprint\Log\',In_p_fbBasLog := In_p_fbBasLog);
+			Out_bolInitDone := TRUE;
+		END_IF
+	ELSE
+		IF ((pHandle<>TC3_MEMMAN.NULL) AND (udiInitStatus=0)) THEN	// valid pointer => init ok
+			// cyclic call of file client - alarm generation in application if status not ok???
+			udiStatus := In_p_fbFileLC^.M_Cyclic(In_pHandle:=pHandle);
+			
+			// *******************************************************************************************************************************************
+			// only for sending test logs!!!
+			// get write handle for tests
+			IF (bolGetFirstHandle=FALSE) THEN
+				uinGetHandleBaseLogStatus := In_p_fbBasLog^.M_GetHandle(Out_pHandle=>pHandleBaseLog);// fbBasLog global defined base log system fub (only once per system)
+				bolGetFirstHandle := TRUE;
+			END_IF
+			
+			// write test state log entries
+			IF (pHandleBaseLog<>TC3_MEMMAN.NULL) AND (intDoWrite>0) THEN
+				intDoWrite := intDoWrite - 1;
+				dinPar1 := dinPar1 + 1;
+				uinWriteStatus := In_p_fbBasLog^.M_Log(In_pHandle:=pHandleBaseLog,In_udiLogType:=BasLog.cLOGTYPE_STATELOG,In_intCtrlID:=11,In_strText1:=strText1,In_strText2:=strText2,In_dinPar1:=dinPar1,In_dinPar2:=0,In_dinPar3:=0,In_dinPar4:=0) ;
+			END_IF
+			// *******************************************************************************************************************************************
+		END_IF;		
+	END_IF
+
+	// out for failures
+	IF (udiInitStatus<>0)THEN
+		Out_udiStatus := udiInitStatus;
+	ELSE
+		Out_udiStatus := udiStatus;
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

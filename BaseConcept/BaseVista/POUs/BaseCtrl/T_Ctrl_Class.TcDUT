@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <DUT Name="T_Ctrl_Class" Id="{9c20edf1-e3b3-43ce-9c8c-f14d4afb36c0}">
     <Declaration><![CDATA[TYPE T_Ctrl_Class :
 STRUCT
@@ -13,6 +14,8 @@ STRUCT
 	SubStateMachine				: T_Ctrl_Class_StateMachine;
 	Alarm						: T_Ctrl_Class_Alm;
 	FUBInfo						: T_fbInfo;
+	// StateLogger infos
+	stStateLogger : T_StateLogger;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="strstr" Id="{0c97d452-55d8-495b-b1cb-cf76e84c14f5}">
+    <Declaration><![CDATA[FUNCTION strstr : POINTER TO BYTE
+VAR_INPUT
+	In_pStr: POINTER TO BYTE; // string which should include search string
+	In_pStrSearch: POINTER TO BYTE; // search string
+	In_bolAddStrSearchLen : BOOL; // add to result search STRING length
+END_VAR
+VAR
+	p_bytStr : POINTER TO BYTE;
+	chrStr : STRING(1) := '';
+	p_bytStrSearch : POINTER TO BYTE;
+	chrStrSearch : STRING(1) := '';
+	ii : UINT;
+	jj : UINT;
+	p_bytAdressStr : POINTER TO BYTE;
+	p_bytAdressStrSearch : POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*char *strstr(const char *s1, const char *s2);
+
+Description
+Locates the first occurence in the string pointed to by s1 of the sequence of characters in the string pointed to by s2 (excluding the terminating null character). 
+
+
+Returns
+Returns a pointer to the located string segment, or a null pointer if the string s2 is not found. If s2 points to a string with zero length, the s1 is returned. 
+*)
+
+// invalid input pointer check
+IF ((In_pStr=TC3_MEMMAN.NULL) OR (In_pStrSearch=TC3_MEMMAN.NULL)) THEN
+	strstr := TC3_MEMMAN.NULL; // input strings not defined
+	RETURN;
+END_IF
+
+
+ii :=0;
+p_bytAdressStr := In_pStr;
+p_bytStr := p_bytAdressStr;
+WHILE (p_bytStr^ <> 0) DO // zero terminated string
+	p_bytAdressStr := In_pStr + ii*SIZEOF(In_pStr^); // pointer increment
+	p_bytStr := p_bytAdressStr;
+	chrStr :=Tc2_System.F_ToCHR(c:= p_bytStr^); // for debugging watch value
+	
+	jj := 0;
+	p_bytAdressStrSearch := In_pStrSearch;
+	p_bytStrSearch := p_bytAdressStrSearch;
+
+	WHILE (p_bytStr^ = p_bytStrSearch^) DO
+		
+		// char/byte matches compare next
+		p_bytAdressStrSearch := In_pStrSearch + jj*SIZEOF(In_pStrSearch^); // pointer increment
+		p_bytStrSearch := p_bytAdressStrSearch;
+		chrStrSearch := Tc2_System.F_ToCHR(c:= p_bytStrSearch^); // for debugging watch value
+		
+		// end of string found->search string matches
+		IF (p_bytStrSearch^=0) THEN// zero terminated string
+			IF (In_bolAddStrSearchLen=TRUE) THEN// add to result search STRING length
+				strstr := p_bytAdressStr + jj*SIZEOF(In_pStr^); // return start adress of next byte after search string
+			ELSE
+				strstr := p_bytAdressStr; // return start adress of match search string
+			END_IF
+			
+			RETURN;
+		END_IF
+		
+		p_bytStr := p_bytAdressStr + jj*SIZEOF(In_pStr^);
+		chrStr :=Tc2_System.F_ToCHR(c:= p_bytStr^); // for debugging watch value
+		jj := jj + 1;
+	END_WHILE
+	ii := ii + 1;
+END_WHILE
+
+strstr := Tc3_MemMan.NULL; // return null adress search string not found in string]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

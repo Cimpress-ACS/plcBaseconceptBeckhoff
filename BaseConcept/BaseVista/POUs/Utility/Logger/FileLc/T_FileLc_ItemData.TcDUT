@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_FileLc_ItemData" Id="{57a97f0b-cc44-472d-a461-090e8b8904f2}">
+    <Declaration><![CDATA[TYPE T_FileLc_ItemData :
+STRUCT
+		udiRecIdx : UDINT; (*Record - Index, zu welchem die Daten gehören*)
+		strValue : STRING[FileLc.cMAX_ITEM_CHAR]; (*Item - Value bereits in einen String gewandelt*)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

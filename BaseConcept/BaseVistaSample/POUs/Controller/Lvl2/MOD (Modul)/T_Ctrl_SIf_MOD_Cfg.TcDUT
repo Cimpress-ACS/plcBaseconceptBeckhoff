@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <DUT Name="T_Ctrl_SIf_MOD_Cfg" Id="{ed4fb6a6-cc49-44cb-ade5-0074827fc1be}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_MOD_Cfg" Id="{19ba0013-d082-4558-b8d4-6e162f54dbc3}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_Cfg :
 STRUCT
 	eTyp: E_Typ_MOD;

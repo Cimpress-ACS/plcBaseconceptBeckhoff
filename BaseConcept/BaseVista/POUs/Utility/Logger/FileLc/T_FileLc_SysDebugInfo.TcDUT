@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_FileLc_SysDebugInfo" Id="{afc088f8-7d5f-40bc-a4fe-ebf8bfcf296c}">
+    <Declaration><![CDATA[TYPE T_FileLc_SysDebugInfo :
+STRUCT
+		udiLogCounter : UDINT;
+		uinGetHandleCalls : UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

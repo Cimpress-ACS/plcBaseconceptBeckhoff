@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_QueueTest_Sender" Id="{5725e57b-db86-4053-9786-64b01f71d77a}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_QueueTest_Sender
+VAR_INPUT
+	In_p_fbQueue: POINTER TO FB_Queue; // only one central FB_QUEUE instance allowed per PLC!!!
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	stData : T_Queue_TestData;
+	bolInit : BOOL := FALSE;
+	pQueueHandle : POINTER TO T_Queue_Info;
+	uinGetHandleStatus : UINT;
+	uinWriteStatus :UINT;
+	uinDoWrite : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Example and test programm for testing the queue system - write data in queue
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.07.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+// system init onetime after start up
+IF (bolInit=FALSE) THEN
+	uinGetHandleStatus := In_p_fbQueue^.M_GetHandle(In_strQueueName:='bReceiver',Out_pQueueHandle=>pQueueHandle);
+	
+	// init write struct
+	stData.strName := 'Daten';
+	stData.udiAdress := 1;
+	stData.udiDataLen := 2;
+	stData.usiDataTyp:= 3;
+	stData.udiDimension := 4;
+	bolInit := TRUE;
+END_IF
+
+// number of cycles to write
+IF (uinDoWrite>0) THEN
+	uinDoWrite := uinDoWrite - 1;
+	uinWriteStatus := In_p_fbQueue^.M_Write(In_pQueueHandle:= pQueueHandle,In_pData:= ADR(stData));
+	stData.udiAdress := stData.udiAdress + 1;
+END_IF]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

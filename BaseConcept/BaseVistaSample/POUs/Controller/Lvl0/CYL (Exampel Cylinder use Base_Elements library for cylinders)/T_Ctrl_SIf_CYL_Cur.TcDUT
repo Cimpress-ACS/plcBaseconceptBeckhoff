@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_CYL_Cur" Id="{849ca438-8dab-4d4a-8ed2-be091111052b}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_CYL_Cur" Id="{2dd87659-a3b2-4088-811c-a8b267e9a988}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_Cur :
 STRUCT
 	///[ms] time last movement to retract

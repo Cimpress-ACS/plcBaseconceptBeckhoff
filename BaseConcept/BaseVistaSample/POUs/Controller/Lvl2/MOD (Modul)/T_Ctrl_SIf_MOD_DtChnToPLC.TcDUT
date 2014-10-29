@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_MOD_DtChnToPLC" Id="{6431b662-259f-4c30-bb7c-d3235bf970f0}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_MOD_DtChnToPLC" Id="{123dfe06-0917-4ae9-82d5-405899cc22e0}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_DtChnToPLC :
 STRUCT
 	dinTest : DINT;

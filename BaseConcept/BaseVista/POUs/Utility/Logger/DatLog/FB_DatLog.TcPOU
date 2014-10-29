@@ -1,0 +1,386 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_DatLog" Id="{62313278-442b-4733-b311-6a0ca01cddca}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DatLog
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	stDatLogLibInfo : T_DL_LibInfo;
+	fbPLC_ReadSymInfo: PLC_ReadSymInfoByNameEx; // only one init allowed on the same time....
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Base logger system. The FUB must be called defined globally one time in PLC-program. After that the implemented 
+sender and receiver must interact over the public methodes of the FB_BasLog.
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.07.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{09acd413-83ee-4538-b272-95b24165c626}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Init : BOOL
+VAR_INPUT
+	In_bolExecute : BOOL;
+	In_strDatLogName: STRING(DatLog.cMAX_SYS_NAME_LENGTH); // name of the client
+	In_a_strDataDefinition: ARRAY[0..DatLog.cMAX_NR_OF_VAR] OF STRING(DatLog.cMAX_VAR_NAME_LEN); // complete VarName: p.e.:MAIN.INIT_TASK.VARINT
+	In_uinStartId: UINT;	// Start ident for item index -> cfg file config has to match with this number!
+	In_Port : T_AmsPort;	// on plc the first runtime system is the 801, 811 ...
+END_VAR
+VAR_OUTPUT
+	Out_udiStatus: UDINT;		 // 0 => successful done, <>0 => error
+	Out_bolDone: BOOL;			// Done
+END_VAR
+VAR
+	pstSysInfo: POINTER TO T_DL_SysInfo;
+	pstItem : POINTER TO T_DL_Item;
+	ii : UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF (In_bolExecute=TRUE) THEN
+	// check if log system allready exists or not, if not allocate a new one
+	pstSysInfo := M_CheckAndAppendDatLogInfo(In_strDatLogName:=In_strDatLogName);
+	IF (pstSysInfo=TC3_MEMMAN.NULL) THEN
+		Out_udiStatus := DatLog.cERR_MEM_ALLOC;
+		RETURN;
+	END_IF
+
+	IF (stDatLogLibInfo.stStatemachine.bolExecute_old=FALSE) THEN // reset statemachine
+		stDatLogLibInfo.stStatemachine.uinState := 1;
+		Out_bolDone := FALSE;
+		Out_udiStatus := 0;
+		stDatLogLibInfo.stStatemachine.usiInitDone := 0;
+	END_IF
+
+CASE stDatLogLibInfo.stStatemachine.uinState OF
+	1:
+		//check number of elements
+		FOR ii :=0 TO DatLog.cMAX_NR_OF_VAR BY 1 DO
+			IF (In_a_strDataDefinition[ii]='') THEN
+				EXIT;
+			END_IF
+		END_FOR
+		
+		pstSysInfo^.uinNbrOfItems := ii;
+		pstSysInfo^.uinStartId := In_uinStartId;
+		
+		// allocate memory for items
+		pstSysInfo^.pstItems := M_AllocMEM((pstSysInfo^.uinNbrOfItems*SIZEOF(T_DL_Item)));
+		IF (pstSysInfo^.pstItems =TC3_MEMMAN.NULL) THEN
+			Out_udiStatus := DatLog.cERR_MEM_ALLOC;
+			RETURN;
+		END_IF
+		pstSysInfo^.uinCntReadItems := 0;
+		pstSysInfo^.uinItemOffset := 0;
+		stDatLogLibInfo.stStatemachine.uinState := stDatLogLibInfo.stStatemachine.uinState + 1;
+		
+	2:	
+		fbPLC_ReadSymInfo.NETID:=''; // local PLC
+		IF (In_Port=0) THEN// access first runtime system
+			fbPLC_ReadSymInfo.PORT := 851;
+		ELSE
+			fbPLC_ReadSymInfo.PORT := In_Port;
+		END_IF
+		fbPLC_ReadSymInfo.SYMNAME := In_a_strDataDefinition[pstSysInfo^.uinCntReadItems];
+		fbPLC_ReadSymInfo.START := FALSE;
+		fbPLC_ReadSymInfo();
+		fbPLC_ReadSymInfo.START := TRUE;
+		fbPLC_ReadSymInfo();
+		stDatLogLibInfo.stStatemachine.uinState := stDatLogLibInfo.stStatemachine.uinState + 1;
+		
+	3:
+		fbPLC_ReadSymInfo();
+		IF (fbPLC_ReadSymInfo.BUSY=FALSE) THEN
+			stDatLogLibInfo.stStatemachine.uinState := stDatLogLibInfo.stStatemachine.uinState + 1;
+		END_IF
+		
+	4:
+		pstItem := pstSysInfo^.pstItems;
+		IF (fbPLC_ReadSymInfo.ERR=FALSE) THEN
+			pstItem[pstSysInfo^.uinCntReadItems].strPvName := In_a_strDataDefinition[pstSysInfo^.uinCntReadItems];
+			pstItem[pstSysInfo^.uinCntReadItems].uinItemOffset := pstSysInfo^.uinItemOffset;
+			pstItem[pstSysInfo^.uinCntReadItems].SymInfo := fbPLC_ReadSymInfo.SYMINFO;
+			pstSysInfo^.uinItemOffset := pstSysInfo^.uinItemOffset + UDINT_TO_UINT(pstItem[pstSysInfo^.uinCntReadItems].SymInfo.byteSize); // offset for next
+			
+			// check if type ok/allowed
+			IF (pstItem[pstSysInfo^.uinCntReadItems].SymInfo.symDataType = 'BOOL') THEN 
+				pstItem[pstSysInfo^.uinCntReadItems].udiItemType := DatLog.cVAR_TYPE_BOOL;
+			ELSIF (pstItem[pstSysInfo^.uinCntReadItems].SymInfo.symDataType = 'SINT') THEN 
+				pstItem[pstSysInfo^.uinCntReadItems].udiItemType := DatLog.cVAR_TYPE_SINT;
+			ELSIF (pstItem[pstSysInfo^.uinCntReadItems].SymInfo.symDataType = 'INT') THEN 
+				pstItem[pstSysInfo^.uinCntReadItems].udiItemType := DatLog.cVAR_TYPE_INT;
+			ELSIF (pstItem[pstSysInfo^.uinCntReadItems].SymInfo.symDataType = 'DINT') THEN 
+				pstItem[pstSysInfo^.uinCntReadItems].udiItemType := DatLog.cVAR_TYPE_DINT;
+			ELSIF (pstItem[pstSysInfo^.uinCntReadItems].SymInfo.symDataType = 'USINT') THEN 
+				pstItem[pstSysInfo^.uinCntReadItems].udiItemType := DatLog.cVAR_TYPE_USINT;
+			ELSIF (pstItem[pstSysInfo^.uinCntReadItems].SymInfo.symDataType = 'UINT') THEN 
+				pstItem[pstSysInfo^.uinCntReadItems].udiItemType := DatLog.cVAR_TYPE_INT;
+			ELSIF (pstItem[pstSysInfo^.uinCntReadItems].SymInfo.symDataType = 'UDINT') THEN 
+				pstItem[pstSysInfo^.uinCntReadItems].udiItemType := DatLog.cVAR_TYPE_UDINT;
+			ELSIF (pstItem[pstSysInfo^.uinCntReadItems].SymInfo.symDataType = 'REAL') THEN 
+				pstItem[pstSysInfo^.uinCntReadItems].udiItemType := DatLog.cVAR_TYPE_REAL;
+			ELSIF (FIND(STR1:=pstItem[pstSysInfo^.uinCntReadItems].SymInfo.symDataType,STR2:='STRING')<>0) THEN 
+				IF (pstItem[pstSysInfo^.uinCntReadItems].SymInfo.byteSize < BasLog.cMAX_CHAR_TEXT2) THEN
+					pstItem[pstSysInfo^.uinCntReadItems].udiItemType := DatLog.cVAR_TYPE_STRING;
+				ELSE
+					Out_udiStatus := DatLog.cERR_UNSUPPORTED_TYPE_STRING_TOO_LONG;
+					RETURN;
+				END_IF
+			ELSE
+				Out_udiStatus := DatLog.cERR_UNSUPPORTED_TYPE;
+				RETURN;
+			END_IF
+		ELSE
+			Out_udiStatus := fbPLC_ReadSymInfo.ERRID;
+			RETURN;
+		END_IF
+		
+		pstSysInfo^.uinCntReadItems := pstSysInfo^.uinCntReadItems  + 1;
+		IF (pstSysInfo^.uinCntReadItems<pstSysInfo^.uinNbrOfItems) THEN // read next value
+			stDatLogLibInfo.stStatemachine.uinState := 2;
+		ELSE
+			stDatLogLibInfo.stStatemachine.uinState := stDatLogLibInfo.stStatemachine.uinState + 1; // all items found
+		END_IF
+	5:
+		Out_bolDone := TRUE;
+		Out_udiStatus := 0;
+		pstSysInfo^.usiInitOk := 1; 
+END_CASE
+END_IF
+stDatLogLibInfo.stStatemachine.bolExecute_old := In_bolExecute;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_AllocMEM" Id="{3d2ed0dc-6b1a-4eea-a823-460a692a3538}">
+      <Declaration><![CDATA[METHOD PROTECTED M_AllocMEM : POINTER TO BYTE
+
+VAR_INPUT
+	In_SizeOfBuffer : UINT; // Byte size of quee to allocate
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Debug counter
+M_AllocMEM := __NEW(BYTE,In_SizeOfBuffer);
+
+// check if allocate memory is ok
+IF (M_AllocMEM=TC3_MEMMAN.NULL) THEN
+	M_AllocMEM := TC3_MEMMAN.NULL;
+ELSE
+	Tc2_System.MEMSET(M_AllocMEM,0,In_SizeOfBuffer); // init with zero.
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_GetHandle" Id="{498121a8-1a31-4f96-bbb7-e3903f3124ce}">
+      <Declaration><![CDATA[METHOD PUBLIC M_GetHandle : UINT
+VAR_INPUT
+	In_strDatLogName: STRING(DatLog.cMAX_SYS_NAME_LENGTH); // name of the client
+	In_p_fbBasLog: POINTER TO FB_BasLog; // only one central FB_BasLog instance allowed per PLC!!!
+END_VAR
+VAR_OUTPUT
+	Out_pHandle : POINTER TO BYTE; // handle of log system for write (M_Log)
+	Out_udiStatus : UDINT; //0 => successful done, <>0 => error
+END_VAR
+VAR
+	pstSysInfo: POINTER TO T_DL_SysInfo;
+	uinGetHandleStatus : UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// check if log system allready exists or not, if not allocate a new one
+	pstSysInfo := M_CheckAndAppendDatLogInfo(In_strDatLogName:=In_strDatLogName);
+	IF (pstSysInfo=TC3_MEMMAN.NULL) THEN
+		Out_udiStatus := DatLog.cERR_MEM_ALLOC;
+		RETURN;
+	END_IF
+	
+	// log on base log system
+	uinGetHandleStatus := In_p_fbBasLog^.M_GetHandle(Out_pHandle=>pstSysInfo^.pBaseLogHandle);
+	
+	// check error
+	IF (uinGetHandleStatus<>0) THEN
+		Out_udiStatus := UINT_TO_UDINT(uinGetHandleStatus);
+		RETURN;
+	ELSE
+		pstSysInfo^.p_fbBasLog := In_p_fbBasLog;
+		Out_pHandle := pstSysInfo;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CheckAndAppendDatLogInfo" Id="{4e0e3241-9671-4184-a5ec-bf896719539b}">
+      <Declaration><![CDATA[METHOD PRIVATE M_CheckAndAppendDatLogInfo : Pointer TO T_DL_SysInfo
+VAR_INPUT
+	In_strDatLogName: STRING(DatLog.cMAX_SYS_NAME_LENGTH); // name of the client
+END_VAR
+VAR
+	pstSysInfo: POINTER TO T_DL_SysInfo;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// methode check, if data log allready exists and if not allocate a new system
+// -> return reference on new system
+
+// exist at least one data log system
+IF (stDatLogLibInfo.pstDatLogSysInfo=TC3_MEMMAN.NULL) THEN
+	// create  a new system
+	stDatLogLibInfo.pstDatLogSysInfo := M_AllocMEM(SIZEOF(T_DL_SysInfo));
+
+	IF (stDatLogLibInfo.pstDatLogSysInfo=TC3_MEMMAN.NULL) THEN
+		M_CheckAndAppendDatLogInfo := TC3_MEMMAN.NULL;
+		RETURN;
+	END_IF
+	
+	// data log name entry in info system
+	stDatLogLibInfo.pstDatLogSysInfo^.strDatLogName := In_strDatLogName;
+	M_CheckAndAppendDatLogInfo := stDatLogLibInfo.pstDatLogSysInfo;
+	RETURN;
+END_IF
+
+// after this point the system has to exist
+IF (stDatLogLibInfo.pstDatLogSysInfo<>TC3_MEMMAN.NULL) THEN
+	pstSysInfo := stDatLogLibInfo.pstDatLogSysInfo;
+	
+	WHILE (pstSysInfo<>TC3_MEMMAN.NULL) DO
+		IF (pstSysInfo^.strDatLogName=In_strDatLogName) THEN
+			// data log name found -> return handle
+			M_CheckAndAppendDatLogInfo := pstSysInfo;
+			RETURN;
+		END_IF
+		
+		// last element
+		IF (pstSysInfo^.pstNextDatLogSystem=TC3_MEMMAN.NULL) THEN
+			// the requested log name does not exist -> allocate a new one
+			pstSysInfo^.pstNextDatLogSystem := M_AllocMEM(SIZEOF(T_DL_SysInfo));
+
+			IF (pstSysInfo^.pstNextDatLogSystem<>TC3_MEMMAN.NULL) THEN
+				pstSysInfo := pstSysInfo^.pstNextDatLogSystem;
+				// data log name entry in info system
+				pstSysInfo^.strDatLogName := In_strDatLogName;
+				M_CheckAndAppendDatLogInfo := pstSysInfo;
+				RETURN;
+			ELSE
+				M_CheckAndAppendDatLogInfo := TC3_MEMMAN.NULL;
+				RETURN;
+			END_IF
+		ELSE
+			// reference next
+			pstSysInfo := pstSysInfo^.pstNextDatLogSystem;
+		END_IF
+	END_WHILE
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Log" Id="{85dba85e-b50f-4606-ab47-9a7fc3d2b952}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Log : UINT
+VAR_INPUT
+	In_pHandle : POINTER TO BYTE;// handle of log system for write (M_Log)
+	In_a_pData: ARRAY [0..DatLog.cMAX_NR_OF_VAR] OF POINTER TO BYTE;// address of structure elements
+END_VAR
+VAR_OUTPUT
+	Out_udiStatus: UDINT;		// 0 => successful done, <>0 => error
+END_VAR
+VAR
+	pstSysInfo: POINTER TO T_DL_SysInfo;
+	pstItem : POINTER TO T_DL_Item;
+	pstItemEle : T_DL_Item;
+	ii : UINT;
+	strText2: STRING(BasLog.cMAX_CHAR_TEXT2); // informationtext2
+	dinPar2 : DINT;
+	dinId : DINT;
+	uinStatus : UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// check handle ok
+IF (In_pHandle=TC3_MEMMAN.NULL) THEN
+	M_Log := DatLog.cERR_NO_HANDLE;
+	RETURN;
+END_IF
+
+// check data
+IF (In_a_pData[0]=TC3_MEMMAN.NULL) THEN
+	M_Log := DatLog.cERR_NO_DATE;
+	RETURN;
+END_IF
+
+// access data loggger system info
+pstSysInfo := In_pHandle;
+
+// check if init ok
+IF (pstSysInfo^.usiInitOk=0) THEN
+	M_Log := DatLog.cERR_INIT_FAILED;
+	RETURN;
+END_IF
+
+// check if items
+IF (pstSysInfo^.pstItems=TC3_MEMMAN.NULL) OR (pstSysInfo^.uinNbrOfItems<=0) THEN
+	M_Log := DatLog.cERR_NO_ITEMS;
+	RETURN;
+END_IF
+// access item definitions
+pstItem := pstSysInfo^.pstItems;
+
+// inc. record id: important the id is inc bevor and after writing of data -> to be sure that no second write is done (MUTEX)
+stDatLogLibInfo.udiCommonRecIdx := stDatLogLibInfo.udiCommonRecIdx + 1;
+IF (stDatLogLibInfo.udiCommonRecIdx=0) THEN
+	stDatLogLibInfo.udiCommonRecIdx := stDatLogLibInfo.udiCommonRecIdx + 1;
+END_IF
+// write record start
+// AE_BL_VAR_TYPE_CMD_NEW_REC
+uinStatus := pstSysInfo^.p_fbBasLog^.M_Log(In_pHandle := pstSysInfo^.pBaseLogHandle,In_udiLogType:=BasLog.cLOGTYPE_DATA,In_intCtrlID:=DatLog.cCTRL_ID,In_strText1:='DataLog',In_strText2:='AE_BL_VAR_TYPE_CMD_NEW_REC',In_dinPar1:=0,In_dinPar2:=0,In_dinPar3:=BasLog.cVAR_TYPE_CMD_NEW_REC,In_dinPar4:=UDINT_TO_DINT(stDatLogLibInfo.udiCommonRecIdx));
+IF (uinStatus<>0) THEN
+	M_Log := uinStatus;
+	RETURN;
+END_IF
+
+// loop over all items and write data to logger
+FOR ii :=0 TO (pstSysInfo^.uinNbrOfItems-1) BY 1 DO
+	// write item
+	pstItemEle := pstItem[ii]; // for debugging
+	// id
+	dinId := UINT_TO_DINT(pstSysInfo^.uinStartId + ii);
+	IF (pstItem[ii].udiItemType=DatLog.cVAR_TYPE_STRING) THEN
+		MEMSET(destAddr:=ADR(strText2),fillByte:=0,n:= SIZEOF(strText2)); // to be sure that a zero is at the end
+		// doesn't work with beckhoff...MEMCPY(destAddr := ADR(strText2),srcAddr:= (In_pAdrData + pstItem[ii].uinItemOffset),n:=pstItem[ii].SymInfo.byteSize);
+		MEMCPY(destAddr := ADR(strText2),srcAddr:= In_a_pData[ii],n:=pstItem[ii].SymInfo.byteSize);
+		dinPar2 := 0;
+	ELSE
+		strText2 := pstItem[ii].strPvName; // just for info
+		MEMCPY(destAddr := ADR(dinPar2),srcAddr:= In_a_pData[ii],n:=pstItem[ii].SymInfo.byteSize);
+	END_IF
+	
+	// log item
+	uinStatus := pstSysInfo^.p_fbBasLog^.M_Log(In_pHandle := pstSysInfo^.pBaseLogHandle,In_udiLogType:=BasLog.cLOGTYPE_DATA,In_intCtrlID:=DatLog.cCTRL_ID,In_strText1:='DataLog',In_strText2:=strText2,In_dinPar1:=dinId,In_dinPar2:=dinPar2,In_dinPar3:=UDINT_TO_DINT(pstItem[ii].udiItemType),In_dinPar4:=UDINT_TO_DINT(stDatLogLibInfo.udiCommonRecIdx));
+
+	IF (uinStatus<>0) THEN // no stop write error number
+		M_Log := uinStatus;
+	END_IF
+END_FOR
+
+// write record stop
+// AE_BL_VAR_TYPE_CMD_NEW_REC
+uinStatus := pstSysInfo^.p_fbBasLog^.M_Log(In_pHandle := pstSysInfo^.pBaseLogHandle,In_udiLogType:=BasLog.cLOGTYPE_DATA,In_intCtrlID:=DatLog.cCTRL_ID,In_strText1:='DataLog',In_strText2:='AE_BL_VAR_TYPE_CMD_END_REC',In_dinPar1:=0,In_dinPar2:=0,In_dinPar3:=BasLog.cVAR_TYPE_CMD_END_REC,In_dinPar4:=UDINT_TO_DINT(stDatLogLibInfo.udiCommonRecIdx));
+IF (uinStatus<>0) THEN
+	M_Log := uinStatus;
+	RETURN;
+END_IF
+
+// increment id a second time
+stDatLogLibInfo.udiCommonRecIdx := stDatLogLibInfo.udiCommonRecIdx + 1;
+IF (stDatLogLibInfo.udiCommonRecIdx=0) THEN
+	stDatLogLibInfo.udiCommonRecIdx := stDatLogLibInfo.udiCommonRecIdx + 1;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

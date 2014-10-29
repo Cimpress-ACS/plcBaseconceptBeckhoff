@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Bl_LibHandleRow" Id="{a44ad8a8-5f74-495d-b7de-f0e7293b572f}">
+    <Declaration><![CDATA[TYPE T_Bl_LibHandleRow :
+STRUCT
+	pQueueHandle :ARRAY[0..BasLog.cMAX_CLIENTS] OF POINTER TO T_Queue_Info; // handle for access buffer
+	usiRequest: USINT; // information if task allready requested a handle
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

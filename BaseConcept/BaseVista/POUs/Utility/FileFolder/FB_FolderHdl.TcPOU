@@ -1,0 +1,575 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_FolderHdl" Id="{6c2cf340-ba28-4f36-aa18-a2edd8dc74d0}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FolderHdl
+
+VAR_OUTPUT
+	Out_bolBusy : BOOL; // busy
+	Out_udiErrId : UDINT; // error id
+	Out_strInfo : STRING; //
+	Out_bolInitDone: BOOL;
+END_VAR
+VAR
+	uinStep: UINT;
+	uinStep_old : UINT;
+	uinSubStep : UINT;
+	intCmd : INT;
+	bolInitDone : BOOL;
+	bolFileNrExceedArraySize : BOOL; // more than max possibel managed files found -> delete in cyclic
+	// configurations/parameters
+	strNetId : STRING(23);
+	strPath : T_MaxString; 	// Contains only the path 
+	strPathName : T_MaxString; 	// Contains the whole search expresion
+	strFilePrefix : T_MaxString;	// Contains only the filename
+	strFileExt : T_MaxString;	// Contains only the ext
+	strTemp : T_MaxString;
+	timFileSupervisionPeriod : TIME;
+	uinMaxNrOfFilesInFolder : UINT; // max number of files in folder defined
+	
+	lreTotalFileSize : LREAL;
+	aFileList : ARRAY[1..cFILE_HDL_MAX_NR_OF_FILE_TO_MANAGE]  OF ST_FindFileEntry;
+	bolAbort : BOOL;
+	intOldestFile : INT := 1; // sort list oldest =1
+	udiNrOfFilesInFolder : UDINT;
+
+	fbEnumFindFileList_1 : FB_EnumFindFileList;
+	fbFileDelete_1 : FB_FileDelete;
+	fTON_1 : TON;
+	
+END_VAR
+VAR CONSTANT
+	// specific steps definitions
+	cStep_Start: UINT := 501;
+	cStep_FileDelete: UINT := 100;
+	cStep_Refresh: UINT := 101;
+	cStep_Wait4Job: UINT := 500;
+	cStep_Error: UINT := 256;
+	
+	cSubStep_Done: UINT := 0;
+	cSubStep_Finished: UINT := 100;
+	cSubStep_Error: UINT := 256;
+	
+	
+	// commandes constants
+	cFOLDER_HDL_CMD_DONE : INT := -1;
+	cFOLDER_HDL_CMD_REFRESH_FILE_LIST : INT := 1;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+	Manage folder: 
+	- Refresh list of files in specific folder
+	- sort list form oldest to newest file
+	- cyclic supervision of max number of files in folder
+	- triggered supervision of max number of files in folder 
+		
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.05.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+
+
+CASE uinStep OF
+	0:	
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_strInfo := 'Wait for init ok -> call methode M_INIT()';
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF
+		
+		IF bolInitDone THEN
+			uinStep := cStep_Start;
+		END_IF
+		
+	cStep_Start: 
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_strInfo := 'Start';	
+			Out_bolBusy := 0;
+			Out_udiErrId := 0;
+			uinSubStep := cSubStep_Done;
+			fTON_1.IN := FALSE;
+			fTON_1();
+			uinStep_old := uinStep;
+		END_IF
+		
+		intCmd := cFOLDER_HDL_CMD_REFRESH_FILE_LIST;// refresh actual file list first
+
+		uinStep := cStep_Wait4Job;
+		
+	cStep_Wait4Job:	
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_strInfo := 'Wait for job';
+			Out_bolBusy := FALSE;
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF
+
+		IF (timFileSupervisionPeriod>T#0MS) THEN
+			fTON_1.PT := timFileSupervisionPeriod;
+			fTON_1.IN := TRUE;
+			fTON_1();
+		END_IF
+		
+		IF (intCmd = cFOLDER_HDL_CMD_REFRESH_FILE_LIST) OR (fTON_1.Q=TRUE) THEN
+			uinStep := cStep_Refresh; // refresh actual file list
+		ELSE
+			IF (udiNrOfFilesInFolder>uinMaxNrOfFilesInFolder) AND (uinMaxNrOfFilesInFolder<>0) THEN
+				intOldestFile := 1; // first entry
+				uinStep := cStep_FileDelete;
+			END_IF
+		END_IF
+		
+		
+
+	cStep_Refresh:	
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_strInfo := 'Refresh file list busy';
+			Out_bolBusy := TRUE;
+			fTON_1.IN := FALSE;
+			fTON_1();
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF
+
+		THIS^.M_RefreshFileList();
+		
+		IF (uinSubStep = cSubStep_Finished) THEN
+			THIS^.M_SortFileList();
+			intCmd := cFOLDER_HDL_CMD_DONE;
+			Out_bolInitDone := TRUE; // valid file list
+			uinStep := cStep_Wait4Job;
+		ELSIF (uinSubStep = cSubStep_Error) THEN
+			intCmd := cFOLDER_HDL_CMD_DONE;
+			uinStep := cStep_Error;
+		END_IF	
+
+	cStep_FileDelete:
+	// entry action
+		IF (uinStep<>uinStep_old) THEN
+			Out_strInfo := 'Delete file busy';
+			Out_bolBusy := TRUE;
+			uinSubStep := cSubStep_Done;
+			uinStep_old := uinStep;
+		END_IF	
+		
+		strTemp := strPath;
+		strTemp := CONCAT(strTemp , aFileList[intOldestFile].sFileName);
+		THIS^.M_FileDelete(strTemp);
+		
+		IF (uinSubStep = cSubStep_Finished) THEN
+			intCmd := cFOLDER_HDL_CMD_DONE;
+			uinStep := cStep_Refresh; 
+		ELSIF (uinSubStep = cSubStep_Error) THEN
+			intCmd := cFOLDER_HDL_CMD_DONE;
+			uinStep := cStep_Error;
+		END_IF
+		
+	cStep_Error:	
+		// entry action
+		IF (uinStep<>uinStep_old) THEN
+			// written in sub Out_strInfo := 'Error';
+			Out_bolBusy := FALSE;
+			uinStep_old := uinStep;
+		END_IF
+		
+		IF (intCmd<>cFOLDER_HDL_CMD_DONE) THEN
+			Out_udiErrId := 0;
+			uinSubStep := cSubStep_Done;
+			uinStep := cStep_Wait4Job;
+		END_IF
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="M_FileExist" Id="{003ce2db-822a-44d3-b24d-e4e83044ac70}">
+      <Declaration><![CDATA[METHOD PUBLIC M_FileExist : BOOL
+VAR_INPUT
+	strPathName : Tc2_System.T_MaxString;
+END_VAR
+VAR
+	fbEnum : FB_EnumFindFileEntry := ( sNetID := '', tTimeout := T#5S, sPathName := strPathName );
+	uinState : UINT:=0;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[WHILE (uinState<>10) DO
+	CASE uinState OF
+	0:
+		fbEnum.sNetId := strNetId;
+		fbEnum.eCmd := eEnumCmd_First; (* enum first entry *)
+		uinState := 1;
+	
+	1: (* enum one entry *)
+		fbEnum( bExecute := FALSE );
+		fbEnum( bExecute := TRUE );
+		uinState := 2;
+	
+	2: (* wait until function block not busy *)
+		fbEnum( bExecute := FALSE );
+		IF NOT fbEnum.bBusy THEN
+			IF NOT fbEnum.bError THEN
+				IF NOT fbEnum.bEOE THEN
+					M_FileExist := TRUE;
+					EXIT;
+				ELSE (* no more entries *)
+					M_FileExist := FALSE;
+					EXIT;
+				END_IF
+			ELSE (* log error *)
+				M_FileExist := FALSE;
+				EXIT;
+			END_IF
+		END_IF
+	END_CASE
+END_WHILE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Cmd_RefreshFileList" Id="{161365a5-ccbf-4bf7-b04f-fbef2a19b78d}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Cmd_RefreshFileList : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[intCmd := cFOLDER_HDL_CMD_REFRESH_FILE_LIST;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_SortFileList" Id="{1931c862-b588-40c4-8859-91f2105ac156}">
+      <Declaration><![CDATA[METHOD PUBLIC M_SortFileList : BOOL
+VAR_INPUT
+
+END_VAR
+VAR
+	stTempFile 	: ST_FindFileEntry;
+	bolNoChangeDone: BOOL;
+	i,j :UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// BubbleSort
+M_SortFileList := FALSE;
+
+IF (udiNrOfFilesInFolder>1) THEN
+	lreTotalFileSize := UINT64_TO_LREAL(aFileList[1].fileSize);
+	FOR i := 1 TO udiNrOfFilesInFolder BY 1 DO
+		bolNoChangeDone := TRUE;
+		FOR j := 1 TO (udiNrOfFilesInFolder-i) BY 1 DO
+			IF (i=1) THEN// count total filesize
+				lreTotalFileSize := lreTotalFileSize + Tc2_Utilities.UINT64_TO_LREAL(aFileList[j+1].fileSize);
+			END_IF
+			
+			IF (FILETIME_TO_DT(aFileList[j].lastWriteTime) > FILETIME_TO_DT(aFileList[j + 1].lastWriteTime)) THEN
+				// swap files
+				memcpy(ADR(stTempFile), ADR(aFileList[j]),SIZEOF(stTempFile));
+				memcpy(ADR(aFileList[j]), ADR(aFileList[j + 1]),SIZEOF(stTempFile));
+				memcpy(ADR(aFileList[j + 1]), ADR(stTempFile),SIZEOF(stTempFile));
+				bolNoChangeDone := FALSE; // at least one change done
+			END_IF
+			
+		END_FOR; 
+		IF (bolNoChangeDone) THEN
+			EXIT;
+		END_IF
+	END_FOR;
+END_IF;
+M_SortFileList := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="FileSupervisionPeriod" Id="{2a65901c-544f-4739-987b-da54ef22574d}">
+      <Declaration><![CDATA[PROPERTY PUBLIC FileSupervisionPeriod : TIME]]></Declaration>
+      <Set Name="Set" Id="{0bb83997-5a0b-4808-97a3-36f5af1181bd}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[timFileSupervisionPeriod := FileSupervisionPeriod;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{93634b3f-c7d2-486a-a089-f7c69602ed34}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[FileSupervisionPeriod := timFileSupervisionPeriod;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="M_Init" Id="{2ee499da-ce52-4a92-9c4a-5941de021a25}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Init : BOOL
+VAR_INPUT
+	IN_strPath : Tc2_System.T_MaxString; 	// Contains only the path 
+	IN_strPrefixFileName : Tc2_System.T_MaxString;// Contains only the filename
+	IN_strFileExt : Tc2_System.T_MaxString;	// Contains only the ext
+	In_strNetId: STRING(23); // NetId to write to foreign system drives
+END_VAR
+VAR
+	strTemp: Tc2_System.T_MaxString;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[strNetId := In_strNetId;
+strPath := IN_strPath;
+strFilePrefix := IN_strPrefixFileName;
+strFileExt := IN_strFileExt;
+strTemp := strPath;//todo check path allready added / CONCAT(strPath , '\');
+strTemp := CONCAT(strTemp , strFilePrefix);
+IF (strFileExt='') THEN
+	strPathName := strTemp;
+ELSE
+	strTemp := CONCAT(strTemp , '.');
+	strPathName := CONCAT(strTemp , strFileExt);
+END_IF
+uinStep := 0;
+bolInitDone := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_RefreshFileList" Id="{2fb1923e-8671-4378-98e3-e36690b49b26}">
+      <Declaration><![CDATA[METHOD PUBLIC M_RefreshFileList : BOOL
+VAR
+	strMyName : STRING := 'M_RefrehFileList: ';
+	strTemp : STRING;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE uinSubStep OF
+	cSubStep_Done:	
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'start');
+		
+		M_RefreshFileList := FALSE;
+		udiNrOfFilesInFolder := 0;
+		
+		// define proberties for searching files in folder
+		fbEnumFindFileList_1.sNetId := strNetId;
+
+		strTemp := strPath;//todo check path allready added / CONCAT(strPath , '\');
+		strTemp := CONCAT(strTemp , strFilePrefix);
+		IF (strFileExt='') THEN
+			strTemp := CONCAT(strTemp , '*'); // all data types
+		ELSE
+			strTemp := CONCAT(strTemp , '*.');
+			strTemp := CONCAT(strTemp , strFileExt);
+		END_IF
+
+		fbEnumFindFileList_1.sPathName := strTemp; // read all files in the defined folder with the defined extension
+        fbEnumFindFileList_1.pFindList := ADR(aFileList);
+        fbEnumFindFileList_1.cbFindList := SIZEOF(aFileList);
+        fbEnumFindFileList_1.tTimeout := DEFAULT_ADS_TIMEOUT;
+		fbEnumFindFileList_1.eCmd := E_EnumCmdType.eEnumCmd_First;	(* enum first entry *)
+		uinSubStep := 1;
+		
+	1: 
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'Reading files in folder busy');	
+		
+		(* enum one entry *)
+		IF bolAbort THEN
+			bolAbort := FALSE;
+			fbEnumFindFileList_1.eCmd := E_EnumCmdType.eEnumCmd_Abort;
+		END_IF
+		
+		fbEnumFindFileList_1( bExecute := FALSE );
+		fbEnumFindFileList_1( bExecute := TRUE );
+		uinSubStep := 2;
+		
+	2:	
+		Out_strInfo := CONCAT(CONCAT(Out_strInfo, strMyName) , 'Reading files in folder busy');	
+		
+		(* wait until function block not busy *)
+		fbEnumFindFileList_1( bExecute := FALSE );
+		IF NOT fbEnumFindFileList_1.bBusy THEN
+			udiNrOfFilesInFolder := fbEnumFindFileList_1.nFindFiles;
+			IF NOT fbEnumFindFileList_1.bError THEN
+				IF NOT fbEnumFindFileList_1.bEOE THEN
+					bolFileNrExceedArraySize := TRUE;
+					(* read more informations -> not meaningful 
+					fbEnumFindFileList_1.eCmd := E_EnumCmdType.eEnumCmd_Next; (* enum next entry *)
+					uinSubStep := 1;*)
+					uinSubStep := cSubStep_Finished; // reduce maximum in cyclic actions...-> delete if > max 
+				ELSE (* no more entries *)
+					uinSubStep := cSubStep_Finished;
+				END_IF
+			ELSE (* log error *)
+				Out_udiErrId := fbEnumFindFileList_1.nErrID;
+				uinSubStep := cSubStep_Error;
+			END_IF
+		END_IF
+
+	cSubStep_Finished: 
+		// succesfully finished
+		M_RefreshFileList := TRUE;
+	cSubStep_Error:
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , CONCAT('error active - number:' , DWORD_TO_HEXSTR( fbEnumFindFileList_1.nErrID, 0, FALSE )));
+		Out_udiErrId := fbEnumFindFileList_1.nErrID;
+		M_RefreshFileList := TRUE;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_getFileInfo" Id="{46619045-8ce5-4fba-9680-cbcba2420133}">
+      <Declaration><![CDATA[METHOD M_getFileInfo : ST_FindFileEntry
+VAR_INPUT
+	IN_strFileNameWithExt : Tc2_System.T_MaxString;// Contains the filename with extension
+END_VAR
+VAR
+	ii : UDINT;
+	udiUpperLimit : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (udiNrOfFilesInFolder<cFILE_HDL_MAX_NR_OF_FILE_TO_MANAGE) THEN
+	udiUpperLimit := udiNrOfFilesInFolder;
+ELSE
+	udiUpperLimit := cFILE_HDL_MAX_NR_OF_FILE_TO_MANAGE;	
+END_IF
+
+FOR ii:= 0 TO udiUpperLimit DO
+	IF (FIND(aFileList[ii].sFileName,IN_strFileNameWithExt)<>0) THEN
+		M_getFileInfo := aFileList[ii];
+		EXIT;
+	END_IF
+END_FOR
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="get_FileList" Id="{7ef5a31f-21d9-4079-8fc0-2cbc001212ce}">
+      <Declaration><![CDATA[PROPERTY PUBLIC get_FileList : ARRAY[1..cFILE_HDL_MAX_NR_OF_FILE_TO_MANAGE]  OF ST_FindFileEntry;]]></Declaration>
+      <Get Name="Get" Id="{b3580fbc-9d11-43d9-861e-138e2fcb83a3}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[uinSubStep := 0;
+
+WHILE (THIS^.M_RefreshFileList()=FALSE) DO
+	//wait until read all files in folder
+END_WHILE
+
+THIS^.M_SortFileList(); // sort last write date -> oldest at position 1!]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="M_FileDelete" Id="{ad3b4bce-2560-4382-a24b-9f4d3f1e8f89}">
+      <Declaration><![CDATA[METHOD PROTECTED M_FileDelete : BOOL
+VAR_INPUT
+	strPathName : T_MaxString;  
+END_VAR
+VAR
+	strMyName : STRING := 'M_FileDelete: ';
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+CASE uinSubStep OF
+	cSubStep_Done:	
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'start');
+		
+		fbFileDelete_1.sNetId := strNetId;
+		fbFileDelete_1.sPathName := strPathName;
+		fbFileDelete_1.ePath := PATH_GENERIC;
+		fbFileDelete_1.tTimeout := T#3S;
+		fbFileDelete_1(bExecute:= FALSE);
+		fbFileDelete_1(bExecute:= TRUE);
+		
+		uinSubStep := 1;
+		
+	1: 
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , 'busy');	
+
+		(* wait until function block not busy *)
+		fbFileDelete_1( bExecute := FALSE );
+		IF NOT fbFileDelete_1.bBusy THEN
+			IF NOT fbFileDelete_1.bError THEN
+				uinSubStep := cSubStep_Finished;
+			ELSE 
+				Out_udiErrId := fbFileDelete_1.nErrID;
+				uinSubStep := cSubStep_Error;
+			END_IF
+		END_IF
+		
+	cSubStep_Finished: 
+		// succesfully finished
+		
+	cSubStep_Error:
+		Out_strInfo :=  CONCAT(CONCAT(Out_strInfo, strMyName) , CONCAT('error active - number:' , DWORD_TO_HEXSTR( fbFileDelete_1.nErrID, 0, FALSE )));
+		Out_udiErrId := fbFileDelete_1.nErrID;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="MaxNrOfFilesInFolder" Id="{d5ea2ac6-b896-4658-bf4a-9b53034c4720}">
+      <Declaration><![CDATA[PROPERTY MaxNrOfFilesInFolder : UINT]]></Declaration>
+      <Set Name="Set" Id="{33026228-00cd-4111-ace0-93a08160bb3d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[// not more files allowed as defined in struct....Sort problem
+IF (MaxNrOfFilesInFolder<cFILE_HDL_MAX_NR_OF_FILE_TO_MANAGE) THEN
+	uinMaxNrOfFilesInFolder := MaxNrOfFilesInFolder;
+ELSE
+	uinMaxNrOfFilesInFolder := UDINT_TO_UINT(cFILE_HDL_MAX_NR_OF_FILE_TO_MANAGE-1);	
+END_IF
+
+
+
+]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{e7f31e99-327f-4c31-a7b8-81c13def12f9}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[MaxNrOfFilesInFolder := uinMaxNrOfFilesInFolder;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="get_NewestFileEntry" Id="{e202371e-86a6-4a94-a3e0-1c3a0a62ff71}">
+      <Declaration><![CDATA[PROPERTY get_NewestFileEntry : ST_FindFileEntry]]></Declaration>
+      <Get Name="Get" Id="{a85de9bc-eaee-4a0d-8b57-cac019ff360d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[uinSubStep := 0;
+(* läuft nicvht???
+WHILE (THIS^.M_RefrehFileList()=FALSE) DO
+	//wait until read all files in folder
+END_WHILE
+
+THIS^.M_SortFileList(); // sort last write date -> oldest at position 1!
+*)
+get_NewestFileEntry := aFileList[udiNrOfFilesInFolder];]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="M_GetFileSize" Id="{fa03a553-9b1e-4382-b17d-07ef9a84e299}">
+      <Declaration><![CDATA[METHOD PUBLIC M_GetFileSize : LREAL
+VAR_INPUT
+	In_strFileName: T_MaxString;
+END_VAR
+VAR
+	i:UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (udiNrOfFilesInFolder=0) THEN
+	WHILE (THIS^.M_RefreshFileList()=FALSE) DO
+		//wait until read all files in folder
+	END_WHILE
+END_IF
+
+M_GetFileSize := 0.0;
+
+FOR i := 1 TO udiNrOfFilesInFolder BY 1 DO
+	IF (In_strFileName = aFileList[i].sFileName) THEN
+		M_GetFileSize := Tc2_Utilities.UINT64_TO_LREAL(aFileList[i].fileSize);
+		EXIT;
+	END_IF
+END_FOR;
+]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

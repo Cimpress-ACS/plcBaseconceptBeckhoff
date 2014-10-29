@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
-  <POU Name="FB_DtChnToLine_Test" Id="{23e5902b-7bcc-46ce-8f3e-6ced6b811d28}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_DtChnToLine_Test" Id="{d660ce4d-9aa3-4110-a4f2-0ad0bdb1754e}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DtChnToLine_Test
 VAR_INPUT
 	bolResetError : BOOL;
@@ -130,7 +131,7 @@ CASE intStatemachine OF
 			
 END_CASE]]></ST>
     </Implementation>
-    <Method Name="Create" Id="{cf51fd71-6d98-4d9f-a8a8-450d3b8fdf3a}">
+    <Method Name="Create" Id="{f353f457-779e-465f-9461-389ddafbb824}">
       <Declaration><![CDATA[METHOD Create : INT
 VAR_INPUT
 	In_Test : DINT;

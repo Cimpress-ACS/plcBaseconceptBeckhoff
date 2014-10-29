@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_FileLc_RecordData" Id="{d728c90b-2d99-4e74-9da3-fedc3dfab1d4}">
+    <Declaration><![CDATA[TYPE T_FileLc_RecordData :
+STRUCT
+	udiRecIdx : UDINT; (*Record - Index*)
+	dtActDateTime : DATE_AND_TIME; (*Datum/Zeit der Record - Daten*)
+	uinActMilli : UINT; (*Millisekunden der Record - Daten*)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,15 +1,29 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="SlowPRG_1" Id="{f627bb3d-dce4-4692-ab49-07a63d91fd84}">
     <Declaration><![CDATA[PROGRAM SlowPRG_1
 VAR
-	bolPlcStartupDone: BOOL := FALSE;
-	bolHostInitDone : BOOL := FALSE;
-	bolInitDone : BOOL := FALSE;
 	uinTaskNbr : UINT := 3; // SlowTask is Task Nr 3
 	jj:INT;
 	bolCtrlRst: BOOL;
+	bolInitAllCtrlDone : BOOL := FALSE;
 	
 	fbAlm_Man: FB_Alm_Man; // alarm manager
+	fbFileLc_StateLogger : FB_FileLc_StateLogger; // file client for state logger
+	
+	/// Switches all controllers in loading station to simulation with pos. edge
+	bolSimulateAll: BOOL;
+	bolSimulationActive: BOOL;
+	
+	// for tests
+	intCmd : INT;
+	stFileTime : T_FILETIME;
+	stTimeStruct : TIMESTRUCT;
+	fbQueueTest_Receiver : FB_QueueTest_Receiver;
+	fbBasLogTest_Client: FB_BasLogTest_Client;
+	fbBasLogTest_Sender : FB_BasLogTest_Sender;
+	fbFileLcTest:	FB_FileLcTest;
+	fbTimeStamp: FB_TimeStamp;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -32,19 +46,47 @@ Version		Date			Author		Comment
 0.00.2		07.11.2013		AVME/KVO	Add local variabel fbAlm_Man, Add set all initialized controller FB the property of the alarm manager adress 
 0.00.3		08.11.2013		AVME/KVO	global g_p_fbAlm_Man adress assigned
 0.00.4		17.02.2014		AVME/KVO	startup check init FB_Alarm IsInitDone
+0.00.5		15.10.2014		AVME/KVO	Add StateLogger file client call and add setAllCtrlBasLogFB
+										Add Simulate all - standard new simulation = false!
 ___________________________________________________________________________________________________*)
 
 
 // -----------------------------------------------------------------------------------------------
 // Initialize the PLC Parameter and check the PLC health
 // -----------------------------------------------------------------------------------------------
-IF ((NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1))) THEN
-
-	// set all initialized controller FB the property of the alarm manager adress 
-	Base_PLC.setAllCtrlAlarmFB(pCtrlInst := ADR(g_a_pCtrlInst[0]), pAlarmCtrl := ADR(fbAlm_Man), uinCtrlInstLength := INT_TO_UINT(E_CtrlId.E_CtrlIdMax));
+IF (g_uinStartProzess=(uinTaskNbr-1)) THEN
+	//*************** only call onetime!!!! after init all controllers before!!!*******************************
+	IF (bolInitAllCtrlDone=FALSE) THEN
+		// set all initialized controller FB the property of the alarm manager adress 
+		// set all initialized controller FB the property of the base logger system adress 
+		// call all CtrlInit()
+		Base_PLC.initAllCtrl(pCtrlInst := ADR(g_a_pCtrlInst[0]), pBasLogFB := ADR(g_fbBasLog), pAlarmCtrl := ADR(fbAlm_Man), uinCtrlInstLength := INT_TO_UINT(E_CtrlId.E_CtrlIdMax));
+		bolInitAllCtrlDone := TRUE;
+	END_IF
+	
 	g_p_fbAlm_Man := ADR(fbAlm_Man);
-	bolPlcStartupDone := TRUE;	
-	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
+	
+	// for sample - simulation activation automatic
+	bolSimulateAll := TRUE;
+	
+	//****************************************************************************************************
+	// Log system - init file client's - takes more than one cycle!
+	//****************************************************************************************************
+	// state logger file client: init -> readout config file, allocate memory -> cyclic read out state logs and write to csv file
+	fbFileLc_StateLogger(In_p_fbBasLog:=ADR(g_fbBasLog),In_p_fbFileLC:=ADR(g_fbFileLc));
+	
+	IF (fbFileLc_StateLogger.Out_bolInitDone=TRUE) OR  (g_bolLogEnableState = FALSE)  THEN
+		// test file client: init -> readout config file, allocate memory -> cyclic read out state logs and write to csv file
+		fbFileLcTest.In_strPath := 'C:\Vistaprint\Log\';
+		fbFileLcTest.In_strCfgFileName := 'StateLogTest.cfg';
+		fbFileLcTest.In_p_fbBasLog := ADR(g_fbBasLog);
+		fbFileLcTest.In_p_fbFileLC := ADR(g_fbFileLC);
+		fbFileLcTest();
+
+		IF (fbFileLcTest.Out_bolInitDone=TRUE) THEN
+			g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
+		END_IF
+	END_IF
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -53,8 +95,7 @@ END_IF
 // The host system is downloading all parameter at startup. 
 // bolPlcStartupDone will be set to true after the Host is done with the initialization
 // -----------------------------------------------------------------------------------------------
-IF (bolPlcStartupDone AND (NOT bolHostInitDone) AND NOT bolInitDone AND (g_uinStartProzess>=(uinTaskNbr-1)+10)) THEN
-	bolHostInitDone := TRUE;
+IF (g_uinStartProzess=(uinTaskNbr-1)+10) THEN
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
@@ -63,13 +104,12 @@ END_IF
 // -----------------------------------------------------------------------------------------------
 // Start PLC code initialization
 // -----------------------------------------------------------------------------------------------
-IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(uinTaskNbr-1)+20) THEN
+IF (g_uinStartProzess=(uinTaskNbr-1)+20) THEN
 	// init call alarm FB until init is done
 	fbAlm_Man(bolCtrlRst:= bolCtrlRst);
 	
 	// init	
 	IF (fbAlm_Man.IsInitDone = TRUE) THEN
-		bolInitDone := TRUE;
 		g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 	END_IF
 END_IF
@@ -78,12 +118,35 @@ END_IF
 // -----------------------------------------------------------------------------------------------
 // Normal Run mode after all the initialization is done
 // -----------------------------------------------------------------------------------------------
-IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(20+c_uinCntTaskClass))) THEN
-	
+IF (g_uinStartProzess>=(20+c_uinCntTaskClass)) THEN
 	//****************************************************************************************************
-	// cyclic controller calls
+	// SIMULATE all controller
+	//****************************************************************************************************
+	IF (bolSimulateAll = TRUE) AND (bolSimulationActive = FALSE) THEN
+		// Enable simulation for all controller	
+		FOR jj:=0 TO E_CtrlId.E_CtrlIdMax BY 1 DO
+			IF (g_a_pCtrlCIf[jj]<>0) THEN // check if entry exist
+				g_a_pCtrlCIf[jj]^.SwCfg.bolSimulation := TRUE;
+			END_IF
+		END_FOR	
+		bolSimulationActive:= TRUE;
+		// Trigger an alarm reset
+		bolCtrlRst:= TRUE;
+	END_IF
+		
+	IF (bolSimulateAll = FALSE) AND (bolSimulationActive = TRUE) THEN
+		// Disable simulation for all controller	
+		FOR jj:=0 TO E_CtrlId.E_CtrlIdMax BY 1 DO
+			IF (g_a_pCtrlCIf[jj]<>0) THEN // check if entry exist
+				g_a_pCtrlCIf[jj]^.SwCfg.bolSimulation := FALSE;
+			END_IF
+		END_FOR	
+		bolSimulationActive:= FALSE;		
+	END_IF
+
 	//****************************************************************************************************
 	// call alarm message handler
+	//****************************************************************************************************
 	fbAlm_Man(bolCtrlRst:= bolCtrlRst);
 	IF (bolCtrlRst) THEN
 		FOR jj:=0 TO E_CtrlId.E_CtrlIdMax BY 1 DO
@@ -93,9 +156,35 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 		END_FOR
 		bolCtrlRst := FALSE;
 	END_IF
-
+	
+	//****************************************************************************************************
+	// file client call for state logger
+	//****************************************************************************************************
+	fbFileLc_StateLogger();
+	IF (fbFileLc_StateLogger.Out_udiStatus<>0) THEN // state log file client error
+		;
+		//fbAlm_Man.setAlarm(p_fbMAIN^.CtrlCIf^.Info.intCtrlId,E_ALM_MAIN.ViperLogFileClient,UDINT_TO_DINT(fbFileClient_ViperLog.Out_udiStatus),ADR(pTmpSIf_MAIN^.Alm),E_AlmState.RST,p_fbMAIN^.CtrlCIf^.Job.eMe_ActivAlmClass);
+	END_IF
+	// ***********************************************************************************************
+	// Test file client
+	fbFileLcTest();
+	IF (fbFileLcTest.Out_udiStatus<>0) THEN // state log file client error
+		;
+		//fbAlm_Man.setAlarm(p_fbMAIN^.CtrlCIf^.Info.intCtrlId,E_ALM_MAIN.ViperLogFileClient,UDINT_TO_DINT(fbFileClient_ViperLog.Out_udiStatus),ADR(pTmpSIf_MAIN^.Alm),E_AlmState.RST,p_fbMAIN^.CtrlCIf^.Job.eMe_ActivAlmClass);
+	END_IF
 END_IF
-// -----------------------------------------------------------------------------------------------]]></ST>
+// -----------------------------------------------------------------------------------------------
+
+
+// ***********************************************************************************************
+// only for sw-tests
+// ***********************************************************************************************
+// Test Base log system
+fbBasLogTest_Sender(In_p_fbBasLog:= ADR(g_fbBasLog));
+fbBasLogTest_Client(In_p_fbBasLog:= ADR(g_fbBasLog));
+
+
+]]></ST>
     </Implementation>
     <ObjectProperties />
   </POU>

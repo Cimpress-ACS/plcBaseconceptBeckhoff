@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <DUT Name="T_Ctrl_Info" Id="{a050d9c8-4cf5-47c1-9dac-a989da120536}">
     <Declaration><![CDATA[TYPE T_Ctrl_Info :
 STRUCT
@@ -16,7 +17,7 @@ STRUCT
 	p_afbChild			: ARRAY[0..Base_Const.cMaxNrOfChilds] OF POINTER TO FB_CtrlBase;
 	///common interface array of childs
 	p_aCIf				: ARRAY[0..Base_Const.cMaxNrOfChilds] OF POINTER TO T_Ctrl_CIf;
-	/// Child Count
+	// Child Count
 	uinChildNbr			: UINT;
 END_STRUCT
 END_TYPE

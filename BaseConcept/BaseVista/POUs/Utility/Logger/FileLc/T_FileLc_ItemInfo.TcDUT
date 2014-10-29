@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_FileLc_ItemInfo" Id="{b20ccbf2-0024-40e8-ba86-2b4c5fbdc005}">
+    <Declaration><![CDATA[TYPE T_FileLc_ItemInfo :
+STRUCT
+	uinActNbrOfItems : UINT; (*Anzahl ermittelter Items*)
+	strPreItemText : STRING[FileLc.cPRE_POST_TEXTLEN]; (*Text, der vor dem ersten Item - Value ins File geschrieben wird*)
+	p_bytItemCfgList : POINTER TO T_FileLc_ItemCfg;; (*Zeiger auf die Item - Konfig - Liste*)
+	stItemRecordData : ARRAY[0..Queue.cMAX_NR_OF_TASKS] OF T_FileLc_RecordData; (*Record - Data: Da Data - Records theoretisch unterbrochen werden können (Taskklassenprio), müssen mehrere Records quasi parallel behandelt werden können. Jeder Record hat daher seinen eigenen Index.*)
+	a_p_bytItemDataList : ARRAY[0..Queue.cMAX_NR_OF_TASKS] OF POINTER TO BYTE; (*Item - Data: siehe oben...*)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

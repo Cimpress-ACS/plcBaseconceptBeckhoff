@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
-  <DUT Name="T_Ctrl_SIf_MOD_Par" Id="{5133764c-7908-4112-b126-bb1b5db9993a}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_MOD_Par" Id="{e981b296-b9b9-4945-b7e9-494e412aed9e}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_Par :
 STRUCT
 	///[ms] wait time in pick position

@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_CYL_Par" Id="{2c7e069b-1122-4cfd-976a-4b55a838ebae}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_CYL_Par" Id="{fc063fc0-1626-4ac6-b143-90ba22e0b938}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_Par :
 STRUCT
 	///[ms] until failure to long time for extend

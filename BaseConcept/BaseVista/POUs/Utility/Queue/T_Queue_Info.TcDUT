@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Queue_Info" Id="{6e4c0046-cbbe-4224-8937-e2a708659c9d}">
+    <Declaration><![CDATA[{attribute 'enable_dynamic_creation' := ''}
+TYPE T_Queue_Info :
+STRUCT
+	fbBuffer: FB_MemRingBuffer; // Buffer FB
+	udiFillLevel : UDINT; // % actual used buffer size
+	pQueueSysInfo: POINTER TO T_Queue_SysInfo; // pointer to sytem struct (parent)
+	bolAllocMe:BOOL; //flag gethandle called before init done!!!
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

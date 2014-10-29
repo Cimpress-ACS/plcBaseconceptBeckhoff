@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="FileLc" Id="{6640dd66-f124-4f32-91f9-b3c3686fc63d}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	// internal
+	cVAR_TYPE_BOOL : USINT := 1; (*Variable hat den Datentyp BOOL*)
+	cVAR_TYPE_SINT : USINT := 2; (*Variable hat den Datentyp SINT*)
+	cVAR_TYPE_INT : USINT := 3; (*Variable hat den Datentyp INT*)
+	cVAR_TYPE_DINT : USINT := 4; (*Variable hat den Datentyp DINT*)
+	cVAR_TYPE_USINT : USINT := 5; (*Variable hat den Datentyp USINT*)
+	cVAR_TYPE_UINT : USINT := 6; (*Variable hat den Datentyp UINT*)
+	cVAR_TYPE_UDINT : USINT := 7; (*Variable hat den Datentyp UDINT*)
+	cVAR_TYPE_LREAL : USINT := 10; (*Variable hat den Datentyp REAL*)
+	cVAR_TYPE_REAL : USINT := 8; (*Variable hat den Datentyp REAL*)
+	cVAR_TYPE_STRING : USINT := 9; (*Variable hat den Datentyp STRING*)
+	cVAR_TYPE_DATE_AND_TIME : USINT := 11; (*Variable hat den Datentyp DATE_AND_TIME*)
+	
+	// config file
+	cTAG_TEMPLATE_E : STRING[80] := '</TEMPLATE>'; (*End Tag*)
+	cTAG_TEMPLATE_B : STRING[80] := '<TEMPLATE>'; (*Start Tag*)
+	cTAG_ROW_E : STRING[80] := '</ROW>'; (*End Tag*)
+	cTAG_ROW_B : STRING[80] := '<ROW>'; (*Start Tag*)
+	cTAG_RECORD_E : STRING[80] := '</RECORD>'; (*End Tag*)
+	cTAG_RECORD_B : STRING[80] := '<RECORD>'; (*Start Tag*)
+	cTAG_ITEM_E : STRING[80] := '</ITEM>'; (*End Tag*)
+	cTAG_ITEM_B : STRING[80] := '<ITEM>'; (*Start Tag*)
+	cTAG_HEADER_E : STRING[80] := '</HEADER>'; (*End Tag*)
+	cTAG_HEADER_B : STRING[80] := '<HEADER>'; (*Start Tag*)
+	cTAG_FOOTER_E : STRING[80] := '</FOOTER>'; (*End Tag*)
+	cTAG_FOOTER_B : STRING[80] := '<FOOTER>'; (*Start Tag*)
+	cTAG_CONFIG_E : STRING[80] := '</CONFIG>'; (*End Tag*)
+	cTAG_CONFIG_B : STRING[80] := '<CONFIG>'; (*Start Tag*)
+	
+	// config tags
+	cTAG_CFG_LOGFILE_PRAEFIX_E : STRING[80] := '</LOGFILE_PRAEFIX>'; (*End Tag*)
+	cTAG_CFG_LOGFILE_PRAEFIX_B : STRING[80] := '<LOGFILE_PRAEFIX>'; (*Start Tag*)
+	cTAG_CFG_LOGFILE_EXT_E : STRING[80] := '</LOGFILE_EXT>'; (*End Tag*)
+	cTAG_CFG_LOGFILE_EXT_B : STRING[80] := '<LOGFILE_EXT>'; (*Start Tag*)
+	cTAG_CFG_QUEUE_LEN_E : STRING[80] := '</QUEUE_LEN>'; (*End Tag*)
+	cTAG_CFG_QUEUE_LEN_B : STRING[80] := '<QUEUE_LEN>'; (*Start Tag*)
+	cTAG_CFG_LOGTYPE_E : STRING[80] := '</LOG_TYPE>'; (*End Tag*)
+	cTAG_CFG_LOGTYPE_B : STRING[80] := '<LOG_TYPE>'; (*Start Tag*)
+	cTAG_CFG_MASK_E : STRING[80] := '</LOG_MASK>'; (*End Tag*)
+	cTAG_CFG_MASK_B : STRING[80] := '<LOG_MASK>'; (*Start Tag*)
+	cTAG_CFG_MAX_LOGFILES_E : STRING[80] := '</MAX_LOGFILES>'; (*End Tag*)
+	cTAG_CFG_MAX_LOGFILES_B : STRING[80] := '<MAX_LOGFILES>'; (*Start Tag*)
+	cTAG_CFG_T_CHECK_MAX_FILE_NR_E : STRING[80] := '</TIME_CHECK_MAX_FILE_NR>'; (*End Tag*)
+	cTAG_CFG_T_CHECK_MAX_FILE_NR_B : STRING[80] := '<TIME_CHECK_MAX_FILE_NR>'; (*Start Tag*)
+	cTAG_CFG_MAX_T_TO_WRITE_E : STRING[80] := '</MAX_TIME_TO_WRITE>'; (*End Tag*)
+	cTAG_CFG_MAX_T_TO_WRITE_B : STRING[80] := '<MAX_TIME_TO_WRITE>'; (*Start Tag*)
+	cTAG_CFG_NEW_FILE_RESTART_E : STRING[80] := '</NEW_FILE_ON_RESTART>'; (*End Tag*)
+	cTAG_CFG_NEW_FILE_RESTART_B : STRING[80] := '<NEW_FILE_ON_RESTART>'; (*Start Tag*)
+	cTAG_CFG_MAX_ENTR_IN_FILE_E : STRING[80] := '</MAX_ENTRIES_IN_FILE>'; (*End Tag*)
+	cTAG_CFG_MAX_ENTR_IN_FILE_B : STRING[80] := '<MAX_ENTRIES_IN_FILE>'; (*Start Tag*)
+	cTAG_CFG_MAX_FILE_SIZE_E : STRING[80] := '</MAX_FILE_SIZE>'; (*End Tag*)
+	cTAG_CFG_MAX_FILE_SIZE_B : STRING[80] := '<MAX_FILE_SIZE>'; (*Start Tag*)
+	cTAG_CFG_LOG_TIMESTAMP_E : STRING[80] := '</LOG_TIMESTAMP>'; (*End Tag*)
+	cTAG_CFG_LOG_TIMESTAMP_B : STRING[80] := '<LOG_TIMESTAMP>'; (*Start Tag*)
+	cTAG_CFG_LOGFILE_SNETID_E : STRING[80] := '</LOGFILE_SNETID>'; (*End Tag*)
+	cTAG_CFG_LOGFILE_SNETID_B : STRING[80] := '<LOGFILE_SNETID>'; (*Start Tag*)
+	cTAG_CFG_LOGFILE_PATH_E : STRING[80] := '</LOGFILE_PATH>'; (*End Tag*)
+	cTAG_CFG_LOGFILE_PATH_B : STRING[80] := '<LOGFILE_PATH>'; (*Start Tag*)
+	cLOG_TIMESTAMP_WIN : STRING[80] := 'LOCAL_TIME'; (*using local time (windows time with time zone)*)
+	cLOG_TIMESTAMP_UTC : STRING[80] := 'UTC'; (*using UTC*)
+	
+	//<ITEM>***</ITEM> predefined items of base log
+	cITEM_UNIX_DATE_TIME_STR : STRING[80] := 'DT_UNIX_STR'; (*Item UNIX Datum/Zeit als String*)
+	cITEM_UNIX_DATE_TIME : STRING[80] := 'DT_UNIX'; (*Item UNIX Datum/Zeit als Integer*)
+	cITEM_TIME_MILLI : STRING[80] := 'TIME_MILLI'; (*Item Millisekunden*)
+	cITEM_EXCEL_DATE_TIME : STRING[80] := 'DT_EXCEL'; (*Item date/time in Excel format. Days as real since 1.1.1980*)
+	cITEM_DATE_SLASH_TIME_COLON : STRING[80] := 'DATE_SLASH_TIME_COLON'; //english date format 2014/09/23 07:10:24
+	cITEM_BL_LOGTYP : STRING[80] := 'BL_LOGTYP'; (*Base Log Item LogTyp*)
+	cITEM_BL_CTRL_ID : STRING[80] := 'BL_CTRL_ID'; (*Base Log Item Controller Id*)
+	cITEM_BL_STRING1 : STRING[80] := 'BL_STRING1'; (*Base Log Item STRING 1*)
+	cITEM_BL_STRING2 : STRING[80] := 'BL_STRING2'; (*Base Log Item STRING 2*)
+	cITEM_BL_PAR1 : STRING[80] := 'BL_PAR1'; (*Base Log Item PAR1  *)
+	cITEM_BL_PAR2 : STRING[80] := 'BL_PAR2'; (*Base Log Item PAR2*)
+	cITEM_BL_PAR3 : STRING[80] := 'BL_PAR3'; (*Base Log Item PAR3*)
+	cITEM_BL_PAR4 : STRING[80] := 'BL_PAR4'; (*Base Log Item PAR4*)
+	
+	// <LOG_TYPE>****</LOG_TYPE>	 predefined values
+	cLOGTYP_BL_STR : STRING[80] := 'BL'; (*BaseLog*)
+	cLOGTYP_PV_STR : STRING[80] := 'PV'; (*PVLog*)
+	cLOGTYP_DATA_STR : STRING[80] := 'DATA'; (*DataLog*)
+	cLOGTYP_OPEN_STR : STRING[80] := 'OPEN'; (*Item date/time in Excel format. Days as real since 1.1.1970*)
+	
+	// Defaults
+	cLOGTYP_BL : USINT := 1; (*Baselog*)
+	cLOGTYP_PV : USINT := 2; (*PV*)
+	cLOGTYP_DATA : USINT := 3; (*Data*)
+	cLOGTYP_OPEN : USINT := 4; (*Open --> Maske setzen!*)
+	cPVTYPE_UNIX_DATE_TIME_STR : DINT := -3;
+	cPVTYPE_UNIX_DATE_TIME : DINT := -1;
+	cPVTYPE_DATE_SLASH_TIME_COLON : DINT := -13; //english date format 2014/09/23 07:10:24
+	cPVTYPE_TIME_MILLI : DINT := -2;
+	cPVTYPE_EXCEL_DATE_TIME : DINT := -4;
+	cPVTYPE_BL_LOGTYP : DINT := -5;
+	cPVTYPE_BL_CTRL_ID : DINT := -6;
+	cPVTYPE_BL_STRING1 : DINT := -7;
+	cPVTYPE_BL_STRING2 : DINT := -8;
+	cPVTYPE_BL_PAR1 : DINT := -9;
+	cPVTYPE_BL_PAR2 : DINT := -10;
+	cPVTYPE_BL_PAR3 : DINT := -11;
+	cPVTYPE_BL_PAR4 : DINT := -12;
+	cTIME_CHECK_MAX_FILE_NR : UDINT := 300; //[s] time period until check number of files in folder
+	cMAX_ITEM_CHAR : UINT := BasLog.cMAX_CHAR_TEXT1; (*25 ist das absolute Minimum für DATE_AND_TIME - String Darstellung*)
+	cEOL : ARRAY[0..1] OF BYTE := [13,10]; (*End of Line (Line feed, carriage return)*)
+	cCMD_FLUSHBUF_NEWFILE : USINT := 2;
+	cCMD_FLUSHBUF : USINT := 1;
+	cCFG_TIME_WRITE_TO_FILE : UDINT := 60; (*DEFAULT: Mindestens alle 60 Sekunden ins File schreiben*)
+	cCFG_QUEUE_LEN : UDINT := 512; (*DEFAULT: Anzahl Elemente der Log Queue*)
+	cCFG_LOGFILE_NAME : STRING[80] := 'LogData_'; (*DEFAULT: LogFile Präfix*)
+	cCFG_LOGFILE_EXT : STRING[80] := 'txt'; (*DEFAULT: LogFile Extension*)
+	cCFG_DEFAULT_MASK : UDINT := 16#FFFFFFFF; // Default mask
+	cCFG_MAX_NBR_OF_LOGFILES : UINT := 2; // Defaultmax number of log files
+	
+	// limits
+	cPRE_POST_TEXTLEN : UINT := 256; // max text len for pre and post text of a value
+	cMAX_RECORDS_IN_FILE_BUF : UINT := 4; (*factor for calculation of file buffer*)
+	cMAX_NBR_OF_FILECLIENTS : UINT := 10; (*Max number of file clients*)
+	cFILENAME_LENGTH : UINT := 260; // config file name len
+	cPATH_LENGTH : UINT := 260; // folderpath string len
+	
+	// error number	
+	cERR_NBR_OF_FC_EXEEDED : UINT := 50400; (*Max number of file clients reached*)
+	cERR_FILENAME_MISSING : UINT := 50401; (*Filename missing*)
+	cERR_PATH_MISSING : UINT := 50402; (*Path definition missing*)
+	cERR_CONFIG_TAG : UINT := 50403; (*Error in <CONFIG></CONFIG> tag*)
+	cERR_TEMPLATE_TAG : UINT := 50404; (*Error in <TEMPLATE></TEMPLATE> tag*)
+	cERR_INVALID_LOGTYP : UINT := 50405; (*Unknown or missing log type -> template/config - file*)
+	cERR_HEADER_TAG : UINT := 50406; (*Error in <HEADER></HEADER> tag*)
+	cERR_RECORD_TAG : UINT := 50407; (*Error in <RECORD></RECORD> tag*)
+	cERR_ROW_TAG : UINT := 50408; (*Error in <ROW></ROW> tag*)
+	cERR_ITEM_TAG : UINT := 50409; (*Error in <ITEM></ITEM> tag*)
+	cERR_FOOTER_TAG : UINT := 50410; (*Error in <FOOTER></FOOTER> tag*)
+	cERR_HANDLE : UINT := 50411; (*no handle reached*)
+	cERR_INVALID_DEVICE : UINT := 50412; (*File destination not correct*)
+	cERR_ALLOC_BUFFER_FILE_CONFIG : UINT := 50413; (*No memory available for config read out*)
+	cERR_ALLOC_MEMORY : UINT := 50414; (*No memory available*)
+	cERR_NO_BASELOG : UINT := 50415; (*BaseLog pointer invalid*)
+	cERR_NO_FLCIDX : UINT := 50416; (*INIT not possibel no valid act client nr index reference / pointer invalid*)
+END_VAR
+]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

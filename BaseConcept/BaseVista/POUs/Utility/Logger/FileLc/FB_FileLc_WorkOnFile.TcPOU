@@ -1,0 +1,885 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_FileLc_WorkOnFile" Id="{3dc84c05-420c-4b93-b1a0-45bd824be3e5}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FileLc_WorkOnFile
+VAR_INPUT
+	In_strCfgFileName: STRING(FileLc.cFILENAME_LENGTH); // name of the config/template file (not implemented yet)
+	In_strPath: STRING(FileLc.cPATH_LENGTH); 
+	In_pstSysInfo : POINTER TO T_FileLc_SysInfo;
+	In_bolExecute : BOOL;
+END_VAR
+VAR_OUTPUT
+	Out_udiStatus: UDINT;			// Rückgabewert 0:ok
+	Out_bolDone: BOOL;			// Done
+END_VAR
+VAR
+	fbFileOpen : FB_FileOpen;
+	fbFileRead : FB_FileRead;
+	fbFileClose : FB_FileClose;
+	fbFileSeek : FB_FileSeek;
+	udiWaitFileOpenCycles : UDINT;
+	udiWaitFileReadCycles : UDINT;
+	uinFileSize: UINT := 1000; // nr of Bytes to read whole config file
+	p_bytTemplateBegin : POINTER TO BYTE;
+	p_bytTemplateEnd : POINTER TO BYTE;
+	p_bytConfigBegin : POINTER TO BYTE;
+	p_bytConfigEnd : POINTER TO BYTE;
+	p_bytHeaderBegin : POINTER TO BYTE;
+	p_bytHeaderEnd : POINTER TO BYTE;
+	p_bytFooterBegin : POINTER TO BYTE;
+	p_bytFooterEnd : POINTER TO BYTE;
+	p_bytRecordBegin : POINTER TO BYTE;
+	p_bytRecordEnd : POINTER TO BYTE;
+	p_bytTmpDestAdr : POINTER TO BYTE;
+	p_bytTmpSrcAdr : POINTER TO BYTE;
+	p_bytRowBegin : POINTER TO BYTE;
+	p_bytRowEnd : POINTER TO BYTE;
+	p_bytItemBegin : POINTER TO BYTE;
+	p_bytItemEnd : POINTER TO BYTE;
+	p_bytLastPos : POINTER TO BYTE;
+	p_bytConfigValBegin : POINTER TO BYTE;
+	p_bytConfigValEnd : POINTER TO BYTE;
+	uinTmpLen : UINT;
+	uinItemCount : UINT;
+	ii : USINT;
+	p_stItemCfgList : POINTER TO T_FileLc_ItemCfg;
+	udiTmpLen : UDINT;
+	strTmp : T_MaxString;
+	udiWaitFileCloseCycles : UDINT := 0;
+	bolBufferNotOk : BOOL;
+	udiFileConfigLen : UDINT;
+	pstrTmp : POINTER TO T_MaxString;
+	strTmpTest:T_MaxString;
+	stStatemachine : T_FileLc_Statemachine;
+	strInfo :T_MaxString;
+	bolExecute_old : BOOL;
+	bolTmp : BOOL;
+	pDelReadPointer : POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF (In_bolExecute=TRUE) THEN
+	IF (bolExecute_old=FALSE) THEN
+		//reset statemachine
+		stStatemachine.uinState :=0;
+		stStatemachine.uinState_old := 255;
+		Out_bolDone := 0;
+		Out_udiStatus := 0;
+	END_IF
+	;
+	
+	CASE stStatemachine.uinState OF
+		0: 
+			IF (In_strCfgFileName<>'') THEN
+				Out_bolDone := FALSE;
+				strInfo := '';
+				Out_udiStatus := 0;
+				pstrTmp := ADR(strTmpTest);
+				stStatemachine.uinState := stStatemachine.uinState  + 1;
+			END_IF
+		1: 
+			// Entry action
+			IF (stStatemachine.uinState_old <> stStatemachine.uinState) THEN
+				//---------------------------------------------------------
+				// File parser and check settings/configs
+				//---------------------------------------------------------
+				
+				//*********************************************************
+				// file open
+				fbFileOpen.sNetId := ''; // only local access
+				fbFileOpen.sPathName := CONCAT(STR1:=In_strPath,STR2:=In_strCfgFileName);
+				fbFileOpen.nMode := Tc2_System.FOPEN_MODEREAD OR FOPEN_MODETEXT;      // Opens for reading in text format
+				fbFileOpen.ePath := PATH_GENERIC;
+				fbFileOpen.tTimeout := T#30S;
+				fbFileOpen(bExecute:= FALSE);
+				fbFileOpen(bExecute:= TRUE);
+				
+				// wait until fail isopened
+				udiWaitFileOpenCycles := 0;
+				 stStatemachine.uinState_old := stStatemachine.uinState;
+			END_IF
+			
+			fbFileOpen(bExecute:= TRUE);
+			
+			IF ((fbFileOpen.bError=FALSE) AND ((fbFileOpen.bBusy) OR (fbFileOpen.hFile=0))) THEN
+				udiWaitFileOpenCycles := udiWaitFileOpenCycles + 1;	
+			ELSE
+				IF (fbFileOpen.bError=TRUE) THEN
+					// file not found
+					IF (fbFileOpen.nErrId=16#70C) THEN
+						strInfo := CONCAT(STR1:='template/config file: not found: ',STR2:= In_strPath); 
+						strInfo := CONCAT(STR1:=strInfo,STR2:= In_strCfgFileName); 
+						Out_udiStatus := fbFileOpen.nErrId;
+						RETURN;
+					ELSE 
+						strInfo := CONCAT(STR1:='template/config file: no more free file handles / unknown or invalid nMode or ePath parameter: ',STR2:= In_strPath); 
+						strInfo := CONCAT(STR1:=strInfo,STR2:= In_strCfgFileName); 
+						Out_udiStatus := fbFileOpen.nErrId;
+						RETURN;
+					END_IF
+				ELSE
+					stStatemachine.uinState := 3;
+				END_IF
+			END_IF
+		
+		3:	// read config file in temp buffer allocate buffer
+			// Entry action
+			IF (stStatemachine.uinState_old <> stStatemachine.uinState) THEN
+				//*********************************************************
+				// read template file
+				fbFileRead.sNetId:=''; // local file access
+				fbFileRead.hFile:=fbFileOpen.hFile;
+				fbFileRead.tTimeout:=T#3S;
+				// create buffer
+				fbFileRead.pReadBuff := M_AllocMEM(uinFileSize);
+				pDelReadPointer := fbFileRead.pReadBuff; // pointer for release
+				fbFileRead.cbReadLen := uinFileSize;
+				
+				IF (fbFileRead.pReadBuff=TC3_MEMMAN.NULL) THEN
+					strInfo := CONCAT(STR1:='template/config file: alloc file buffer invalid: ',STR2:= In_strPath);
+					strInfo := CONCAT(STR1:=strInfo,STR2:= In_strCfgFileName);
+					Out_udiStatus := FileLc.cERR_ALLOC_BUFFER_FILE_CONFIG;
+					RETURN;
+				END_IF
+				
+				//valid buffer allocated
+				fbFileRead(bExecute:=FALSE);
+				fbFileRead(bExecute:=TRUE);
+				udiWaitFileReadCycles := 0;
+					
+				 stStatemachine.uinState_old := stStatemachine.uinState;
+			END_IF
+			
+			fbFileRead();	
+			
+			// read file binary
+			IF (fbFileRead.bBusy) THEN
+				udiWaitFileReadCycles := udiWaitFileReadCycles + 1;
+			ELSE
+				
+			//test variabel
+		MEMSET(destAddr:=pstrTmp,fillByte:=0,n:= SIZEOF(strTmp));
+		MEMCPY(destAddr:=pstrTmp,srcAddr:=fbFileRead.pReadBuff,n:= (SIZEOF(strTmp)-1)); // zero determining string
+		
+				IF (fbFileRead.bError=FALSE) THEN
+					IF (fbFileRead.cbRead<UINT_TO_UDINT(uinFileSize)) THEN // enough memory for whole cfg file allocated
+						// allocated buffer is ok
+						udiFileConfigLen := fbFileRead.cbRead; // file len read
+						stStatemachine.uinState := stStatemachine.uinState  + 1;
+					ELSE
+						// buffer size to small! 
+						
+						// reset file read pointer
+						fbFileSeek.sNetId:=''; // local file access
+						fbFileSeek.hFile:=fbFileOpen.hFile;
+						fbFileSeek.eOrigin:=E_SeekOrigin.SEEK_SET; // start pos at beginning of file
+						fbFileSeek.tTimeout:=T#3S;
+						fbFileSeek.nSeekPos := 0; // at beginn of file
+						fbFileSeek(bExecute:=FALSE);
+						fbFileSeek(bExecute:=TRUE);
+						WHILE (fbFileSeek.bBusy) DO
+							udiWaitFileReadCycles := udiWaitFileReadCycles + 1;
+							fbFileSeek(bExecute:=TRUE);
+						END_WHILE
+						
+						//release old buffer
+						__DELETE(pDelReadPointer);
+
+						uinFileSize := LREAL_TO_UINT(UINT_TO_LREAL(uinFileSize) * 1.5); // create bigger buffer for next try
+						
+						stStatemachine.uinState_old := 0; // entry action alloc new buffer
+					END_IF
+					
+				ELSE
+					// error read file
+					strInfo := CONCAT(STR1:='template/config file: error reading file: ',STR2:= In_strPath);
+					strInfo := CONCAT(STR1:=strInfo,STR2:= In_strCfgFileName);
+					Out_udiStatus := fbFileRead.nErrId;
+					RETURN;
+				END_IF;
+			END_IF
+				
+			
+			
+		4:
+			//*********************************************************	
+			// parse template file
+			// <TEMPLATE>pBuffer
+			p_bytTemplateBegin := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_TEMPLATE_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytTemplateEnd := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_TEMPLATE_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytTemplateBegin=TC3_MEMMAN.NULL) OR (p_bytTemplateEnd=TC3_MEMMAN.NULL) OR (p_bytTemplateBegin>p_bytTemplateEnd)) THEN
+				strInfo := CONCAT(STR1:='template/config file: parse error: ',STR2:= FileLc.cTAG_TEMPLATE_B);
+				Out_udiStatus := FileLc.cERR_TEMPLATE_TAG;
+				RETURN;
+			END_IF
+			
+			// <CONFIG>
+			p_bytConfigBegin := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_CONFIG_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigEnd := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_CONFIG_E),In_bolAddStrSearchLen:= FALSE);
+		
+			IF ((p_bytConfigBegin=TC3_MEMMAN.NULL) OR (p_bytConfigEnd=TC3_MEMMAN.NULL) OR (p_bytConfigBegin>p_bytConfigEnd)) THEN
+				strInfo := CONCAT(STR1:='template/config file: parse error: ',STR2:= FileLc.cTAG_CONFIG_B);
+				Out_udiStatus := FileLc.cERR_CONFIG_TAG;
+				RETURN;
+			END_IF
+			
+			// <HEADER>
+			p_bytHeaderBegin := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_HEADER_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytHeaderEnd := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_HEADER_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytHeaderBegin=TC3_MEMMAN.NULL) OR (p_bytHeaderEnd=TC3_MEMMAN.NULL) OR (p_bytHeaderBegin>p_bytHeaderEnd)) THEN
+				strInfo := CONCAT(STR1:='template/config file: parse error: ',STR2:= FileLc.cTAG_HEADER_B);
+				Out_udiStatus := FileLc.cERR_HEADER_TAG;
+				RETURN;
+			END_IF
+			
+			// <FOOTER>
+			p_bytFooterBegin := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_FOOTER_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytFooterEnd := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_FOOTER_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytFooterBegin=TC3_MEMMAN.NULL) OR (p_bytFooterEnd=TC3_MEMMAN.NULL) OR (p_bytFooterBegin>p_bytFooterEnd)) THEN
+				strInfo := CONCAT(STR1:='template/config file: parse error: ',STR2:= FileLc.cTAG_FOOTER_B);
+				Out_udiStatus := FileLc.cERR_FOOTER_TAG;
+				RETURN;
+			END_IF
+			
+			// <RECORD>
+			p_bytRecordBegin := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_RECORD_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytRecordEnd := strstr(In_pStr:=fbFileRead.pReadBuff,In_pStrSearch:=ADR(FileLc.cTAG_RECORD_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytRecordBegin=TC3_MEMMAN.NULL) OR (p_bytRecordEnd=TC3_MEMMAN.NULL) OR (p_bytRecordBegin>p_bytRecordEnd)) THEN
+				strInfo := CONCAT(STR1:='template/config file: parse error: ',STR2:= FileLc.cTAG_RECORD_B);
+				Out_udiStatus := FileLc.cERR_RECORD_TAG;
+				RETURN;
+			END_IF
+			
+			//*********************************************************	
+			// check header
+			// allocate memory for header text
+			uinTmpLen := UDINT_TO_UINT(p_bytHeaderEnd-p_bytHeaderBegin); // with key words -> len > necessary...
+		//test variabel
+			MEMSET(destAddr:=pstrTmp,fillByte:=0,n:= SIZEOF(strTmp));
+			MEMCPY(destAddr:=pstrTmp,srcAddr:=p_bytHeaderBegin,n:= (SIZEOF(strTmp)-1)); // zero determining string
+			
+			
+			In_pstSysInfo^.p_bytHeaderText := M_AllocMEM(uinTmpLen);
+			IF (In_pstSysInfo^.p_bytHeaderText=TC3_MEMMAN.NULL) THEN
+				strInfo := 'template/config file: alloc memory for header text failed';
+				Out_udiStatus := FileLc.cERR_ALLOC_MEMORY;
+				RETURN;
+			END_IF
+			p_bytTmpDestAdr := In_pstSysInfo^.p_bytHeaderText;
+			p_bytTmpSrcAdr := p_bytHeaderBegin;
+			uinTmpLen := 0;
+			REPEAT
+				p_bytRowBegin := strstr(In_pStr:=p_bytTmpSrcAdr,In_pStrSearch:=ADR(FileLc.cTAG_ROW_B),In_bolAddStrSearchLen:= TRUE);
+				p_bytRowEnd := strstr(In_pStr:=p_bytTmpSrcAdr,In_pStrSearch:=ADR(FileLc.cTAG_ROW_E),In_bolAddStrSearchLen:= FALSE);
+				IF ((p_bytRowBegin<>TC3_MEMMAN.NULL) AND (p_bytRowEnd<>TC3_MEMMAN.NULL) 
+					AND (p_bytRowBegin<p_bytHeaderEnd) AND (p_bytRowEnd<p_bytHeaderEnd)) THEN
+					IF (p_bytRowBegin>p_bytRowEnd) THEN
+						strInfo := CONCAT(STR1:='template/config file: parse error: ',STR2:= FileLc.cTAG_ROW_B);
+						strInfo := CONCAT(STR1:=strInfo,STR2:= ' in :');
+						strInfo := CONCAT(STR1:=strInfo,STR2:= FileLc.cTAG_HEADER_B);
+						Out_udiStatus := FileLc.cERR_ROW_TAG;
+						RETURN;
+					END_IF
+					uinTmpLen := uinTmpLen + DWORD_TO_UINT(p_bytRowEnd-p_bytRowBegin);
+					MEMCPY(destAddr:=p_bytTmpDestAdr,srcAddr:=p_bytRowBegin,n:=(p_bytRowEnd-p_bytRowBegin)); // copy row section
+			//test variabel
+			MEMSET(destAddr:=pstrTmp,fillByte:=0,n:= SIZEOF(strTmp));
+			MEMCPY(destAddr:=pstrTmp,srcAddr:=p_bytTmpDestAdr,n:= (SIZEOF(strTmp)-1)); // zero determining string
+			
+					p_bytTmpDestAdr := p_bytTmpDestAdr + p_bytRowEnd - p_bytRowBegin; //calculate next adress to add texts
+					uinTmpLen := uinTmpLen + SIZEOF(FileLc.cEOL);
+					MEMCPY(destAddr:=p_bytTmpDestAdr,srcAddr:=ADR(FileLc.cEOL),n:=SIZEOF(FileLc.cEOL)); //add end of line
+					p_bytTmpDestAdr := p_bytTmpDestAdr + SIZEOF(FileLc.cEOL);
+					p_bytTmpSrcAdr := p_bytRowEnd + Tc2_Standard.LEN(STR:=FileLc.cTAG_ROW_E);
+				ELSE
+					p_bytRowBegin := TC3_MEMMAN.NULL;
+				END_IF
+			UNTIL(p_bytRowBegin=TC3_MEMMAN.NULL)
+			END_REPEAT
+			In_pstSysInfo^.udiHeaderTextLen := UINT_TO_UDINT(uinTmpLen);
+			
+			
+			//*********************************************************	
+			// check footer
+			// allocate memory for footer text
+			uinTmpLen := UDINT_TO_UINT(p_bytFooterEnd-p_bytFooterBegin);// with key words -> len > necessary...
+			
+			In_pstSysInfo^.p_bytFooterText := M_AllocMEM(uinTmpLen);
+			IF (In_pstSysInfo^.p_bytFooterText=TC3_MEMMAN.NULL) THEN
+				strInfo := 'template/config file: alloc memory for footer text failed';
+				Out_udiStatus := FileLc.cERR_ALLOC_MEMORY;
+				RETURN;
+			END_IF
+			p_bytTmpDestAdr := In_pstSysInfo^.p_bytFooterText;
+			p_bytTmpSrcAdr := p_bytFooterBegin;
+			uinTmpLen := 0;
+			REPEAT
+				p_bytRowBegin := strstr(In_pStr:=p_bytTmpSrcAdr,In_pStrSearch:=ADR(FileLc.cTAG_ROW_B),In_bolAddStrSearchLen:= TRUE);
+				p_bytRowEnd := strstr(In_pStr:=p_bytTmpSrcAdr,In_pStrSearch:=ADR(FileLc.cTAG_ROW_E),In_bolAddStrSearchLen:= FALSE);
+				IF ((p_bytRowBegin<>TC3_MEMMAN.NULL) AND (p_bytRowEnd<>TC3_MEMMAN.NULL) 
+					AND (p_bytRowBegin<p_bytFooterEnd) AND (p_bytRowEnd<p_bytFooterEnd)) THEN
+					IF (p_bytRowBegin>p_bytRowEnd) THEN
+						strInfo := CONCAT(STR1:='template/config file: parse error: ',STR2:= FileLc.cTAG_ROW_B);
+						strInfo := CONCAT(STR1:=strInfo,STR2:= ' in :');
+						strInfo := CONCAT(STR1:=strInfo,STR2:= FileLc.cTAG_FOOTER_B);
+						Out_udiStatus := FileLc.cERR_ROW_TAG;
+						RETURN;
+					END_IF
+					uinTmpLen := uinTmpLen + DWORD_TO_UINT(p_bytRowEnd-p_bytRowBegin);
+					MEMCPY(destAddr:=p_bytTmpDestAdr,srcAddr:=p_bytRowBegin,n:=(p_bytRowEnd-p_bytRowBegin)); // copy row section
+					p_bytTmpDestAdr := p_bytTmpDestAdr + p_bytRowEnd - p_bytRowBegin; //calculate next adress to add texts
+					uinTmpLen := uinTmpLen + SIZEOF(FileLc.cEOL);
+					MEMCPY(destAddr:=p_bytTmpDestAdr,srcAddr:=ADR(FileLc.cEOL),n:=SIZEOF(FileLc.cEOL)); //add end of line
+					p_bytTmpDestAdr := p_bytTmpDestAdr + SIZEOF(FileLc.cEOL);
+					p_bytTmpSrcAdr := p_bytRowEnd + Tc2_Standard.LEN(STR:=FileLc.cTAG_ROW_E);
+				ELSE
+					p_bytRowBegin := TC3_MEMMAN.NULL;
+				END_IF
+			UNTIL(p_bytRowBegin=TC3_MEMMAN.NULL)
+			END_REPEAT
+			In_pstSysInfo^.udiFooterTextLen := UINT_TO_UDINT(uinTmpLen);
+			
+			//*********************************************************	
+			// check RECORD
+			uinItemCount := 0;
+			p_bytTmpSrcAdr := p_bytRecordBegin;
+			
+			// count all items in record tag
+			REPEAT
+				p_bytItemBegin := strstr(In_pStr:=p_bytTmpSrcAdr,In_pStrSearch:=ADR(FileLc.cTAG_ITEM_B),In_bolAddStrSearchLen:= TRUE);
+				p_bytItemEnd := strstr(In_pStr:=p_bytTmpSrcAdr,In_pStrSearch:=ADR(FileLc.cTAG_ITEM_E),In_bolAddStrSearchLen:= FALSE);
+				
+				IF ((p_bytItemBegin<>TC3_MEMMAN.NULL) AND (p_bytItemEnd<>TC3_MEMMAN.NULL) 
+					AND (p_bytItemBegin<p_bytRecordEnd) AND (p_bytItemEnd<p_bytRecordEnd)) THEN
+					p_bytTmpSrcAdr := p_bytItemEnd + LEN(STR:=FileLc.cTAG_ITEM_E); 
+					
+					// plausibility check
+					IF (p_bytItemBegin>p_bytItemEnd) THEN
+						strInfo := CONCAT(STR1:='template/config file: parse error: ',STR2:= FileLc.cTAG_ITEM_B);
+						strInfo := CONCAT(STR1:=strInfo,STR2:= ' in :');
+						strInfo := CONCAT(STR1:=strInfo,STR2:= FileLc.cTAG_RECORD_B);
+						Out_udiStatus := FileLc.cERR_ITEM_TAG;
+						RETURN;
+					END_IF
+					// item tag count
+					uinItemCount := uinItemCount +1;
+				ELSE
+					p_bytItemBegin := TC3_MEMMAN.NULL;
+				END_IF
+				
+			UNTIL(p_bytItemBegin=TC3_MEMMAN.NULL)
+			END_REPEAT
+			
+			// save found number of items
+			In_pstSysInfo^.stItemInfo.uinActNbrOfItems := uinItemCount;
+			
+			// allocate memory for ItemData list
+			FOR ii:=0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+				In_pstSysInfo^.stItemInfo.a_p_bytItemDataList[ii] := M_AllocMEM(uinItemCount*SIZEOF(T_FileLc_ItemData));
+				IF (In_pstSysInfo^.stItemInfo.a_p_bytItemDataList[ii]=TC3_MEMMAN.NULL) THEN
+					strInfo := 'template/config file: alloc memory for item data list failed';
+					Out_udiStatus := FileLc.cERR_ALLOC_MEMORY;
+					RETURN;
+				END_IF
+			END_FOR
+			stStatemachine.uinState := stStatemachine.uinState  + 1;
+		
+		5:
+			// allocate memory for ItemCfg list
+			In_pstSysInfo^.stItemInfo.p_bytItemCfgList := M_AllocMEM(uinItemCount*SIZEOF(T_FileLc_ItemCfg));
+			IF (In_pstSysInfo^.stItemInfo.p_bytItemCfgList=TC3_MEMMAN.NULL) THEN
+				strInfo := 'template/config file: alloc memory for item config list failed';
+				Out_udiStatus := FileLc.cERR_ALLOC_MEMORY;
+				RETURN;
+			END_IF
+			p_stItemCfgList := In_pstSysInfo^.stItemInfo.p_bytItemCfgList;
+			
+			//*********************************************************	
+			// in RECORD, search all item-tags
+			uinItemCount := 0;
+			p_bytTmpSrcAdr := p_bytRecordBegin;
+			
+			// count all items in record tag
+			REPEAT
+				p_bytItemBegin := strstr(In_pStr:=p_bytTmpSrcAdr,In_pStrSearch:=ADR(FileLc.cTAG_ITEM_B),In_bolAddStrSearchLen:= TRUE);
+				p_bytItemEnd := strstr(In_pStr:=p_bytTmpSrcAdr,In_pStrSearch:=ADR(FileLc.cTAG_ITEM_E),In_bolAddStrSearchLen:= FALSE);
+				
+				IF ((p_bytItemBegin<>TC3_MEMMAN.NULL) AND (p_bytItemEnd<>TC3_MEMMAN.NULL) 
+					AND (p_bytItemBegin<p_bytRecordEnd) AND (p_bytItemEnd<p_bytRecordEnd)) THEN
+					
+					// plausibility check
+					IF (p_bytItemBegin>p_bytItemEnd) THEN
+						strInfo := CONCAT(STR1:='template/config file: parse error: ',STR2:= FileLc.cTAG_ITEM_B);
+						strInfo := CONCAT(STR1:=strInfo,STR2:= ' in :');
+						strInfo := CONCAT(STR1:=strInfo,STR2:= FileLc.cTAG_RECORD_B);
+						Out_udiStatus := FileLc.cERR_ITEM_TAG;
+						RETURN;
+					END_IF
+					//test variabel
+		MEMSET(destAddr:=pstrTmp,fillByte:=0,n:= SIZEOF(strTmp));
+		MEMCPY(destAddr:=pstrTmp,srcAddr:=p_bytItemBegin,n:= (SIZEOF(strTmp)-1)); // zero determining string
+		
+					p_bytTmpSrcAdr := p_bytItemEnd + LEN(STR:=FileLc.cTAG_ITEM_E);
+					udiTmpLen := p_bytItemEnd-p_bytItemBegin;
+					IF (MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_UNIX_DATE_TIME),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_UNIX_DATE_TIME;		
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_UNIX_DATE_TIME_STR),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_UNIX_DATE_TIME_STR;	
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_EXCEL_DATE_TIME),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_EXCEL_DATE_TIME;	
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_DATE_SLASH_TIME_COLON),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_DATE_SLASH_TIME_COLON;		
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_TIME_MILLI),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_TIME_MILLI;	
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_BL_LOGTYP),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_BL_LOGTYP;	
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_BL_CTRL_ID),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_BL_CTRL_ID;	
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_BL_STRING1),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_BL_STRING1;	
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_BL_STRING2),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_BL_STRING2;	
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_BL_PAR1),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_BL_PAR1;	
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_BL_PAR2),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_BL_PAR2;
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_BL_PAR3),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_BL_PAR3;
+					ELSIF(MEMCMP(pBuf1:=p_bytItemBegin,pBuf2:=ADR(FileLc.cITEM_BL_PAR4),udiTmpLen) = 0) THEN
+						p_stItemCfgList[uinItemCount].dinPvId := FileLc.cPVTYPE_BL_PAR4;
+					ELSE
+						MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+						IF (udiTmpLen < SIZEOF(strTmp)) THEN
+							MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytItemBegin,udiTmpLen);
+							p_stItemCfgList[uinItemCount].dinPvId := STRING_TO_DINT(strTmp);
+						ELSE
+							strInfo := CONCAT(STR1:='template/config file: parse error item definition larger than defined string: ',STR2:= FileLc.cTAG_ITEM_B);
+							strInfo := CONCAT(STR1:=strInfo,STR2:= ' in :');
+							strInfo := CONCAT(STR1:=strInfo,STR2:= FileLc.cTAG_RECORD_B);
+							Out_udiStatus := FileLc.cERR_ITEM_TAG;
+							RETURN;
+						END_IF
+					END_IF
+					
+					IF (uinItemCount=0) THEN // only for the first element
+						// PreText
+						udiTmpLen := p_bytItemBegin-Tc2_Standard.LEN(STR:=FileLc.cTAG_ITEM_B)-p_bytRecordBegin;
+						IF (udiTmpLen>FileLc.cPRE_POST_TEXTLEN) THEN
+							udiTmpLen := FileLc.cPRE_POST_TEXTLEN - 1; //-1 -> strEnd!
+						END_IF
+						MEMSET(destAddr := ADR(In_pstSysInfo^.stItemInfo.strPreItemText),0,SIZEOF(In_pstSysInfo^.stItemInfo.strPreItemText));
+						MEMCPY(destAddr:=ADR(In_pstSysInfo^.stItemInfo.strPreItemText), p_bytRecordBegin, udiTmpLen);
+					ELSE
+						// Post item text
+						udiTmpLen := p_bytItemBegin-Tc2_Standard.LEN(STR:=FileLc.cTAG_ITEM_B)-p_bytLastPos;
+						IF (udiTmpLen>FileLc.cPRE_POST_TEXTLEN) THEN
+							udiTmpLen := FileLc.cPRE_POST_TEXTLEN - 1; //-1 -> strEnd!
+						END_IF
+						MEMSET(destAddr := ADR(p_stItemCfgList[uinItemCount-1].strPostText),0,SIZEOF(p_stItemCfgList[uinItemCount-1].strPostText));
+						MEMCPY(destAddr:=ADR(p_stItemCfgList[uinItemCount-1].strPostText), p_bytLastPos, udiTmpLen);
+					END_IF
+					
+					// save last position of ITEM entry
+					p_bytLastPos := p_bytItemEnd + Tc2_Standard.LEN(STR:=FileLc.cTAG_ITEM_E);
+					// item tag count
+					uinItemCount := uinItemCount +1;
+				ELSE
+					p_bytItemBegin := TC3_MEMMAN.NULL;
+				END_IF
+				
+			UNTIL(p_bytItemBegin=TC3_MEMMAN.NULL)
+			END_REPEAT
+			
+			// manage last element
+			udiTmpLen := p_bytRecordEnd-p_bytLastPos;
+			IF (udiTmpLen>FileLc.cPRE_POST_TEXTLEN) THEN
+				udiTmpLen := FileLc.cPRE_POST_TEXTLEN - 1; //-1 -> strEnd!
+			END_IF
+			MEMCPY(destAddr:=ADR(p_stItemCfgList[uinItemCount-1].strPostText), p_bytLastPos, udiTmpLen);
+			
+			//*********************************************************	
+			// check CONFIG 
+			
+			//**** <LOGFILE_PRAEFIX>
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGFILE_PRAEFIX_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGFILE_PRAEFIX_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+				ELSE
+					strTmp := FileLc.cCFG_LOGFILE_NAME; // error - load default
+				END_IF
+			ELSE
+				strTmp := FileLc.cCFG_LOGFILE_NAME; // error - load default
+			END_IF
+			In_pstSysInfo^.stConfig.strLogFileNamePraeFix := strTmp;
+			
+			//**** <LOGFILE_EXT>
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGFILE_EXT_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGFILE_EXT_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+				ELSE
+					strTmp := FileLc.cCFG_LOGFILE_EXT; // error - load default
+				END_IF
+			ELSE
+				strTmp := FileLc.cCFG_LOGFILE_EXT; // error - load default
+			END_IF
+			In_pstSysInfo^.stConfig.strLogFileNameExt := strTmp;
+			
+			//**** <LOG_TIMESTAMP>
+			
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOG_TIMESTAMP_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOG_TIMESTAMP_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+					IF (FIND(STR1:=strTmp,STR2:=FileLc.cLOG_TIMESTAMP_WIN)<>0)THEN // win defiend
+						bolTmp := TRUE;
+					ELSE
+						bolTmp := FALSE;
+					END_IF
+				ELSE
+					bolTmp := FALSE; // error - load default - local drive access
+				END_IF
+			ELSE
+				bolTmp := FALSE; // error - load default - local drive access
+			END_IF
+			In_pstSysInfo^.stConfig.bolUseLocalTimeStamp := bolTmp;
+			
+			//**** <LOGFILE_SNETID>
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGFILE_SNETID_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGFILE_SNETID_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+				ELSE
+					strTmp := ''; // error - load default - local drive access
+				END_IF
+			ELSE
+				strTmp :=  ''; // error - load default - local drive access
+			END_IF
+			In_pstSysInfo^.stConfig.strLogNetId := strTmp;
+			
+			//**** <LOGFILE_PATH>
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGFILE_PATH_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGFILE_PATH_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+				ELSE
+					strTmp := In_strPath; // error - load default
+				END_IF
+			ELSE
+				strTmp := In_strPath; // error - load default
+			END_IF
+			In_pstSysInfo^.stConfig.strLogPath := CONCAT(STR1:=strTmp ,STR2:= '\');
+			
+			//**** <QEUE_LEN>
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_QUEUE_LEN_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_QUEUE_LEN_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+					In_pstSysInfo^.stConfig.udiQueueLen := STRING_TO_UDINT(strTmp);
+				ELSE
+					In_pstSysInfo^.stConfig.udiQueueLen := FileLc.cCFG_QUEUE_LEN; // error - load default
+				END_IF
+			ELSE
+				In_pstSysInfo^.stConfig.udiQueueLen := FileLc.cCFG_QUEUE_LEN; // error - load default
+			END_IF
+			
+			//**** <MASK>
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MASK_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MASK_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+					In_pstSysInfo^.udiMask := STRING_TO_UDINT(strTmp);
+				ELSE
+					In_pstSysInfo^.udiMask := FileLc.cCFG_DEFAULT_MASK; // error - load default
+				END_IF
+			ELSE
+				In_pstSysInfo^.udiMask := FileLc.cCFG_DEFAULT_MASK; // error - load default
+			END_IF
+			
+			//**** <LOG_TYPE>
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGTYPE_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_LOGTYPE_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+			
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;	
+				IF (MEMCMP(pBuf1:=p_bytConfigValBegin,pBuf2:=ADR(FileLc.cLOGTYP_BL_STR),n:=udiTmpLen)=0)THEN
+					In_pstSysInfo^.uinLogTyp := FileLc.cLOGTYP_BL;
+				ELSIF (MEMCMP(pBuf1:=p_bytConfigValBegin,pBuf2:=ADR(FileLc.cLOGTYP_PV_STR),n:=udiTmpLen)=0)THEN
+					In_pstSysInfo^.uinLogTyp := FileLc.cLOGTYP_PV;
+				ELSIF (MEMCMP(pBuf1:=p_bytConfigValBegin,pBuf2:=ADR(FileLc.cLOGTYP_DATA_STR),n:=udiTmpLen)=0)THEN
+					In_pstSysInfo^.uinLogTyp := FileLc.cLOGTYP_DATA;
+				ELSIF (MEMCMP(pBuf1:=p_bytConfigValBegin,pBuf2:=ADR(FileLc.cLOGTYP_OPEN_STR),n:=udiTmpLen)=0)THEN
+					In_pstSysInfo^.uinLogTyp := FileLc.cLOGTYP_OPEN;	
+				ELSE
+					strInfo := CONCAT(STR1:='template/config file: parse error log typ not definde element: ',STR2:= FileLc.cTAG_CFG_LOGTYPE_B);
+					Out_udiStatus := FileLc.cERR_INVALID_LOGTYP;
+					RETURN;
+				END_IF
+			ELSE
+				In_pstSysInfo^.uinLogTyp := FileLc.cLOGTYP_BL; // load default
+			END_IF
+			
+			//**** <MAX_LOGFILES>
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MAX_LOGFILES_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MAX_LOGFILES_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+					In_pstSysInfo^.stConfig.uinMaxNbrOfLogFiles := STRING_TO_UINT(strTmp);
+				ELSE
+					In_pstSysInfo^.stConfig.uinMaxNbrOfLogFiles := FileLc.cCFG_MAX_NBR_OF_LOGFILES; // error - load default
+				END_IF
+			ELSE
+				In_pstSysInfo^.stConfig.uinMaxNbrOfLogFiles := FileLc.cCFG_MAX_NBR_OF_LOGFILES; // error - load default
+			END_IF
+			
+			//**** <TIME_CHECK_MAX_FILE_NR>
+			// max time check max file nr
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_T_CHECK_MAX_FILE_NR_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_T_CHECK_MAX_FILE_NR_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+					In_pstSysInfo^.stConfig.udiTimeCheckMaxFileNr := STRING_TO_UDINT(strTmp)*1000; // defined in s -> ms
+				ELSE
+					In_pstSysInfo^.stConfig.udiTimeCheckMaxFileNr := FileLc.cTIME_CHECK_MAX_FILE_NR*1000; // defined in s -> ms// error - load default
+				END_IF
+			ELSE
+				In_pstSysInfo^.stConfig.udiTimeCheckMaxFileNr:= FileLc.cTIME_CHECK_MAX_FILE_NR*1000; // defined in s -> ms// error - load default
+			END_IF
+			
+			//**** <MAX_TIME_TO_WRITE>
+			// max time between to file writes
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MAX_T_TO_WRITE_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MAX_T_TO_WRITE_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+					In_pstSysInfo^.stConfig.udiMaxTimeWriteToFile := STRING_TO_UDINT(strTmp)*1000; // defined in s -> ms
+				ELSE
+					In_pstSysInfo^.stConfig.udiMaxTimeWriteToFile := FileLc.cCFG_TIME_WRITE_TO_FILE*1000; // defined in s -> ms// error - load default
+				END_IF
+			ELSE
+				In_pstSysInfo^.stConfig.udiMaxTimeWriteToFile := FileLc.cCFG_TIME_WRITE_TO_FILE*1000; // defined in s -> ms// error - load default
+			END_IF
+			
+			//**** <NEW_FILE_ON_RESTART>
+			// >0 -> create always a new file on power up
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_NEW_FILE_RESTART_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_NEW_FILE_RESTART_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+					In_pstSysInfo^.stConfig.uinNewFileOnRestart := STRING_TO_UINT(strTmp);
+				ELSE
+					In_pstSysInfo^.stConfig.uinNewFileOnRestart := 0; // error - load default
+				END_IF
+			ELSE
+				In_pstSysInfo^.stConfig.uinNewFileOnRestart := 0; // error - load default
+			END_IF
+			
+			//**** <MAX_ENTRIES_IN_FILE>
+			// maximal number of entries in log file
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MAX_ENTR_IN_FILE_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MAX_ENTR_IN_FILE_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+					In_pstSysInfo^.stConfig.udiMaxEntriesInFile := STRING_TO_UDINT(strTmp);
+				ELSE
+					In_pstSysInfo^.stConfig.udiMaxEntriesInFile := 0; // error - load default -> 0 no limit
+				END_IF
+			ELSE
+				In_pstSysInfo^.stConfig.udiMaxEntriesInFile := 0; // error - load default -> 0 no limit
+			END_IF
+			
+			//**** <MAX_FILE_SIZE_MB>
+			// maximal size of a logfile [MBytes]
+			p_bytConfigValBegin := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MAX_FILE_SIZE_B),In_bolAddStrSearchLen:= TRUE);
+			p_bytConfigValEnd := strstr(In_pStr:=p_bytConfigBegin,In_pStrSearch:=ADR(FileLc.cTAG_CFG_MAX_FILE_SIZE_E),In_bolAddStrSearchLen:= FALSE);
+			IF ((p_bytConfigValBegin<>TC3_MEMMAN.NULL) AND (p_bytConfigValEnd<>TC3_MEMMAN.NULL) AND (p_bytConfigValBegin<p_bytConfigValEnd) AND (p_bytConfigValEnd<p_bytConfigEnd)) THEN
+				MEMSET(destAddr := ADR(strTmp),0,SIZEOF(strTmp));
+				udiTmpLen := p_bytConfigValEnd - p_bytConfigValBegin;
+		
+				IF (SIZEOF(strTmp)>udiTmpLen) THEN
+					MEMCPY(destAddr := ADR(strTmp),srcAddr := p_bytConfigValBegin,udiTmpLen);	
+					In_pstSysInfo^.stConfig.udiMaxFileSize := REAL_TO_UDINT(STRING_TO_REAL(strTmp)*1000000.0);// set in MB internal : bytes
+				ELSE
+					In_pstSysInfo^.stConfig.udiMaxFileSize := 0; // error - load default -> 0 no limit
+				END_IF
+			ELSE
+				In_pstSysInfo^.stConfig.udiMaxFileSize := 0; // error - load default -> 0 no limit
+			END_IF
+			
+			stStatemachine.uinState := stStatemachine.uinState  + 1;
+		
+		6:
+			// Entry action
+			IF (stStatemachine.uinState_old <> stStatemachine.uinState) THEN
+				//*********************************************************
+				// file close
+				fbFileClose.sNetId := ''; // only local access
+				fbFileClose.hFile := fbFileOpen.hFile; // only local access
+				fbFileClose.tTimeout := T#3S;
+				fbFileClose(bExecute:= FALSE);
+				fbFileClose(bExecute:= TRUE);
+				udiWaitFileCloseCycles := 0;
+					
+				 stStatemachine.uinState_old := stStatemachine.uinState;
+			END_IF
+				
+			// wait UNTIL closed
+			IF (fbFileClose.bBusy) THEN
+				udiWaitFileCloseCycles := udiWaitFileCloseCycles + 1;
+				fbFileClose(bExecute:=FALSE);
+			ELSE
+				IF fbFileClose.bError THEN
+					strInfo := 'template/config file close failed';
+					Out_udiStatus := fbFileClose.nErrId;
+					RETURN;
+				END_IF
+				
+				// delocate memory
+				__DELETE(pDelReadPointer);
+				
+				// allocat for temporary item list
+				// nbr of items * size for value output + nbf of items * Pre- and Post - Text
+				// with this calculation is the buffer normally greater than necessary
+				// cMAX_ITEM_CHAR has to be defined for worst case (big 4-byt values, date strings) so big
+				udiTmpLen := (In_pstSysInfo^.stItemInfo.uinActNbrOfItems*FileLc.cMAX_ITEM_CHAR) + (In_pstSysInfo^.stItemInfo.uinActNbrOfItems*FileLc.cPRE_POST_TEXTLEN);
+				In_pstSysInfo^.p_bytTmpRecordText := M_AllocMEM(In_SizeOfBuffer:=UDINT_TO_UINT(udiTmpLen));
+				IF (In_pstSysInfo^.p_bytTmpRecordText=TC3_MEMMAN.NULL) THEN
+					strInfo := 'template/config file: alloc memory for temp record text failed';
+					Out_udiStatus := FileLc.cERR_ALLOC_MEMORY;
+					RETURN;
+				END_IF
+				In_pstSysInfo^.udiTmpRecordSize := udiTmpLen;
+				
+				// allocat for temporary file buffer
+				udiTmpLen := udiTmpLen*FileLc.cMAX_RECORDS_IN_FILE_BUF;
+				In_pstSysInfo^.stFileHandler.p_bytTmpFileBuffer := M_AllocMEM(In_SizeOfBuffer:=UDINT_TO_UINT(udiTmpLen));
+				IF (In_pstSysInfo^.stFileHandler.p_bytTmpFileBuffer=TC3_MEMMAN.NULL) THEN
+					strInfo := 'template/config file: alloc memory for temp file buffer failed';
+					Out_udiStatus := FileLc.cERR_ALLOC_MEMORY;
+					RETURN;
+				END_IF
+				In_pstSysInfo^.stFileHandler.udiTmpFileBufferSize := udiTmpLen;
+				stStatemachine.uinState := stStatemachine.uinState  + 1;
+			END_IF
+			
+		
+		7:
+			stStatemachine.usiInitDone := 1;
+			Out_bolDone := TRUE;
+			strInfo := 'template/config file: successfully parsed';
+			Out_udiStatus := 0;
+	END_CASE
+END_IF
+bolExecute_old := In_bolExecute;]]></ST>
+    </Implementation>
+    <Method Name="M_AllocMEM" Id="{b939cda1-769c-4a29-ae02-2034f663bfef}">
+      <Declaration><![CDATA[METHOD PROTECTED M_AllocMEM : POINTER TO BYTE
+
+VAR_INPUT
+	In_SizeOfBuffer : UINT; // Byte size of quee to allocate
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Debug counter
+M_AllocMEM := __NEW(BYTE,In_SizeOfBuffer);
+
+// check if allocate memory is ok
+IF (M_AllocMEM=TC3_MEMMAN.NULL) THEN
+	M_AllocMEM := TC3_MEMMAN.NULL;
+ELSE
+	Tc2_System.MEMSET(M_AllocMEM,0,In_SizeOfBuffer); // init with zero.
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_exit" Id="{cdb3dee3-bb40-407e-961e-ae10cb643e25}">
+      <Declaration><![CDATA[METHOD FB_exit : BOOL
+VAR_INPUT
+	bInCopyCode : BOOL; // if TRUE, the exit method is called for exiting an instance that is copied afterwards (online change).
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[__DELETE(pDelReadPointer);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ReleaseAllMEM" Id="{ef537a60-715d-41d4-b0a3-b6bcabf07d3e}">
+      <Declaration><![CDATA[METHOD M_ReleaseAllMEM : BOOL
+VAR_INPUT
+	In_pstSysInfo : POINTER TO T_FileLc_SysInfo;
+END_VAR
+VAR
+	pDelPointer : POINTER TO BYTE;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// no usage at the moment -> with handle shutdown sequence no easy to remove every thing in the right order
+
+
+// the other allocated memory has to be deallocated by FB_FileLC! on exit this methode should be called from FB_FileLC!
+IF (In_pstSysInfo<>TC3_MEMMAN.NULL) THEN
+	__DELETE(In_pstSysInfo^.p_bytHeaderText);
+	__DELETE(In_pstSysInfo^.p_bytFooterText);
+	FOR ii:=0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+		IF (In_pstSysInfo^.stItemInfo.a_p_bytItemDataList[ii]<>TC3_MEMMAN.NULL) THEN
+			pDelPointer := In_pstSysInfo^.stItemInfo.a_p_bytItemDataList[ii];
+			__DELETE(pDelPointer);
+			In_pstSysInfo^.stItemInfo.a_p_bytItemDataList[ii] := 0;
+		END_IF
+	END_FOR
+	__DELETE(In_pstSysInfo^.stItemInfo.p_bytItemCfgList);
+	__DELETE(In_pstSysInfo^.p_bytTmpRecordText);
+	__DELETE(In_pstSysInfo^.stFileHandler.p_bytTmpFileBuffer);
+	__DELETE(pDelReadPointer);
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

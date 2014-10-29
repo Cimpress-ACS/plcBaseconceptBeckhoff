@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_CYL_Ilk" Id="{0acd7b20-3a3f-4d7a-8909-c3ab1a8ec360}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_CYL_Ilk" Id="{5b6afb43-b807-4bf4-986d-d58ed64020da}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_Ilk :
 STRUCT
 	///interlock retraction of cylinder

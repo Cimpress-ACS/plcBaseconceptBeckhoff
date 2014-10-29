@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="FB_CYL" Id="{737d0ef7-e1b0-4ebc-93e3-5294ee4a3127}">
+  <POU Name="FB_CYL" Id="{909ba205-1a13-4501-84fa-79d252733f5c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CYL EXTENDS FB_CtrlBase
 
 VAR_INPUT
@@ -45,74 +45,8 @@ ________________________________________________________________________________
 
 SUPER^();]]></ST>
     </Implementation>
-    <Method Name="IoInBridge" Id="{1a1841f5-d9d3-4cec-abb4-aa384c6b5472}">
-      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-SIf.In.bolExtended.map := THIS^.In_bolExtended;
-SIf.In.bolRetracted.map := THIS^.In_bolRetracted;
-
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolExtended));
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolRetracted));
-ELSE
-	//simulation of global IO
-END_IF
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="getCtrlSIf" Id="{30e501b6-8c97-4304-a96a-42e63b787840}">
-      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_CYL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_OFF" Id="{322bdbb7-0b7f-4ad4-8eab-2577b3fb486a}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		// State Change Condition
-		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
-			IF (me.intCmd=cCMD_STOP) THEN
-				// sensor retract always on cylinder
-				me.StateMachine.intStateNext :=  cSTA_STOPBusy;
-			ELSIF (me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN 
-				me.StateMachine.intStateNext := cSTA_EXTENDBusy;
-			ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
-				me.StateMachine.intStateNext := cSTA_RETRACTBusy;
-			END_IF
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_EXTENDBusy" Id="{3b168bb9-a863-4bc6-ae4b-3b0e9b16e776}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_EXTENDBusy : BOOL
+    <Method Name="sta_RETRACT" Id="{1167542e-450d-4be6-a02b-87324f656cc4}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RETRACT : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -121,10 +55,6 @@ END_IF
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
-		fbSimulationTimer.IN := FALSE;
-		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimExtendTime_ms);
-		fbSimulationTimer(); // set time/reset timer
-		fbSimulationTimer.IN := TRUE; // start timer
 	END_IF
 
 
@@ -134,179 +64,16 @@ END_IF
 
 		// Simulation
 		IF (CIf.SwCfg.bolSimulation) THEN
-			fbSimulationTimer(); // simulation time
-			IF (fbSimulationTimer.Q) THEN
-				SIf.In.bolExtended.intern := TRUE;
-				SIf.In.bolRetracted.intern := FALSE;
-			END_IF
-		END_IF
-		
-		//no change action
-		SIf.Out.bolExtend.intern := TRUE;
-		SIf.Out.bolRetract.intern := FALSE;
-		
-		
-		// State Change Condition
-		IF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiExtendTime_ms) THEN
-			IF (SIf.In.bolRetracted.intern) THEN
-				// sensor retract always on
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			ELSE
-				// SIf.Alm[E_ALM_CYL.SensorExtendNotReached].strText := 'timeout extend - sensor extend not reached'
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendNotReached,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			END_IF
-			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF (SIf.In.bolExtended.intern) AND (SIf.In.bolRetracted.intern=FALSE) THEN
-			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTEND;
-		ELSIF(me.intCmd=cCMD_STOP) THEN
-			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		ELSIF(me.intCmd=cCMD_RETRACT) THEN
-			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		SIf.Cur.udiMoveTimeExtend := me.StateMachine.udiTimeInState_ms;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="getCmdState" Id="{3cc12842-92b2-40e3-acee-7144bf90e142}">
-      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
-VAR_INPUT
-	intCmdState: INT;
-	bolState: BOOL;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
-IF (getCmdState='') THEN // global not defined get local
-	// get string cmd/state string information in runtime
-	IF (bolState=FALSE) THEN
-		// cmd's
-		CASE intCmdState OF
-			CYL_CmdState.cCMD_RETRACT: 
-				getCmdState := 'cCMD_RETRACT';
-			CYL_CmdState.cCMD_EXTEND: 
-				getCmdState := 'cCMD_EXTEND';
-		ELSE
-			getCmdState := 'Cmd not defined';
-		END_CASE;
-	ELSE
-	
-	// cmd's
-		CASE intCmdState OF
-			CYL_CmdState.cSTA_RETRACTBusy: 
-				getCmdState := 'cSTA_RETRACTBusy';
-			CYL_CmdState.cSTA_RETRACT: 
-				getCmdState := 'cSTA_RETRACT';
-			CYL_CmdState.cSTA_EXTENDBusy: 
-				getCmdState := 'cSTA_EXTENDBusy';
-			CYL_CmdState.cSTA_EXTEND: 
-				getCmdState := 'cSTA_EXTEND';
-		ELSE
-			getCmdState := 'State not defined';
-		END_CASE;
-	END_IF
-END_IF
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_OFFBusy" Id="{3f83ecbc-a282-4f17-8fc6-7079c773506d}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		// switch off?
-		IF (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor2) 
-			OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorExtended) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorRetracted) THEN
-			// monostabil valve -> do nothing
 			;
-		ELSE
-			// bistable valve -> switch both off
-			SIf.Out.bolExtend.intern := FALSE;
-			SIf.Out.bolRetract.intern := FALSE;
-		END_IF
-		
-		
-		
-		// State Change Condition
-		IF (TRUE) THEN
-			me.StateMachine.intStateNext := cSTA_OFF;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_RETRACTBusy" Id="{49759eab-4a0b-44af-ba4f-190d63c6d182}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_RETRACTBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		SIf.Out.bolExtend.intern := FALSE;
-		SIf.Out.bolRetract.intern := TRUE;
-		
-		fbSimulationTimer.IN := FALSE;
-		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimRetractTime_ms);
-		fbSimulationTimer(); // set time/reset timer
-		fbSimulationTimer.IN := TRUE; // start timer
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			fbSimulationTimer(); // simulation time
-			IF (fbSimulationTimer.Q) THEN
-				SIf.In.bolRetracted.intern := TRUE;
-				SIf.In.bolExtended.intern := FALSE;
-			END_IF
 		END_IF
 		
 		// State Change Condition
-		IF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiRetractTime_ms) THEN
-			IF (SIf.In.bolExtended.intern) THEN
-				// sensor extend always on 
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			ELSE
-				// timeout retract cylinder
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractNotReached,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			END_IF
+		IF (SIf.In.bolExtended.intern) THEN
+			// sensor retract always on
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF (SIf.In.bolRetracted.intern) AND(SIf.In.bolExtended.intern=FALSE) THEN
-			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACT;
+		ELSIF (SIf.In.bolRetracted.intern = FALSE) THEN // wait time until error?
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF(me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN
@@ -320,82 +87,11 @@ END_IF
 //--------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		SIf.Cur.udiMoveTimeRetract := me.StateMachine.udiTimeInState_ms;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="StateMachine" Id="{4ffaf879-3ba6-4f07-861c-fe09e9967dd0}">
-      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.StateMachine();
-
-// main statemachine of base controller
-CASE me.StateMachine.intState OF
-    CYL_CmdState.cSTA_RETRACTBusy: 
-        THIS^.sta_RETRACTBusy();
-    CYL_CmdState.cSTA_RETRACT: 
-        THIS^.sta_RETRACT();
-    CYL_CmdState.cSTA_EXTENDBusy: 
-        THIS^.sta_EXTENDBusy();
-    CYL_CmdState.cSTA_EXTEND: 
-        THIS^.sta_EXTEND();
-	cSTA_STOPBusy: 
-        THIS^.sta_STOPBusy();
-    cSTA_STOP: 
-        THIS^.sta_STOP();
-END_CASE;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ERRORQuit" Id="{61b9299d-71ce-459d-8978-132e921106a2}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
-			CIf.Job.bolAlmReset := FALSE;
-		END_IF
-		
-		// State Change Condition
-		IF (CIf.Job.bolAlmReset = FALSE) THEN
-			IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
-				me.StateMachine.intStateNext := cSTA_PONBusy;
-			ELSIF(me.intCmd=cCMD_OFF) THEN
-				me.StateMachine.intStateNext := cSTA_OFFBusy;
-			ELSIF(me.intCmd=cCMD_STOP) THEN
-				me.StateMachine.intStateNext := cSTA_STOPBusy;
-			ELSIF(me.intCmd=cCMD_RETRACT) THEN
-				me.StateMachine.intStateNext := cSTA_RETRACTBusy;
-			ELSIF(me.intCmd=cCMD_EXTEND) THEN
-				me.StateMachine.intStateNext := cSTA_EXTENDBusy;
-			END_IF
-		END_IF
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="FB_init" Id="{6cfa0fd4-0741-4a03-8098-1e8615c9dfcb}">
+    <Method Name="FB_init" Id="{1184e2eb-0860-491e-806e-a6c146a6cb2f}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
 	///if TRUE, the retain variables are initialized (warm start / cold start)
@@ -463,54 +159,56 @@ SIf.Par.udiSimExtendTime_ms := SIf.Par.udiExtendTime_ms/2;
 SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_STOPBusy" Id="{793279a7-f53f-4c40-9ff7-e53abf833e13}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_STOPBusy : BOOL
+    <Method Name="getCmdState" Id="{219e3efc-9e72-4288-bec9-0582486befc6}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		// switch off?
-		IF (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor2) 
-			OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorExtended) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorRetracted) THEN
-			// monostabil valve -> do nothing
-			;
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		// cmd's
+		CASE intCmdState OF
+			CYL_CmdState.cCMD_RETRACT: 
+				getCmdState := 'cCMD_RETRACT';
+			CYL_CmdState.cCMD_EXTEND: 
+				getCmdState := 'cCMD_EXTEND';
 		ELSE
-			// bistable valve -> switch both on -> block at position
-			SIf.Out.bolExtend.intern := TRUE;
-			SIf.Out.bolRetract.intern := TRUE;
-		END_IF
-		
-		
-		
-		// State Change Condition
-		IF (TRUE) THEN
-			me.StateMachine.intStateNext := cSTA_STOP;
-		END_IF
+			getCmdState := 'Cmd not defined';
+		END_CASE;
+	ELSE
+	
+	// cmd's
+		CASE intCmdState OF
+			CYL_CmdState.cSTA_RETRACTBusy: 
+				getCmdState := 'cSTA_RETRACTBusy';
+			CYL_CmdState.cSTA_RETRACT: 
+				getCmdState := 'cSTA_RETRACT';
+			CYL_CmdState.cSTA_EXTENDBusy: 
+				getCmdState := 'cSTA_EXTENDBusy';
+			CYL_CmdState.cSTA_EXTEND: 
+				getCmdState := 'cSTA_EXTEND';
+		ELSE
+			getCmdState := 'State not defined';
+		END_CASE;
 	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+END_IF
+]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_EXTEND" Id="{7a9aba2f-5635-4f1c-a39a-c1b3d993f846}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_EXTEND : BOOL
+    <Method Name="getCtrlSIf" Id="{3c89aada-4fd3-457a-96f2-78e689a7de9d}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_CYL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RETRACTBusy" Id="{3d6f7f9b-4cdc-4b70-85b2-588f98caa582}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RETRACTBusy : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -518,7 +216,14 @@ SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;]]></ST>
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-
+		
+		SIf.Out.bolExtend.intern := FALSE;
+		SIf.Out.bolRetract.intern := TRUE;
+		
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimRetractTime_ms);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
 	END_IF
 
 
@@ -528,23 +233,81 @@ SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;]]></ST>
 
 		// Simulation
 		IF (CIf.SwCfg.bolSimulation) THEN
-			;
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				SIf.In.bolRetracted.intern := TRUE;
+				SIf.In.bolExtended.intern := FALSE;
+			END_IF
 		END_IF
 		
 		// State Change Condition
-		IF (SIf.In.bolRetracted.intern) THEN
-			// sensor retract always on
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		IF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiRetractTime_ms) THEN
+			IF (SIf.In.bolExtended.intern) THEN
+				// sensor extend always on 
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			ELSE
+				// timeout retract cylinder
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractNotReached,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF (SIf.In.bolExtended.intern = FALSE) THEN // wait time until error?
-			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
+		ELSIF (SIf.In.bolRetracted.intern) AND(SIf.In.bolExtended.intern=FALSE) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACT;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
-			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
+		ELSIF(me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
 		END_IF
 	END_IF
 
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		SIf.Cur.udiMoveTimeRetract := me.StateMachine.udiTimeInState_ms;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERRORQuit" Id="{514619a2-f33e-48f7-a226-7fd6ba2719b1}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = FALSE) THEN
+			IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
+				me.StateMachine.intStateNext := cSTA_PONBusy;
+			ELSIF(me.intCmd=cCMD_OFF) THEN
+				me.StateMachine.intStateNext := cSTA_OFFBusy;
+			ELSIF(me.intCmd=cCMD_STOP) THEN
+				me.StateMachine.intStateNext := cSTA_STOPBusy;
+			ELSIF(me.intCmd=cCMD_RETRACT) THEN
+				me.StateMachine.intStateNext := cSTA_RETRACTBusy;
+			ELSIF(me.intCmd=cCMD_EXTEND) THEN
+				me.StateMachine.intStateNext := cSTA_EXTENDBusy;
+			END_IF
+		END_IF
+	END_IF
 
 
 //--------------------------------------------------------------------------------------
@@ -554,8 +317,8 @@ SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_STOP" Id="{949b2121-4415-435d-9934-8162cf92f3de}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_STOP : BOOL
+    <Method Name="sta_OFF" Id="{5646be62-658c-43e6-8d0a-911b2b570a3c}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -573,12 +336,16 @@ SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;]]></ST>
 		
 		;
 		
-		
 		// State Change Condition
-		IF (me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN 
-			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
-		ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
-			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+			IF (me.intCmd=cCMD_STOP) THEN
+				// sensor retract always on cylinder
+				me.StateMachine.intStateNext :=  cSTA_STOPBusy;
+			ELSIF (me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN 
+				me.StateMachine.intStateNext := cSTA_EXTENDBusy;
+			ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
+				me.StateMachine.intStateNext := cSTA_RETRACTBusy;
+			END_IF
 		END_IF
 	END_IF
 
@@ -592,7 +359,7 @@ SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="IoOutBridge" Id="{9eb7dfbc-a97c-4a98-8041-59ed784bdd31}">
+    <Method Name="IoOutBridge" Id="{5eadd75a-10be-486f-a43d-13cdb9027cad}">
       <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
 VAR
 	bolSwitchValvesOff: BOOL;
@@ -650,7 +417,318 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ERROR" Id="{b8510dd4-13c9-4fbe-b96c-0becef1f2fd5}">
+    <Method Name="IoInBridge" Id="{75850b21-cc86-4eb4-9f06-2728d7a7d635}">
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolExtended.map := THIS^.In_bolExtended;
+SIf.In.bolRetracted.map := THIS^.In_bolRetracted;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolExtended));
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolRetracted));
+ELSE
+	//simulation of global IO
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STOPBusy" Id="{80ec70af-56d1-4785-a6fd-78deb1cabff1}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_STOPBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// switch off?
+		IF (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor2) 
+			OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorExtended) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorRetracted) THEN
+			// monostabil valve -> do nothing
+			;
+		ELSE
+			// bistable valve -> switch both on -> block at position
+			SIf.Out.bolExtend.intern := TRUE;
+			SIf.Out.bolRetract.intern := TRUE;
+		END_IF
+		
+		
+		
+		// State Change Condition
+		IF (TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_STOP;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{8756986a-eb8e-4ad7-9e47-7eb86f14fdd4}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
+	//me.StateMachine.intStateNext := cSTA_OFFBusy;
+	me.bolChangeBackToAUTO := FALSE; // for cylinder no change to off when switch to automatic!!
+END_IF
+
+SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	// always error supervision
+	
+	// ----------------------------------------------------------------------------------
+	// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+	IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+		IF (me.StateMachine.intState=cSTA_OFF) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		ELSE // stay in OFF
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		END_IF
+	END_IF
+END_IF
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{8aecb467-fc6d-43f8-8e80-01128959a17a}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// switch off?
+		IF (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor2) 
+			OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorExtended) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorRetracted) THEN
+			// monostabil valve -> do nothing
+			;
+		ELSE
+			// bistable valve -> switch both off
+			SIf.Out.bolExtend.intern := FALSE;
+			SIf.Out.bolRetract.intern := FALSE;
+		END_IF
+		
+		
+		
+		// State Change Condition
+		IF (TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STOP" Id="{9db3bd5f-8bd7-4970-aebc-9afd60bcf638}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_STOP : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN 
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
+		ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EXTEND" Id="{abf25ab4-e8bd-47a2-8a8d-14d870215d20}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_EXTEND : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF (SIf.In.bolRetracted.intern) THEN
+			// sensor retract always on
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF (SIf.In.bolExtended.intern = FALSE) THEN // wait time until error?
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
+		ELSIF(me.intCmd=cCMD_STOP) THEN
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		ELSIF(me.intCmd=CYL_CmdState.cCMD_RETRACT) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
+		END_IF
+	END_IF
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EXTENDBusy" Id="{c9838761-4950-4674-aabd-6699fb11fee1}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_EXTENDBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimExtendTime_ms);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				SIf.In.bolExtended.intern := TRUE;
+				SIf.In.bolRetracted.intern := FALSE;
+			END_IF
+		END_IF
+		
+		//no change action
+		SIf.Out.bolExtend.intern := TRUE;
+		SIf.Out.bolRetract.intern := FALSE;
+		
+		
+		// State Change Condition
+		IF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiExtendTime_ms) THEN
+			IF (SIf.In.bolRetracted.intern) THEN
+				// sensor retract always on
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			ELSE
+				// SIf.Alm[E_ALM_CYL.SensorExtendNotReached].strText := 'timeout extend - sensor extend not reached'
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendNotReached,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF (SIf.In.bolExtended.intern) AND (SIf.In.bolRetracted.intern=FALSE) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTEND;
+		ELSIF(me.intCmd=cCMD_STOP) THEN
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		ELSIF(me.intCmd=cCMD_RETRACT) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		SIf.Cur.udiMoveTimeExtend := me.StateMachine.udiTimeInState_ms;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{fd322cb1-05d1-4db4-b24a-a5818483f488}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    CYL_CmdState.cSTA_RETRACTBusy: 
+        THIS^.sta_RETRACTBusy();
+    CYL_CmdState.cSTA_RETRACT: 
+        THIS^.sta_RETRACT();
+    CYL_CmdState.cSTA_EXTENDBusy: 
+        THIS^.sta_EXTENDBusy();
+    CYL_CmdState.cSTA_EXTEND: 
+        THIS^.sta_EXTEND();
+	cSTA_STOPBusy: 
+        THIS^.sta_STOPBusy();
+    cSTA_STOP: 
+        THIS^.sta_STOP();
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{fe9df6b3-165d-44d7-9b7b-c5761db23a37}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
 ]]></Declaration>
       <Implementation>
@@ -685,123 +763,6 @@ END_IF]]></ST>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_RETRACT" Id="{ca69179f-e0cb-4219-bf7a-eda5c31eaab5}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_RETRACT : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			;
-		END_IF
-		
-		// State Change Condition
-		IF (SIf.In.bolExtended.intern) THEN
-			// sensor retract always on
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF (SIf.In.bolRetracted.intern = FALSE) THEN // wait time until error?
-			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
-		ELSIF(me.intCmd=cCMD_STOP) THEN
-			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		ELSIF(me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN
-			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PON" Id="{eb929956-f658-49d3-b05f-2071ebdcc2c8}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		// State Change Condition
-		IF(me.intCmd=cCMD_STOP) THEN
-			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		ELSIF(me.intCmd=cCMD_RETRACT) THEN
-			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
-		ELSIF (me.intCmd=cCMD_EXTEND) THEN
-			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="Always" Id="{f991da10-5343-4634-b55a-33f8f2d15035}">
-      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
-	//me.StateMachine.intStateNext := cSTA_OFFBusy;
-	me.bolChangeBackToAUTO := FALSE; // for cylinder no change to off when switch to automatic!!
-END_IF
-
-SUPER^.Always();
-
-// ----------------------------------------------------------------------------------
-// cyclic actions outside of statemachine
-IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	
-	// always error supervision
-	
-	// ----------------------------------------------------------------------------------
-	// overrule error always from base -> no EOFF State!! in EOFF go to OFF
-	IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
-		IF (me.StateMachine.intState=cSTA_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFF;
-		ELSE // stay in OFF
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		END_IF
-	END_IF
-END_IF
-
-
-]]></ST>
       </Implementation>
     </Method>
     <ObjectProperties />

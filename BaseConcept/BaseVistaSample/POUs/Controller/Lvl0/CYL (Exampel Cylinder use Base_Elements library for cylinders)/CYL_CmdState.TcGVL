@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <GVL Name="CYL_CmdState" Id="{8f2c660f-fba0-4f8d-9311-c20e4adea868}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="CYL_CmdState" Id="{17afa519-a259-4498-b65d-67bf034088f6}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl commands definitions
 	///specific commands >200 - every command has to be a even number

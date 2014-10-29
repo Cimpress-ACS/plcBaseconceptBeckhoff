@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Queue_LibInfo" Id="{17b902c5-7a2b-4cbc-8762-57a91a70dc83}">
+    <Declaration><![CDATA[TYPE T_Queue_LibInfo :
+STRUCT
+	pstQueue_SysInfo : POINTER TO T_Queue_SysInfo; // pointer to first queue system - linked list 
+	uinFUBInternalError: UINT; // internal error
+	stSysDebugInfo:T_Queue_SysDebugInfo; //Debug structure
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

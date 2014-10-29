@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{D5D058E2-D862-490D-9E1F-19A82A0D2277}" ModifiedGUID="{E46AA0E0-1831-4F6A-BBA4-B9CDF6555554}" Target64Bit="true">
+	<Project ProjectGUID="{D5D058E2-D862-490D-9E1F-19A82A0D2277}" ModifiedGUID="{FE428D3C-CD5D-4957-A4E7-CDD6866FF480}">
 		<System>
+			<Settings RouterMemory="6291456"/>
 			<Licenses>
 				<Target>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
 				</Target>
 			</Licenses>
 			<Tasks>
-				<Task Id="2" Priority="5" CycleTime="100000" AmsPort="350">
+				<Task Id="2" Priority="5" CycleTime="100000" AmsPort="350" ExceedWarning="2">
 					<Name>Task_Fast</Name>
 				</Task>
-				<Task Id="3" Priority="20" CycleTime="1000000" AmsPort="351">
+				<Task Id="3" Priority="20" CycleTime="800000" AmsPort="351">
 					<Name>Task_Slow</Name>
 				</Task>
-				<Task Id="4" Priority="10" CycleTime="500000" AmsPort="352">
+				<Task Id="4" Priority="10" CycleTime="400000" AmsPort="352">
 					<Name>Task_Middle</Name>
 				</Task>
 			</Tasks>

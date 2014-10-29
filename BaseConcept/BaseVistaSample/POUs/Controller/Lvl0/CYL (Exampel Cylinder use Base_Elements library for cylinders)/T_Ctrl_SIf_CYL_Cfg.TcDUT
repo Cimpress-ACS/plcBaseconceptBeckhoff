@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_CYL_Cfg" Id="{3629c71a-213c-4aea-9ef5-1e8d7cf43b25}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_CYL_Cfg" Id="{6e49a13b-8a13-4896-95d7-7d00c383a46d}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_Cfg :
 STRUCT
 	eTyp: E_Typ_CYL;

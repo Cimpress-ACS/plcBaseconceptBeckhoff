@@ -15,9 +15,18 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.5.0</ProjectVersion>
+    <ProjectVersion>0.3.5.2</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.5.0 - Update to TwinCat 4016.5
+    <Description>0.3.5.2 
+	- CtrlInit() uses internal variable again, in cyclic call of FB at first caclic call and init not done - only init is executed
+	- Alarmhandler works now with time stamp FB, properties for timestamp usage in controller
+	- Add new functions strstr, initAllCtrl, callAllCtrlInit
+	- Integrate in BaseCtrl state logging
+	- Add logger system
+- Add time stamp FUB FB_TimeStamp
+0.3.5.1 - Add Methode ResetSubState
+- alarm reset first statemachine and then the messages
+0.3.5.0 - Update to TwinCat 4016.5
 0.3.4.9 - Increased maxchildnumber to 30
             - CtrlInit made Public
             - New CtrlInit call only once flag
@@ -133,10 +142,28 @@ Automatic Substate handling.
     <Compile Include="POUs\BaseCtrl\T_fbInfo.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\BaseCtrl\T_StateLogger.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Utility\DLL (Double Linked List)\FB_DLL.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Utility\DLL (Double Linked List)\T_Element.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\FB_TimeStamp.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\FileFolder\FB_FileCopy.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\FileFolder\FB_FileHdl.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\FileFolder\FB_FolderHdl.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\FileFolder\FileHdl.TcGVL">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Utility\getInBol.TcPOU">
@@ -157,10 +184,142 @@ Automatic Substate handling.
     <Compile Include="POUs\Utility\getStrInstanceName.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Utility\Logger\BasLog\BasLog.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\BasLog\FB_BasLog.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\BasLog\FB_BasLogTest_Client.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\BasLog\FB_BasLogTest_Sender.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\BasLog\T_Bl_BaseStruc.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\BasLog\T_Bl_LibClient.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\BasLog\T_Bl_LibHandleRow.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\BasLog\T_Bl_LibSingleClient.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\DatLog\DatLog.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\DatLog\FB_DatLog.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\DatLog\FB_DatLogTest_Sender.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\DatLog\T_DatLogTest.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\DatLog\T_DL_Item.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\DatLog\T_DL_LibInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\DatLog\T_DL_Statemachine.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\DatLog\T_DL_SysInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\FB_FileLc.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\FB_FileLcTest.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\FB_FileLc_FileHdl.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\FB_FileLc_WorkOnFile.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\FileLc.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_FileHandler.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_ItemCfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_ItemData.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_ItemInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_LibInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_RecordData.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_Statemachine.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_SysCfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_SysDebugInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Logger\FileLc\T_FileLc_SysInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\FB_Queue.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\FB_QueueTest_Receiver.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\FB_QueueTest_Sender.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\Queue.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\T_Queue_Info.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\T_Queue_InfoInternal.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\T_Queue_LibInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\T_Queue_SysDebugInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\T_Queue_SysInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\Queue\T_Queue_TestData.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Utility\setAllCtrlAlarmFB.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Utility\ScaleINT.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\setAllCtrlBasLogFB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\initAllCtrl.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\callAllCtrlInit.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Utility\setOutBol.TcPOU">
@@ -175,6 +334,9 @@ Automatic Substate handling.
     <Compile Include="POUs\Utility\setOutUsint.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Utility\strstr.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Version\Global_Version.TcGVL">
       <SubType>Code</SubType>
     </Compile>
@@ -185,6 +347,12 @@ Automatic Substate handling.
     <Folder Include="POUs\BaseCtrl\" />
     <Folder Include="POUs\Utility" />
     <Folder Include="POUs\Utility\DLL %28Double Linked List%29" />
+    <Folder Include="POUs\Utility\FileFolder" />
+    <Folder Include="POUs\Utility\Logger" />
+    <Folder Include="POUs\Utility\Logger\BasLog\" />
+    <Folder Include="POUs\Utility\Logger\DatLog\" />
+    <Folder Include="POUs\Utility\Logger\FileLc\" />
+    <Folder Include="POUs\Utility\Queue" />
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
@@ -218,7 +386,35 @@ Automatic Substate handling.
       <Namespace>Tc3_Module</Namespace>
     </LibraryReference>
   </ItemGroup>
-  <ProjectExtensions />
+  <ProjectExtensions>
+    <PlcProjectOptions>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="OptionKey">
+      <v n="Name">"&lt;ProjectRoot&gt;"</v>
+      <d n="SubKeys" t="Hashtable" ckt="String" cvt="OptionKey">
+        <v>{40450F57-0AA3-4216-96F3-5444ECB29763}</v>
+        <o>
+          <v n="Name">"{40450F57-0AA3-4216-96F3-5444ECB29763}"</v>
+          <d n="SubKeys" t="Hashtable" />
+          <d n="Values" t="Hashtable" ckt="String" cvt="Int32">
+            <v>ActiveVisuExtensionsLength</v>
+            <v>0</v>
+          </d>
+        </o>
+      </d>
+      <d n="Values" t="Hashtable" />
+    </o>
+        </Data>
+        <TypeList>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="Int32">System.Int32</Type>
+          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </PlcProjectOptions>
+  </ProjectExtensions>
   <!-- 
    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

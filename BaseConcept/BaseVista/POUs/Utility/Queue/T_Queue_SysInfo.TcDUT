@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Queue_SysInfo" Id="{8cc6b787-841d-4637-8288-fd8c6cac628e}">
+    <Declaration><![CDATA[{attribute 'enable_dynamic_creation' := ''}
+TYPE T_Queue_SysInfo :
+STRUCT
+	strQueueName : STRING(Queue.cMAX_NAME_LENGTH); // queue name
+	uinNbrOfElement : UINT; // number of elements
+	udiSizeOfElement : UDINT; // Byte size of one elment
+	uinMode : UINT; // 0: FIFO ring buffer, no overwrite!!
+	// ident of FIFO new saved in fbBuffer udiIdent : UDINT;
+	udiSecure: UDINT; // alternating bit muster for plausibility check of handle
+	pQueueInfo: ARRAY[0..Queue.cMAX_NR_OF_TASKS] OF POINTER TO  T_Queue_Info; // structure/queue per tasclass
+	pstNextQueue_SysInfo : POINTER TO T_Queue_SysInfo; // pointer to next queue system - linked list 
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

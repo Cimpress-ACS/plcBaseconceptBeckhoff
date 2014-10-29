@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Queue_TestData" Id="{7b843fe1-d242-40a8-b5f5-014dda851cfd}">
+    <Declaration><![CDATA[TYPE T_Queue_TestData :
+STRUCT
+	strName : STRING(34); //name OF process variabel
+	usiDataTyp : USINT;
+	udiDataLen : UDINT;
+	udiDimension : UDINT;
+	udiAdress : UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

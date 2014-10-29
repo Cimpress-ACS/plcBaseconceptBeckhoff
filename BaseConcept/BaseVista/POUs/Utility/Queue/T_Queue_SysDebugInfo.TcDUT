@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Queue_SysDebugInfo" Id="{6e2e9da1-2bbb-44d2-98f2-6cc840a637fd}">
+    <Declaration><![CDATA[TYPE T_Queue_SysDebugInfo :
+STRUCT
+	uinGetHandleCalls : UINT;
+	uinIniCalls:UINT;
+	uinCheckAndAppendQSCalls:UINT;
+	uinAllocNewQSCalls: UINT;
+	uinAllocNewQICalls: UINT;
+	uinAllocnewQCalls:UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

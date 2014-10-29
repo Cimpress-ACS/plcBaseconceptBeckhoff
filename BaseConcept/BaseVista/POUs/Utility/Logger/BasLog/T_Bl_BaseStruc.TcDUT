@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Bl_BaseStruc" Id="{01c77a22-1478-42ff-aa0d-814418e1fcd5}">
+    <Declaration><![CDATA[TYPE T_Bl_BaseStruc :
+STRUCT
+	dtDateTimeEntry: DT; // actual date and time (Date and time.The most significat digit is one second. 32Bit 1970-01-01-00:00 to 2106-02-06-06:28:15)
+	uinMs : UINT; // actual millisecond
+	udiLogType: UDINT; // kind of log
+	intCtrlID: INT; // unique controllerID which element has created this entry
+	strText1: STRING(BasLog.cMAX_CHAR_TEXT1);	//informationtext1
+	strText2: STRING(BasLog.cMAX_CHAR_TEXT2); // informationtext2
+	dinPar1: DINT; // value parmeter 1
+	dinPar2: DINT; // value parmeter 2
+	dinPar3: DINT; // value parmeter 3
+	dinPar4: DINT; // value parmeter 4
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,655 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_Queue" Id="{9b900278-ee0e-4d33-800b-c33db67bb88d}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Queue
+VAR // buffer dynamic and PERSISTENT?????
+	// creted with new -> dynamic but not retain....arrBuffer: ARRAY[0..ConstBaseLog.MAX_BUFFER_SIZE] OF BYTE; (* Buffer memory used by FB_MemRingBuffer function block *)
+	stQueueLibInfo	: T_Queue_LibInfo;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Queue functionallity for mutli tasking system. The FUB must be called defined globally one time in PLC-program. After that the implemented 
+sender and receiver must interact over the public methodes.
+
+Public methodes:
+
+M_Clear: 
+	Functionality: - Clear all queue entries
+	Input parameter: - Queue handlings pointer In_pQueueHandle
+	Methode return:	- Status UINT
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.07.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)]]></ST>
+    </Implementation>
+    <Method Name="M_Clear" Id="{21001147-4926-4292-90bc-4afc736211fb}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Clear : UINT
+VAR_INPUT
+	In_pQueueHandle : POINTER TO BYTE; // handle from M_GetHandle()
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+	pInfo : POINTER TO T_Queue_Info;
+	usiCnt: USINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Clear specific queue system
+
+// check handle ok
+IF (In_pQueueHandle=TC3_MEMMAN.NULL) THEN
+	M_Clear := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+// handle is pointer to queue info system
+pInfo := In_pQueueHandle;
+
+// for reading needed access to system info (check all task class queues)
+IF (pInfo^.pQueueSysInfo=TC3_MEMMAN.NULL) THEN
+	M_Clear := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+// access system info struct
+pSysInfo := pInfo^.pQueueSysInfo;
+
+// validate pointer
+IF (pSysInfo^.udiSecure<>Queue.cSECURE_CODE) THEN
+	M_Clear := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+
+// check all queues for first entry
+// loop over all queues
+FOR usiCnt :=0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+	pInfo := pSysInfo^.pQueueInfo[usiCnt];
+	IF (pInfo<>TC3_MEMMAN.NULL) THEN
+		IF (pInfo^.fbBuffer.pBuffer<>TC3_MEMMAN.NULL) THEN
+			
+			MEMSET( ADR( pInfo^.fbBuffer.pBuffer), 0, pInfo^.fbBuffer.cbBuffer); (* reset (optional) internal buffer *)
+			pInfo^.fbBuffer.A_Reset( );
+			
+			IF (pInfo^.fbBuffer.bOk=TRUE) THEN
+				pInfo^.udiFillLevel := (pInfo^.fbBuffer.cbSize * 100) / pInfo^.fbBuffer.cbBuffer; // % 0 empty queue
+			ELSE
+				M_Clear := Queue.cERR_CLEAR;
+				RETURN;
+			END_IF
+		ELSE
+			M_Clear := Queue.cERR_QUEUE_DOES_NOT_EXIST;
+			RETURN;
+		END_IF
+	END_IF
+END_FOR
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{225fea33-605f-46e2-b4f7-886a3eaa7644}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Read : UINT
+VAR_INPUT
+	In_pQueueHandle : POINTER TO BYTE; // handle from M_GetHandle()
+	In_pData: POINTER TO BYTE; // destination address of the read element
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+	pInfo : POINTER TO T_Queue_Info;
+	usiCnt: USINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reset specific queue system
+
+// check handle ok
+IF (In_pQueueHandle=TC3_MEMMAN.NULL) THEN
+	M_Read := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+// handle is pointer to queue info system
+pInfo := In_pQueueHandle;
+
+// for reading needed access to system info (check all task class queues)
+IF (pInfo^.pQueueSysInfo=TC3_MEMMAN.NULL) THEN
+	M_Read := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+// access system info struct
+pSysInfo := pInfo^.pQueueSysInfo;
+
+// validate pointer
+IF (pSysInfo^.udiSecure<>Queue.cSECURE_CODE) THEN
+	M_Read := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+//check data read pointer
+IF (In_pData=TC3_MEMMAN.NULL) THEN
+	M_Read := Queue.cERR_DATA_INVALID;
+	RETURN;
+END_IF
+
+// check all queues for first entry
+// loop over all queues
+FOR usiCnt :=0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+	pInfo := pSysInfo^.pQueueInfo[usiCnt];
+	IF (pInfo<>TC3_MEMMAN.NULL) THEN
+		
+		IF (pInfo^.fbBuffer.pBuffer<>TC3_MEMMAN.NULL) THEN
+			
+			IF (pInfo^.fbBuffer.nCount>0) THEN // entry?
+				pInfo^.fbBuffer.A_RemoveHead(pRead:= In_pData, cbRead:= pSysInfo^.udiSizeOfElement);
+
+				pInfo^.udiFillLevel := (pInfo^.fbBuffer.cbSize * 100) / pInfo^.fbBuffer.cbBuffer;;
+				M_Read := 0;
+				RETURN;
+			END_IF
+		ELSE
+			M_Read := Queue.cERR_QUEUE_DOES_NOT_EXIST;
+			RETURN;
+		END_IF
+	END_IF
+END_FOR
+
+// queue empty
+M_Read := Queue.cERR_QUEUE_EMPTY;
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{5352794e-efea-48d6-9a75-187b3dfbd409}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Init : BOOL
+VAR_INPUT
+	In_strQueueName: STRING(Queue.cMAX_NAME_LENGTH); // name of the queue system
+	In_uinNrOfElement: UINT;		// number of queue element
+	In_udiSizeOfElement: UDINT;	// size of an element
+	In_uinMode:UINT;				// 0: no overwrite of buffer, 1: ring buffer overwrite oldest entry
+END_VAR
+VAR_OUTPUT
+	Out_pHandle: POINTER TO T_Queue_SysInfo; 			// handle for every task class sender/receiver
+	Out_uinStatus: UINT;			// error -> 0:ok
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+	pInfo : POINTER TO T_Queue_Info;
+	usiCnt: USINT;
+	pByte : POINTER TO BYTE;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Debug counter
+stQueueLibInfo.stSysDebugInfo.uinIniCalls := stQueueLibInfo.stSysDebugInfo.uinIniCalls + 1;
+
+IF (In_strQueueName='') THEN
+	Out_uinStatus := Queue.cERR_QUEUE_NAME;
+	RETURN;
+END_IF
+IF (LEN(In_strQueueName)=0) THEN
+	Out_uinStatus := Queue.cERR_QUEUE_NAME;
+	RETURN;
+END_IF
+IF (In_uinNrOfElement=0) THEN
+	Out_uinStatus := Queue.cERR_NR_OF_ELEMENTS;
+	RETURN;
+END_IF
+IF (In_udiSizeOfElement=0) THEN
+	Out_uinStatus := Queue.cERR_SIZE_OF_ELEMENTS;
+	RETURN;
+END_IF
+
+// check if queue system allready exist
+pSysInfo := M_CheckAndAppendQueueSysInfo(In_strQueueName,FALSE); // false means check and if not exist create new queeue system!!!
+
+IF (pSysInfo=TC3_MEMMAN.NULL) THEN // system exist
+	Out_uinStatus := Queue.cERR_MEM_ALLOC;
+	RETURN;
+END_IF
+
+// save buffer dimension
+pSysInfo^.uinNbrOfElement := In_uinNrOfElement;
+pSysInfo^.udiSizeOfElement := In_udiSizeOfElement;
+pSysInfo^.uinMode := In_uinMode;
+
+FOR usiCnt :=0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+	pInfo := pSysInfo^.pQueueInfo[usiCnt]; // Queue info allready allocated -> allocate missing queues for the queue info (init after get_handle)
+	IF (pInfo<>TC3_MEMMAN.NULL) THEN // Queue Info allready exist?
+		// queue allready allocated?
+		IF (pInfo^.fbBuffer.pBuffer=TC3_MEMMAN.NULL) AND (pInfo^.bolAllocMe=TRUE) THEN
+			// not allready allocated
+			// create FIFO System
+			pInfo^.fbBuffer.pBuffer := M_AllocNewQueue(UDINT_TO_UINT(In_uinNrOfElement*In_udiSizeOfElement));
+			IF (pInfo^.fbBuffer.pBuffer<>TC3_MEMMAN.NULL) THEN
+				//valid buffer allocated
+				pInfo^.fbBuffer.cbBuffer := UINT_TO_UDINT(In_uinNrOfElement)*In_udiSizeOfElement; // size created in byte
+				pInfo^.bolAllocMe := FALSE;	
+			END_IF
+		END_IF
+	END_IF
+END_FOR
+
+Out_uinStatus := 0;
+Out_pHandle := pSysInfo;
+RETURN;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_AllocNewQueueInfo" Id="{5c9140c5-e2f1-483d-a2a6-3ce3793b2f3d}">
+      <Declaration><![CDATA[METHOD PROTECTED M_AllocNewQueueInfo : POINTER TO T_Queue_Info
+VAR_INPUT
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Debug counter
+stQueueLibInfo.stSysDebugInfo.uinAllocNewQICalls := stQueueLibInfo.stSysDebugInfo.uinAllocNewQICalls + 1;
+
+M_AllocNewQueueInfo := __NEW(T_Queue_Info);
+
+// check if allocate memory is ok
+IF (M_AllocNewQueueInfo=TC3_MEMMAN.NULL) THEN
+	stQueueLibInfo.uinFUBInternalError := Queue.cERR_MEM_ALLOC;
+	M_AllocNewQueueInfo := TC3_MEMMAN.NULL;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CheckAndAppendQueueSysInfo" Id="{5f6dd4e8-fdca-4bb9-9381-0bbc263e5b21}">
+      <Declaration><![CDATA[METHOD PROTECTED M_CheckAndAppendQueueSysInfo : POINTER TO T_Queue_SysInfo
+VAR_INPUT
+	In_strQueue : STRING(Queue.cMAX_NAME_LENGTH);
+	In_bolCheckOnly : BOOL; // create not automaticallyy a new system -> feedback only valid if exist
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// methode check if queue system allready exist. If not allocate a new one and return pointer.
+// Debug counter
+stQueueLibInfo.stSysDebugInfo.uinCheckAndAppendQSCalls := stQueueLibInfo.stSysDebugInfo.uinCheckAndAppendQSCalls + 1;
+
+// exist no queue system?
+IF (stQueueLibInfo.pstQueue_SysInfo=TC3_MEMMAN.NULL) THEN
+	// no queue system exist -> return
+	IF (In_bolCheckOnly=TRUE) THEN
+		M_CheckAndAppendQueueSysInfo := TC3_MEMMAN.NULL;
+		RETURN;
+	END_IF
+	
+	// allocate new queue system
+	stQueueLibInfo.pstQueue_SysInfo := M_AllocNewQueueSystem();
+	IF (stQueueLibInfo.pstQueue_SysInfo<>TC3_MEMMAN.NULL) THEN
+		pSysInfo := stQueueLibInfo.pstQueue_SysInfo;
+		// entry queue name
+		pSysInfo^.strQueueName := In_strQueue;
+		// add secure element
+		pSysInfo^.udiSecure := Queue.cSECURE_CODE;
+	
+		M_CheckAndAppendQueueSysInfo := pSysInfo;
+		RETURN;
+	ELSE
+		M_CheckAndAppendQueueSysInfo := TC3_MEMMAN.NULL;
+		RETURN;
+	END_IF
+END_IF
+
+IF (stQueueLibInfo.pstQueue_SysInfo<>TC3_MEMMAN.NULL) THEN
+	// queue system allready exisit
+	pSysInfo := stQueueLibInfo.pstQueue_SysInfo;
+	
+	WHILE (pSysInfo<>TC3_MEMMAN.NULL) DO
+		// check queue name
+		IF (pSysInfo^.strQueueName = In_strQueue) THEN
+			// name found
+			M_CheckAndAppendQueueSysInfo := pSysInfo;
+			RETURN;
+		END_IF
+		
+		// is this the last element?
+		IF (pSysInfo^.pstNextQueue_SysInfo=TC3_MEMMAN.NULL) THEN
+			// no queue system exist -> return
+			IF (In_bolCheckOnly) THEN
+				M_CheckAndAppendQueueSysInfo := TC3_MEMMAN.NULL;
+				RETURN;
+			END_IF
+			
+			// allocate new queue system
+			pSysInfo^.pstNextQueue_SysInfo := M_AllocNewQueueSystem();
+			
+			IF (pSysInfo^.pstNextQueue_SysInfo<>TC3_MEMMAN.NULL) THEN
+				// reference to new allocated queue system
+				pSysInfo := pSysInfo^.pstNextQueue_SysInfo;
+				// entry queue name
+				pSysInfo^.strQueueName := In_strQueue;
+				// add secure element
+				pSysInfo^.udiSecure := Queue.cSECURE_CODE;
+			
+				M_CheckAndAppendQueueSysInfo := pSysInfo;
+				RETURN;
+			ELSE
+				M_CheckAndAppendQueueSysInfo := TC3_MEMMAN.NULL;
+				RETURN;
+			END_IF
+		END_IF
+		
+		// reference to next element
+		pSysInfo := pSysInfo^.pstNextQueue_SysInfo;
+	END_WHILE
+END_IF
+
+M_CheckAndAppendQueueSysInfo := TC3_MEMMAN.NULL;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_exit" Id="{76c5653c-d30d-4a68-9a0e-23a89f91973f}">
+      <Declaration><![CDATA[METHOD FB_exit : BOOL
+VAR_INPUT
+	bInCopyCode : BOOL; // if TRUE, the exit method is called for exiting an instance that is copied afterwards (online change).
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+	pSysInfoNext : POINTER TO T_Queue_SysInfo;
+	jj : USINT;
+	usiCnt : USINT;
+	pDelPointer : POINTER TO BYTE;
+	pDelQueueInfo : POINTER TO T_Queue_Info;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Write" Id="{87b8c68c-43c0-4323-8476-18d8126d0944}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Write : UINT
+VAR_INPUT
+	In_pQueueHandle : POINTER TO T_Queue_Info; // handle from M_GetHandle()
+	In_pData: POINTER TO BYTE;  // source address of the write element
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+	pInfo : POINTER TO T_Queue_Info;
+	pData : POINTER TO BYTE; // read dummy element for remove oldest...
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Write element to specific queue system
+
+// check handle ok
+IF (In_pQueueHandle=TC3_MEMMAN.NULL) THEN
+	M_Write := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+// handle is pointer to queue info system
+pInfo := In_pQueueHandle;
+
+// for reading needed access to system info (check all task class queues)
+IF (pInfo^.pQueueSysInfo=TC3_MEMMAN.NULL) THEN
+	M_Write := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+// access system info struct
+pSysInfo := pInfo^.pQueueSysInfo;
+
+// validate pointer
+IF (pSysInfo^.udiSecure<>Queue.cSECURE_CODE) THEN
+	M_Write := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+//check data
+IF (In_pData=TC3_MEMMAN.NULL) THEN
+	M_Write := Queue.cERR_DATA_INVALID;
+	RETURN;
+END_IF
+
+// check if queue exist
+IF (pInfo^.fbBuffer.pBuffer=TC3_MEMMAN.NULL) THEN
+	M_Write := Queue.cERR_QUEUE_DOES_NOT_EXIST;
+	RETURN;
+END_IF
+
+
+// check fill level
+// feedback of FIFO = false -> overflow .... IF (pInfo^.udiFillLevel<100) AND (pInfo^.fbBuffer.nCount<pSysInfo^.uinNbrOfElement)THEN
+pInfo^.fbBuffer.A_AddTail( pWrite:= In_pData,
+				cbWrite:= pSysInfo^.udiSizeOfElement); 
+(*				pBuffer:= ADR( arrBuffer ),
+				cbBuffer:= SIZEOF( arrBuffer ),
+				bOk=> Out_bolOk,
+				nCount => Out_udiCount*)
+IF (pInfo^.fbBuffer.bOk=FALSE) THEN (* overflow ? *)
+	IF (pSysInfo^.uinMode=0) THEN //0:FIFO ring buffer overwrite
+		IF (pData = TC3_MEMMAN.NULL) THEN // alloc new dummy read element
+			pData := __NEW(BYTE,pSysInfo^.udiSizeOfElement);
+		END_IF
+		IF (pData <> TC3_MEMMAN.NULL) THEN // alloc new dummy read element
+			pInfo^.fbBuffer.A_RemoveHead(pRead:= pData, cbRead:= pSysInfo^.udiSizeOfElement); (* remove one oldest entry *)
+			__DELETE(pData); // release dummy memory
+			
+			pInfo^.fbBuffer.A_AddTail();
+			pInfo^.udiFillLevel := (pInfo^.fbBuffer.cbSize * 100) / pInfo^.fbBuffer.cbBuffer;
+			M_Write :=0; //Done
+		ELSE
+			M_Write := Queue.cERR_QUEUE_FULL;
+		END_IF
+		RETURN;
+	ELSE
+		pInfo^.udiFillLevel := (pInfo^.fbBuffer.cbSize * 100) / pInfo^.fbBuffer.cbBuffer;
+		M_Write := Queue.cERR_QUEUE_FULL;
+		RETURN;
+	END_IF
+ELSE
+	pInfo^.udiFillLevel := (pInfo^.fbBuffer.cbSize * 100) / pInfo^.fbBuffer.cbBuffer;
+	M_Write :=0; //Done
+	RETURN;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_AllocNewQueueSystem" Id="{a395ffe9-edb4-422f-8e3a-e5c60dde2122}">
+      <Declaration><![CDATA[METHOD PROTECTED M_AllocNewQueueSystem : POINTER TO T_Queue_SysInfo
+VAR_INPUT
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Debug counter
+stQueueLibInfo.stSysDebugInfo.uinAllocNewQSCalls := stQueueLibInfo.stSysDebugInfo.uinAllocNewQSCalls + 1;
+
+M_AllocNewQueueSystem := __NEW(T_Queue_SysInfo);
+
+// check if allocate memory is ok
+IF (M_AllocNewQueueSystem=TC3_MEMMAN.NULL) THEN
+	stQueueLibInfo.uinFUBInternalError := Queue.cERR_MEM_ALLOC;
+	M_AllocNewQueueSystem := TC3_MEMMAN.NULL;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ReadReference" Id="{a857d82a-fa53-4b9e-ab5e-78a6d6f38ff7}">
+      <Declaration><![CDATA[METHOD PUBLIC M_ReadReference : UINT
+VAR_INPUT
+	In_pQueueHandle : POINTER TO BYTE; // handle from M_GetHandle()
+END_VAR
+VAR_OUTPUT
+	Out_pData: POINTER TO BYTE; // read reference
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+	pInfo : POINTER TO T_Queue_Info;
+	usiCnt: USINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// get reference to element from queue 
+
+// check handle ok
+IF (In_pQueueHandle=TC3_MEMMAN.NULL) THEN
+	M_ReadReference := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+// handle is pointer to queue info system
+pInfo := In_pQueueHandle;
+
+// for reading needed access to system info (check all task class queues)
+IF (pInfo^.pQueueSysInfo=TC3_MEMMAN.NULL) THEN
+	M_ReadReference := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+// access system info struct
+pSysInfo := pInfo^.pQueueSysInfo;
+
+// validate pointer
+IF (pSysInfo^.udiSecure<>Queue.cSECURE_CODE) THEN
+	M_ReadReference := Queue.cERR_HANDLE_INVALID;
+	RETURN;
+END_IF
+
+// check all queues for first entry
+// loop over all queues
+FOR usiCnt :=0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+	pInfo := pSysInfo^.pQueueInfo[usiCnt];
+	IF (pInfo<>TC3_MEMMAN.NULL) THEN
+		IF (pInfo^.fbBuffer.pBuffer<>TC3_MEMMAN.NULL) THEN
+			
+			IF (pInfo^.fbBuffer.nCount>0) THEN // entry?
+				pInfo^.fbBuffer.A_GetHead( 	pRead:= Out_pData, cbRead:= pSysInfo^.udiSizeOfElement);
+				M_ReadReference := 0;
+				RETURN;
+			END_IF
+		ELSE
+			M_ReadReference := Queue.cERR_QUEUE_DOES_NOT_EXIST;
+			RETURN;
+		END_IF
+	END_IF
+END_FOR
+
+// queue empty
+M_ReadReference := Queue.cERR_QUEUE_EMPTY;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_AllocNewQueue" Id="{bed87220-610d-4085-8e7f-7718ee6d0b3a}">
+      <Declaration><![CDATA[METHOD PROTECTED M_AllocNewQueue : POINTER TO BYTE
+
+VAR_INPUT
+	In_udiSizeOfQueue : UDINT; // Byte size of quee to allocate
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Debug counter
+stQueueLibInfo.stSysDebugInfo.uinAllocnewQCalls := stQueueLibInfo.stSysDebugInfo.uinAllocnewQCalls + 1;
+M_AllocNewQueue := __NEW(BYTE,In_udiSizeOfQueue);
+
+// check if allocate memory is ok
+IF (M_AllocNewQueue=TC3_MEMMAN.NULL) THEN
+	stQueueLibInfo.uinFUBInternalError := Queue.cERR_MEM_ALLOC;
+	M_AllocNewQueue := TC3_MEMMAN.NULL;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_GetHandle" Id="{e6b34911-1e82-4dca-a712-72e4827e5fcd}">
+      <Declaration><![CDATA[METHOD PUBLIC M_GetHandle : UINT
+VAR_INPUT
+	In_strQueueName: STRING(Queue.cMAX_NAME_LENGTH); // name of the queue system
+END_VAR
+VAR_OUTPUT
+	Out_pQueueHandle : POINTER TO T_Queue_Info;
+END_VAR
+VAR
+	fbGETCURTASKINDEX : GETCURTASKINDEX;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// get handle of a specific queue identification over name and task index
+fbGETCURTASKINDEX(); // This function block finds the task index of the task which is called from.
+
+// get handle based on task index
+M_GetHandle := M_GetHandle_TC(In_strQueueName,fbGETCURTASKINDEX.index,Out_pQueueHandle=>Out_pQueueHandle);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_GetHandle_TC" Id="{eae4bc1c-41de-4119-809c-db8abb6c8bb0}">
+      <Declaration><![CDATA[METHOD PUBLIC M_GetHandle_TC : UINT
+VAR_INPUT
+	In_strQueueName: STRING(Queue.cMAX_NAME_LENGTH); // name of the queue system
+	In_bytTaskIndex: BYTE; // calling task index
+END_VAR
+VAR_Output
+	Out_pQueueHandle : POINTER TO T_Queue_Info;
+END_VAR
+VAR
+	pSysInfo : POINTER TO T_Queue_SysInfo;
+	pInfo : POINTER TO T_Queue_Info;
+	udiSizeOfQueue: UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// get handle of a specific queue identification over name and task index
+
+// Debug counter
+stQueueLibInfo.stSysDebugInfo.uinGetHandleCalls := stQueueLibInfo.stSysDebugInfo.uinGetHandleCalls + 1;
+
+IF (In_strQueueName='') THEN
+	M_GetHandle_TC := Queue.cERR_QUEUE_NAME;
+	RETURN;
+END_IF
+IF (LEN(In_strQueueName)=0) THEN
+	M_GetHandle_TC := Queue.cERR_QUEUE_NAME;
+	RETURN;
+END_IF
+
+// check if queue system allready exist
+pSysInfo := M_CheckAndAppendQueueSysInfo(In_strQueueName,FALSE); // false means check if queue system exist!!!
+
+IF (pSysInfo=TC3_MEMMAN.NULL) THEN // system exist?
+	M_GetHandle_TC := Queue.cERR_MEM_ALLOC;
+	RETURN;
+END_IF
+
+// Queue exist and ready?
+IF (pSysInfo^.pQueueInfo[In_bytTaskIndex-1]<>TC3_MEMMAN.NULL) THEN
+	Out_pQueueHandle := pSysInfo^.pQueueInfo[In_bytTaskIndex-1];
+	M_GetHandle_TC := 0;
+ELSE
+	pSysInfo^.pQueueInfo[In_bytTaskIndex-1] := M_AllocNewQueueInfo();
+	
+	IF (pSysInfo^.pQueueInfo[In_bytTaskIndex-1] <> TC3_MEMMAN.NULL) THEN
+		pInfo := pSysInfo^.pQueueInfo[In_bytTaskIndex-1];
+		pInfo^.pQueueSysInfo := pSysInfo; // save system info as reference in queue (parent)
+		Out_pQueueHandle := pSysInfo^.pQueueInfo[In_bytTaskIndex-1];	//set pointer feedback
+		
+		// check if init/size definition allready done
+		udiSizeOfQueue := UINT_TO_UDINT(pSysInfo^.uinNbrOfElement)*pSysInfo^.udiSizeOfElement;
+		IF (udiSizeOfQueue<>0) THEN
+			// Create queue and put reference to info structure
+			pInfo^.fbBuffer.pBuffer := M_AllocNewQueue(udiSizeOfQueue);
+			IF (pInfo^.fbBuffer.pBuffer<>TC3_MEMMAN.NULL) THEN
+				//valid buffer allocated
+				pInfo^.fbBuffer.cbBuffer := udiSizeOfQueue; // size created in byte
+			ELSE
+				M_GetHandle_TC := Queue.cERR_MEM_ALLOC;
+				RETURN;
+			END_IF
+		ELSE
+			pInfo^.bolAllocMe := TRUE; // get handle called before valid init done!
+		END_IF
+	ELSE
+		M_GetHandle_TC := Queue.cERR_MEM_ALLOC;
+		RETURN;
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

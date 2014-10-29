@@ -1,0 +1,325 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_BasLog" Id="{26ae351d-fba6-4b8f-8c99-f2e36ace5608}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_BasLog
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	stBlClientInfo : T_Bl_LibClient;
+	stBlBaseStruct : T_Bl_BaseStruc;
+	fbQueue : FB_Queue;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Base logger system. The FUB must be called defined globally one time in PLC-program. After that the implemented 
+sender and receiver must interact over the public methodes of the FB_BasLog.
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.07.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)]]></ST>
+    </Implementation>
+    <Method Name="M_GetHandle" Id="{2db99745-0adf-4662-a1ba-c5ab0abc665c}">
+      <Declaration><![CDATA[METHOD PUBLIC M_GetHandle : UINT
+VAR_INPUT
+;
+END_VAR
+VAR_OUTPUT
+	Out_pHandle : POINTER TO T_Bl_LibHandleRow; // handle of log system for write (M_Log)
+END_VAR
+VAR
+	fbGETCURTASKINDEX : GETCURTASKINDEX;
+	usiCnt: USINT;
+	pQueueHandle : POINTER TO BYTE;
+	uinStatus : UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// get handle of log system
+fbGETCURTASKINDEX(); // This function block finds the task index of the task which is called from.
+IF (stBlClientInfo.usiClientNr=0) THEN
+	// set information that for this taskclass information are requested
+	stBlClientInfo.stHandleRow[fbGETCURTASKINDEX.index].usiRequest := 1;
+	Out_pHandle := ADR(stBlClientInfo.stHandleRow[fbGETCURTASKINDEX.index]);
+ELSE
+	// get handle for all declared clients
+	FOR usiCnt :=0 TO (stBlClientInfo.usiClientNr-1) BY 1 DO
+		M_GetHandle := fbQueue.M_GetHandle(In_strQueueName:=stBlClientInfo.stClient[usiCnt].strName,Out_pQueueHandle=>pQueueHandle);
+		
+		IF (M_GetHandle=0) AND (pQueueHandle<>TC3_MEMMAN.NULL) THEN
+			stBlClientInfo.stHandleRow[fbGETCURTASKINDEX.index].usiRequest := 1;
+			stBlClientInfo.stHandleRow[fbGETCURTASKINDEX.index].pQueueHandle[usiCnt] := pQueueHandle;
+			
+			// handle write in TC 0 writer for reading function
+			stBlClientInfo.stHandleRow[0].pQueueHandle[usiCnt] := pQueueHandle;
+		ELSE
+			RETURN;
+		END_IF
+	END_FOR
+	Out_pHandle := ADR(stBlClientInfo.stHandleRow[fbGETCURTASKINDEX.index]);
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ChangeMask" Id="{3a88b466-b6e5-4902-8f3b-83a568c942fd}">
+      <Declaration><![CDATA[METHOD PUBLIC M_ChangeMask : UINT
+VAR_INPUT
+	In_strClientName: STRING(Queue.cMAX_NAME_LENGTH); // name of the client
+	In_udiNewMask: UDINT;		// new filter mask which log type should be logged for this client
+END_VAR
+VAR
+	usiCnt:USINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// change of filter mask
+IF (stBlClientInfo.usiClientNr>0) THEN
+	FOR usiCnt :=0 TO (stBlClientInfo.usiClientNr-1) BY 1 DO
+		IF (In_strClientName=stBlClientInfo.stClient[usiCnt].strName) THEN
+			stBlClientInfo.stClient[usiCnt].udiMask := In_udiNewMask;
+			M_ChangeMask := 0;
+			RETURN;
+		END_IF
+	END_FOR
+END_IF
+M_ChangeMask := BasLog.cERR_SYSTEM_NOT_FOUND;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_ClientInit" Id="{5b356c31-d6e9-499e-b4a4-e3009f210b0e}">
+      <Declaration><![CDATA[METHOD PUBLIC M_ClientInit : BOOL
+VAR_INPUT
+	In_strClientName: STRING(Queue.cMAX_NAME_LENGTH); // name of the client
+	In_udiMask: UDINT;		// filter mask which log typ should be logged for this client
+	In_uinNrOfElement: UINT;	// number of elements in queue
+	In_p_fbTimeStamp: POINTER TO FB_TimeStamp; 
+	In_bolUseLocalTimeStamp : BOOL; // use local time stamp or UTC
+END_VAR
+VAR_OUTPUT
+	Out_pHandle: POINTER TO T_Queue_Info; 	// handle for read
+	Out_uinStatus: UINT;	// feedback value 0:ok
+END_VAR
+VAR
+	usiCnt: USINT;
+	pQueueHandle : POINTER TO T_Queue_Info;
+	pQueueSysHandle : POINTER TO T_Queue_SysInfo;
+	uinStatus : UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// client declaration
+IF (stBlClientInfo.usiClientNr>0) THEN
+	FOR usiCnt :=0 TO (stBlClientInfo.usiClientNr-1) BY 1 DO
+		IF (In_strClientName=stBlClientInfo.stClient[usiCnt].strName) THEN
+			// name allready exist - return handle
+			Out_pHandle :=  ADR(stBlClientInfo.stHandleRow[0].pQueueHandle[usiCnt]);
+			Out_uinStatus := 0;
+			RETURN;
+		END_IF
+	END_FOR
+END_IF
+
+// entry timestamp FB
+IF (In_p_fbTimeStamp=TC3_MEMMAN.NULL) THEN
+	IF (stBlClientInfo.p_fbTimeStamp=TC3_MEMMAN.NULL) THEN
+		Out_uinStatus := BasLog.cERR_NO_FB_TIME_STAMP_POINTER;
+		RETURN;
+	END_IF
+ELSE
+	stBlClientInfo.p_fbTimeStamp := In_p_fbTimeStamp;
+END_IF
+
+	
+IF (stBlClientInfo.usiClientNr<BasLog.cMAX_CLIENTS) THEN
+	// entry info of new client
+	stBlClientInfo.stClient[stBlClientInfo.usiClientNr].strName := In_strClientName;
+	stBlClientInfo.stClient[stBlClientInfo.usiClientNr].udiMask := In_udiMask;
+	stBlClientInfo.stClient[stBlClientInfo.usiClientNr].udiNrOfElements := In_uinNrOfElement;
+	stBlClientInfo.stClient[stBlClientInfo.usiClientNr].bolUseLocalTimeStamp := In_bolUseLocalTimeStamp;
+		
+	// init queue system if place for new client 
+	fbQueue.M_Init(In_strQueueName:=In_strClientName,In_uinNrOfElement:=In_uinNrOfElement,In_udiSizeOfElement:=SIZEOF(T_Bl_BaseStruc),
+					In_uinMode:=0,Out_pHandle=>pQueueSysHandle,Out_uinStatus=>uinStatus);
+					
+	// check feedback from init
+	IF (uinStatus<>0) THEN
+		Out_uinStatus := uinStatus; // error init queue system
+	ELSE
+		
+		// return handle of TC field zero
+		Out_pHandle := ADR(stBlClientInfo.stHandleRow[0].pQueueHandle[stBlClientInfo.usiClientNr]);
+		
+		// increment client count
+		stBlClientInfo.usiClientNr := stBlClientInfo.usiClientNr + 1;
+		
+		// requirement for handles, if not allready done by tasks
+		FOR usiCnt :=0 TO Queue.cMAX_NR_OF_TASKS BY 1 DO
+			// if requests allready exist 
+			IF (stBlClientInfo.stHandleRow[usiCnt].usiRequest<>0) THEN
+				// check for handle
+				uinStatus := fbQueue.M_GetHandle_TC(In_strQueueName:=In_strClientName,In_bytTaskIndex:=usiCnt, Out_pQueueHandle=>pQueueHandle);
+				
+				// check feedback from M_GetHandle_TC
+				IF (uinStatus=0) AND (pQueueHandle<>TC3_MEMMAN.NULL) THEN
+					// if no error entry handle
+					stBlClientInfo.stHandleRow[usiCnt].pQueueHandle[stBlClientInfo.usiClientNr-1] := pQueueHandle;
+					stBlClientInfo.stHandleRow[0].pQueueHandle[stBlClientInfo.usiClientNr-1] := pQueueHandle;
+				ELSE
+					Out_uinStatus := uinStatus; // error M_GetHandle_TC
+				END_IF
+ 			END_IF
+		END_FOR
+	END_IF
+					
+ELSE
+	Out_uinStatus := BasLog.cERR_TOO_MANY_CLIENTS;
+	RETURN;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_CheckValidLogType" Id="{85b797b6-8ad8-4a76-974b-55ba27222191}">
+      <Declaration><![CDATA[METHOD PROTECTED M_CheckValidLogType : BOOL
+VAR_INPUT
+	In_udiLogType : UDINT;
+END_VAR
+VAR
+	ii : UINT;
+	udiValue : UDINT := 1;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// check all 2er square
+FOR ii :=1 TO 32 BY 1 DO
+	// if result identic 
+	IF (udiValue=In_udiLogType) THEN
+		M_CheckValidLogType := TRUE;
+		RETURN;
+	END_IF
+	udiValue := udiValue * 2; // if not ok multiply with 2
+END_FOR
+M_CheckValidLogType := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Read" Id="{d5de0ddf-225b-4564-a536-c8265ef66429}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Read : UINT
+VAR_INPUT
+	In_pHandle : POINTER TO POINTER TO BYTE; // handle for read
+	In_pData: POINTER TO T_Bl_BaseStruc; // Pointer for feedback element
+END_VAR
+VAR
+	pReadHandle : POINTER TO POINTER TO T_Queue_Info;
+	usiCnt:USINT;
+	uinStatus:UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// check handle ok
+IF (In_pHandle=TC3_MEMMAN.NULL) THEN
+	M_Read := BasLog.cERR_NO_HANDLE;
+	RETURN;
+END_IF
+
+IF (In_pHandle^=TC3_MEMMAN.NULL) THEN
+	M_Read := BasLog.cERR_NO_WRITE_TASK;
+	RETURN;
+ELSE
+	pReadHandle := In_pHandle;
+	
+	// readout
+	M_Read := fbQueue.M_Read(In_pQueueHandle:= pReadHandle^,In_pData:=In_pData); // return<> -> error
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Log" Id="{de046605-81ba-4630-afa1-233401b78d24}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Log : UINT
+VAR_INPUT
+	In_pHandle : POINTER TO BYTE;
+	In_udiLogType: UDINT; // log type
+	In_intCtrlID: INT; // unique controllerID which has created this entry
+	In_strText1: STRING(BasLog.cMAX_CHAR_TEXT1);	//information text1
+	In_strText2: STRING(BasLog.cMAX_CHAR_TEXT2); // information text2
+	In_dinPar1: DINT; // value parameter  1
+	In_dinPar2: DINT; // value parameter  2
+	In_dinPar3: DINT; // value parameter  3
+	In_dinPar4: DINT; // value parameter  4
+END_VAR
+VAR
+	stTimeStruct: TIMESTRUCT;
+	pHandleRow: POINTER TO T_Bl_LibHandleRow;
+	usiCnt:USINT;
+	uinStatus:UINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// check handle ok
+IF (In_pHandle=TC3_MEMMAN.NULL) THEN
+	M_Log := BasLog.cERR_NO_HANDLE;
+	RETURN;
+END_IF
+
+// check for correct logtyp
+IF ((In_udiLogType>0) AND (M_CheckValidLogType(In_udiLogType)=TRUE))THEN
+	// interprete input as row with handles
+	pHandleRow := In_pHandle;
+	// if time stamp fb is valid
+	IF (stBlClientInfo.p_fbTimeStamp<>TC3_MEMMAN.NULL) THEN
+		IF (stBlClientInfo.p_fbTimeStamp^.Out_bolInitOk=TRUE) THEN
+			IF (stBlClientInfo.stClient[usiCnt].bolUseLocalTimeStamp=FALSE) THEN
+				// write time in struct
+				stTimeStruct :=  stBlClientInfo.p_fbTimeStamp^.UTC_TimeStruct;
+			ELSE
+				// write time in struct
+				stTimeStruct := stBlClientInfo.p_fbTimeStamp^.LocalTime_TimeStruct_BaseWin;
+			END_IF
+		ELSE
+			M_Log := BasLog.cERR_NO_FB_TIME_STAMP_INIT_NOT_OK;
+			RETURN;
+		END_IF
+	ELSE
+		M_Log := BasLog.cERR_NO_FB_TIME_STAMP_POINTER;
+		RETURN;
+	END_IF
+	
+	// write parameter and time in struct
+	stBlBaseStruct.uinMs := stTimeStruct.wMilliseconds;
+	stTimeStruct.wMilliseconds := 0; // The system time has a resolution of 1ms, while the resolution of DATE_AND_TIME is 1s. The milliseconds from the system time are used in the course of the conversion to determine the direction of rounding for the returned DATE_AND_TIME value. Set the wMilliseconds member of the Windows system time structure to zero to deactivate the rounding.
+	stBlBaseStruct.dtDateTimeEntry := SYSTEMTIME_TO_DT(stTimeStruct);
+	
+	stBlBaseStruct.udiLogType := In_udiLogType;
+	stBlBaseStruct.intCtrlID := In_intCtrlID;
+	stBlBaseStruct.strText1 := In_strText1;
+	stBlBaseStruct.strText2 := In_strText2;
+	stBlBaseStruct.dinPar1 := In_dinPar1;
+	stBlBaseStruct.dinPar2 := In_dinPar2;
+	stBlBaseStruct.dinPar3 := In_dinPar3;
+	stBlBaseStruct.dinPar4 := In_dinPar4;
+	
+	// send write command depending on filter mask
+	IF (stBlClientInfo.usiClientNr>0) THEN
+		FOR usiCnt :=0 TO (stBlClientInfo.usiClientNr-1) BY 1 DO
+			// check filter mask
+			IF ((In_udiLogType AND stBlClientInfo.stClient[usiCnt].udiMask)<>0) THEN
+				uinStatus := fbQueue.M_Write(In_pQueueHandle:=pHandleRow^.pQueueHandle[usiCnt],In_pData:=ADR(stBlBaseStruct));
+				IF (uinStatus<>0) THEN
+					M_Log := uinStatus;
+				END_IF
+			END_IF
+		END_FOR
+	END_IF
+ELSE
+	M_Log := BasLog.cERR_INVALID_LOGTYPE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

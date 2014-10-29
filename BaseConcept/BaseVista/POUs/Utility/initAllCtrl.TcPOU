@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="initAllCtrl" Id="{7ea86c8b-b986-49cb-8fe3-aa950ed3c848}">
+    <Declaration><![CDATA[FUNCTION initAllCtrl : BOOL
+VAR_INPUT
+	pCtrlInst			: POINTER TO POINTER TO FB_CtrlBase;
+	pBasLogFB			: POINTER TO FB_BasLog;
+	pAlarmCtrl			: POINTER TO FB_Alm_Man;
+	uinCtrlInstLength	: UINT;
+END_VAR
+VAR
+	uinIdx	: UINT;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR uinIdx := 0 TO uinCtrlInstLength DO
+	IF pCtrlInst[uinIdx] <> 0 THEN
+		IF (pAlarmCtrl<>0) THEN
+			pCtrlInst[uinIdx]^.AlarmCtrl := pAlarmCtrl; // add alarm manager interface/pointer
+		END_IF
+		IF (pBasLogFB<>0) THEN
+			pCtrlInst[uinIdx]^.BaseLog := pBasLogFB; // add base logger interface/pointer
+		END_IF
+		pCtrlInst[uinIdx]^.CtrlInit(); // init ctrl and add childs
+	END_IF
+END_FOR
+]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

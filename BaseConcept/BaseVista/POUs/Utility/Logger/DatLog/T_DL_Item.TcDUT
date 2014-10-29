@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_DL_Item" Id="{0f403726-74f6-485c-b444-9dc4b5118757}">
+    <Declaration><![CDATA[TYPE T_DL_Item :
+STRUCT
+	strPvName : T_MaxString; // name of declared client
+	udiItemType : UDINT; // datatyp defined in logsystem
+	uinItemOffset : UINT; // data offset in record struct
+	SymInfo : SYMINFOSTRUCT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

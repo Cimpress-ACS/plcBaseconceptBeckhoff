@@ -1,0 +1,247 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_TimeStamp" Id="{9c1ebd8b-cb6e-4368-9029-bf780bfd5120}">
+    <Declaration><![CDATA[FUNCTION_BLOCK PUBLIC FB_TimeStamp
+VAR_INPUT
+		In_t_CycleTimeRefreshTimeZone : TIME;
+		In_strNetId : T_AmsNetID;
+END_VAR
+VAR_OUTPUT
+	Out_bolInitOk : BOOL; // init ok  (i.e. it was synchronised with the local Windows time at least once).
+END_VAR
+VAR
+	tzID    : E_TimeZoneID; // Additional daylight-saving/standard time information (not always existent)
+    tzInfo  : ST_TimeZoneInformation; //In case of success this structure variable supplies the current time zone information of the operating system.
+	fbTONRefreshTimeZone : TON;
+	bolSuccessfullyDone : BOOL;
+	bolStartGetTimeZone : BOOL;
+	udiError : UDINT;
+	fbGetTimeZoneInformation: FB_GetTimeZoneInformation;
+	fbToLocal : FB_FileTimeToTzSpecificLocalTime;
+	fbLocalTime : FB_LocalSystemTime := ( bEnable := TRUE, dwCycle := 1 ,dwOpt := 1);
+	fbLocalTime_RTC : RTC_EX2;
+    //dwOpt: Bit 0: If this is set, the Windows system time is additionally synchronised cyclically with the hardware clock (RTC) (corresponds to the function NT_SetTimeToRTCTime). Default: Activated.
+    //This option is irrelevant for a Windows CE system.
+
+	bolStartUp : BOOL := TRUE;
+	bolInitTimeZoneOk  : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Idea of this FUB is a central solution to get time stamps on PLC synchronized with windows time. 
+
+Automatic synchronisation of the RTC time using the function block "NT_SetTimeToRTCTime" 
+an be used to synchronise the local Windows system time (displayed in the task bar) with the real-time clock of the PC (RTC time in the BIOS). 
+At System startup this system synchronisation will be done.
+
+Properties only read:
+Cyclic FB call is needed for automatic time zone synchronisation, local time calculation, changes, adjustments  on windows time not detected!
+-> LocalTime_FileTime_BaseUTC : Before get call UTC_Refresh! data typ FileTime in local time calculated based on time zone and on UTC FileTime 
+-> LocalTime_TimeStruct_BaseUTC : Before get call UTC_Refresh! data typ TimeStruct in local time calculated based on time zone and on UTC FileTime 
+
+Not use for exact measurements because of automatic asynchron windows synchronisation(the local Windows system time is displayed in the task bar)!
+Cyclic FB call is needed for automatic windows synchronisation of win time!
+-> LocalTime_FileTime_BaseWin : automatic refresh on get, data typ FileTime in windows time shown in taskbar. 
+-> LocalTime_TimeStruct_BaseWin : automatic refresh on get, data typ TimeStruct in windows time shown in taskbar
+
+-> UTC_FileTime : automatic refresh on get, data typ FileTime in UTC 
+-> UTC_TimeStruct :  automatic refresh on get, data typ TimeStruct in UTC 
+
+Methods:
+-> TimeZone_Refresh : Refreh time zone information -> for  explicit time calculation  UTC<->Win
+
+FB Cyclic: 
+	- automatic FB_LocalSystemTime asynchron windows time synchronisation for LocalTime_FileTime_BaseWin/LocalTime_TimeStruct_BaseWin needed
+	- automatic cyclic TimeZone_Refresh based on In_t_CycleTimeRefreshTimeZone parameter if =0 -> disabled
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		10.10.2014		AVME/KVO	Start history
+
+___________________________________________________________________________________________________*)
+
+// refresh time Zone
+IF ((In_t_CycleTimeRefreshTimeZone<>T#0S)OR (bolStartUp=TRUE)) THEN
+	// cylic call of FUB will automatic cyclic refresh the Time Zone informations
+	IF (fbTONRefreshTimeZone.IN = FALSE) THEN
+		fbTONRefreshTimeZone();
+		fbTONRefreshTimeZone.IN := TRUE;
+		fbTONRefreshTimeZone.PT := In_t_CycleTimeRefreshTimeZone;
+		bolSuccessfullyDone := FALSE;
+		udiError := 0; // reset last alarm
+	END_IF
+	
+	fbTONRefreshTimeZone();
+	
+	// Zeit abgelaufen
+	IF (fbTONRefreshTimeZone.Q) OR (bolStartUp=TRUE) THEN
+		IF ((bolSuccessfullyDone=FALSE) AND (udiError=0)) THEN
+			udiError := TimeZone_Refresh(In_strNetId :=In_strNetId,Out_bolSuccessfullyDone=> bolSuccessfullyDone);
+		ELSE
+			bolStartUp := FALSE; // FirstCycle DirectionParameterOverflow call -> refresh!!
+			bolInitTimeZoneOk := TRUE;
+			fbTONRefreshTimeZone.IN := FALSE; // start next cycle
+		END_IF
+	END_IF
+END_IF
+
+//The FB_LocalSystemTime function block must be called cyclically (e.g. every second or during each PLC cycle). 
+//This is necessary to enable the time between synchronisations to be calculated.
+(*The local Windows system time is read with the aid of acyclic services (ADS function blocks). 
+Due to the system characteristics the runtime of the ADS commands cannot be specified/estimated. 
+Differences in command runtimes may lead to time jitter at the systemTime output, depending on the operating system, 
+the synchronisation interval and the PLC cycle time. For this reason the time supplied by the 
+block is only suitable to a limited extent for measuring tasks requiring higher precision, 
+although it tends to be adequate for building automation applications, for example.*)
+
+(*This function block internally combines the functions of the following function blocks: RTC_EX2, NT_GetTime, FB_GetTimeZoneInformation and NT_SetTimeToRTCTime. 
+The RTC_EX2 block can be used for generating time stamps for log outputs, for example. 
+However, this block has the disadvantage that its time is not synchronised with the local Windows system time and has to be resynchronised 
+cyclically via the NT_GetTime function block (see RTC block examples in the documentation). Cyclic synchronisation of the internal time (systemTime output) 
+is already implemented in the function block. 
+The cycle time can be configured via the dwCycle input. The function block also provides time zone information (daylight-saving/standard time).*)
+fbLocalTime.sNetID := In_strNetId;
+fbLocalTime(); // for local time it seems to be ok for logging (not measuring), for exact measuring it's simpler to just use the utc time!!!!
+
+// synchronize RTC for fast access
+IF (fbLocalTime.bValid = TRUE) THEN
+	fbLocalTime_RTC.EN := FALSE;
+	fbLocalTime_RTC();
+	fbLocalTime_RTC.EN := TRUE;
+	fbLocalTime_RTC.PDT := fbLocalTime.systemTime;
+	fbLocalTime_RTC.PMICRO := 0;
+	fbLocalTime_RTC();
+END_IF
+
+Out_bolInitOk := ((fbLocalTime.bValid=TRUE) AND (bolInitTimeZoneOk=TRUE) AND (fbLocalTime_RTC.Q=TRUE));]]></ST>
+    </Implementation>
+    <Property Name="LocalTime_TimeStruct_BaseWin" Id="{0cdf4cec-83c5-495c-814e-e1f636e60ed8}">
+      <Declaration><![CDATA[PROPERTY PUBLIC LocalTime_TimeStruct_BaseWin : TIMESTRUCT]]></Declaration>
+      <Get Name="Get" Id="{0004ace4-fd79-4eba-b019-94fe85ec5197}">
+        <Declaration><![CDATA[VAR
+
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[// for local time it seems to be ok for logging (not measuring), for exact measuring it's simpler to just use the utc time!!!!
+//fbLocalTime(); make some trouble if called in fast tk -> use seperate RTC!!!!
+fbLocalTime_RTC();
+LocalTime_TimeStruct_BaseWin := fbLocalTime_RTC.CDT; //fbLocalTime.systemTime;
+
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="UTC_FileTime" Id="{1d43b03f-9993-428b-a03e-436077680fba}">
+      <Declaration><![CDATA[PROPERTY PUBLIC UTC_FileTime : T_FileTime
+]]></Declaration>
+      <Get Name="Get" Id="{c13acd3e-0ed3-49f4-901d-a6b7c485caa2}">
+        <Declaration><![CDATA[VAR
+	fbGETSYSTEMTIME : GETSYSTEMTIME;
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[// read out actual TIME in UTC (NT_GETTIME needs to much cycles!!!!!)
+fbGETSYSTEMTIME(timeLoDW=>UTC_FileTime.dwLowDateTime, timeHiDW=>UTC_FileTime.dwHighDateTime); // UTC available in one cycle
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="UTC_TimeStruct" Id="{3d1ba55b-acc8-4f58-9930-1a626d26a86f}">
+      <Declaration><![CDATA[PROPERTY PUBLIC UTC_TimeStruct : TIMESTRUCT]]></Declaration>
+      <Get Name="Get" Id="{075596d6-e39b-455d-9244-07a5b112f1a1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[UTC_TimeStruct := FILETIME_TO_SYSTEMTIME(UTC_FileTime);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="LocalTime_FileTime_BaseUTC" Id="{854d8b1f-13b2-4fd5-b66d-5b4573d13bcd}">
+      <Declaration><![CDATA[PROPERTY PUBLIC LocalTime_FileTime_BaseUTC : T_FileTime]]></Declaration>
+      <Get Name="Get" Id="{e9448c7e-c19a-455d-a024-7c79e0b68bc1}">
+        <Declaration><![CDATA[VAR
+	
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[// use before/last refreshed UTC as base and calculates based on the UTC and the time zone -> the local time
+fbToLocal.in := UTC_FileTime;
+fbToLocal.tzInfo := tzInfo;
+fbToLocal(); // tests -> is exact but if a user change the windows time no change on this time stamp
+LocalTime_FileTime_BaseUTC :=fbToLocal.out;
+
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="TimeZone_Refresh" Id="{9fa54801-7485-4084-8d5f-0e7e3c78caf2}">
+      <Declaration><![CDATA[METHOD PUBLIC TimeZone_Refresh : UDINT
+VAR_INPUT
+	In_strNetId : T_AmsNetID;
+END_VAR
+VAR_OUTPUT
+	Out_bolSuccessfullyDone : BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// reads out the windows time zone
+IF (bolStartGetTimeZone = FALSE) THEN
+	fbGetTimeZoneInformation.bExecute := FALSE;
+	fbGetTimeZoneInformation();
+	fbGetTimeZoneInformation.sNetID  := In_strNetId;
+	fbGetTimeZoneInformation.bExecute := TRUE;
+	fbGetTimeZoneInformation();
+	bolStartGetTimeZone := TRUE; 
+ELSE
+	fbGetTimeZoneInformation();
+	IF (fbGetTimeZoneInformation.bBusy=FALSE) THEN
+		IF (fbGetTimeZoneInformation.bError=FALSE) THEN
+			tzID := fbGetTimeZoneInformation.tzID;
+        	tzInfo := fbGetTimeZoneInformation.tzInfo;
+			Out_bolSuccessfullyDone := TRUE;
+		ELSE
+			TimeZone_Refresh := fbGetTimeZoneInformation.nErrID;
+		END_IF
+		bolStartGetTimeZone := FALSE;
+	END_IF
+END_IF
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="LocalTime_TimeStruct_BaseUTC" Id="{a261436c-6c30-44f2-a4f1-5e51cf7dee20}">
+      <Declaration><![CDATA[PROPERTY PUBLIC LocalTime_TimeStruct_BaseUTC : TIMESTRUCT]]></Declaration>
+      <Get Name="Get" Id="{c0603f84-037b-4f00-8b65-2c42bcab1e91}">
+        <Declaration><![CDATA[VAR
+
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[LocalTime_TimeStruct_BaseUTC := FILETIME_TO_SYSTEMTIME( LocalTime_FileTime_BaseUTC );]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="LocalTime_FileTime_BaseWin" Id="{c75d9ee6-7bd8-4348-bb5d-3e2aaf2a440e}">
+      <Declaration><![CDATA[PROPERTY PUBLIC LocalTime_FileTime_BaseWin : T_FileTime]]></Declaration>
+      <Get Name="Get" Id="{7177af10-5e1b-4950-81de-40a35386c1b1}">
+        <Declaration><![CDATA[VAR
+	fbToLocal : FB_FileTimeToTzSpecificLocalTime;
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[LocalTime_FileTime_BaseWin := SYSTEMTIME_TO_FILETIME( LocalTime_TimeStruct_BaseWin );]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

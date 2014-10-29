@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_FileLc_FileHdl" Id="{475352b7-c209-44ef-993e-57cc9d151203}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FileLc_FileHdl
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	fbFileHdl : FB_FileHdl;
+	bol_fpNewFileEvent : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Property Name="ActFileSize" Id="{118f2027-4973-4e5d-a8a1-b9f68afb9bb5}">
+      <Declaration><![CDATA[PROPERTY PUBLIC ActFileSize : UDINT]]></Declaration>
+      <Get Name="Get" Id="{a1b2671e-e41b-4698-a2bf-4955ec2554f1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ActFileSize := fbFileHdl.ActFileSize;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="M_Cyclic" Id="{308e2e4d-01fb-4172-a345-1b4bc877797a}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Cyclic : UDINT
+VAR_INPUT
+	In_pstSysInfo: POINTER TO T_FileLc_SysInfo;
+END_VAR
+
+VAR
+
+END_VAR
+VAR CONSTANT
+	// specific steps definitions
+	cStep_Wait4Job: UINT := 500;
+	cStep_WriteFileBuf: UINT := 501;
+	cStep_WriteFooter: UINT := 502;
+	cStep_CreateNew: UINT := 503;
+	cStep_WriteHeader: UINT := 504;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[fbFileHdl();
+
+CASE In_pstSysInfo^.stFileHandler.uinState OF
+	0:	In_pstSysInfo^.stFileHandler.uinState := cStep_Wait4Job;
+	
+	// ready for new job
+	cStep_Wait4Job:
+		IF (In_pstSysInfo^.stFileHandler.uinState<>In_pstSysInfo^.stFileHandler.uinState_old) THEN
+			In_pstSysInfo^.stFileHandler.strInfo := 'I: cStep_Wait4Job';
+			
+			In_pstSysInfo^.stFileHandler.uinState_old := In_pstSysInfo^.stFileHandler.uinState;
+		END_IF
+		
+		// file handler ready for new commands
+		IF (fbFileHdl.Out_bolBusy=FALSE) THEN
+			// create new file after startup
+			IF ((In_pstSysInfo^.stConfig.uinNewFileOnRestart=1) AND (In_pstSysInfo^.stFileHandler.usiInitDone=0)) THEN
+				In_pstSysInfo^.stFileHandler.usiCmdNewFile := 1; 
+			END_IF
+			
+			// mark for restart detection
+			In_pstSysInfo^.stFileHandler.usiInitDone := 1;	
+
+			// event from filehandler nwe file created!!!
+			IF (fbFileHdl.Out_bolNewFileCreated) THEN
+				IF (bol_fpNewFileEvent=FALSE) THEN // detect positive edge on signal!!
+					bol_fpNewFileEvent := TRUE;
+					In_pstSysInfo^.stFileHandler.uinState := cStep_WriteHeader;
+				END_IF
+			ELSE
+				bol_fpNewFileEvent := FALSE;
+			END_IF
+			
+			// finish file
+			IF (In_pstSysInfo^.stFileHandler.usiCmdNewFile=1) THEN
+				In_pstSysInfo^.stFileHandler.usiCmd := FileLc.cCMD_FLUSHBUF_NEWFILE;
+				In_pstSysInfo^.stFileHandler.usiCmdNewFile :=0;
+			END_IF
+			
+			// temp file buffer write to file
+			IF ((In_pstSysInfo^.stFileHandler.usiCmd=FileLc.cCMD_FLUSHBUF_NEWFILE) OR (In_pstSysInfo^.stFileHandler.usiCmd=FileLc.cCMD_FLUSHBUF)) THEN
+				In_pstSysInfo^.stFileHandler.uinState :=cStep_WriteFileBuf;
+				
+			END_IF
+		END_IF
+	
+	// write file buffer to file
+	cStep_WriteFileBuf:
+		// entry action
+		IF (In_pstSysInfo^.stFileHandler.uinState<>In_pstSysInfo^.stFileHandler.uinState_old) THEN
+			In_pstSysInfo^.stFileHandler.strInfo := 'I: cStep_WriteFileBuf';
+			
+			fbFileHdl.M_Cmd_WriteBuffer(In_p_bytWriteBuff:=In_pstSysInfo^.stFileHandler.p_bytTmpFileBuffer,In_udiWriteLen:=In_pstSysInfo^.stFileHandler.udiTmpFileBufferOffset);
+			fbFileHdl(); // first call -> set busy flag = TRUE
+			
+			In_pstSysInfo^.stFileHandler.uinState_old := In_pstSysInfo^.stFileHandler.uinState;
+		END_IF
+		
+		fbFileHdl(); // first call -> set busy flag = TRUE
+		
+		// always action
+		IF (fbFileHdl.Out_bolBusy=FALSE) THEN
+			IF (fbFileHdl.Out_udiErrId<>0) THEN
+				In_pstSysInfo^.stFileHandler.usiCmd := 0;
+				In_pstSysInfo^.stFileHandler.uinState :=cStep_WriteFooter;
+			ELSIF (In_pstSysInfo^.stFileHandler.usiCmd=FileLc.cCMD_FLUSHBUF) THEN
+				// reset file buffer and add offset
+				In_pstSysInfo^.stFileHandler.udiTmpFileBufferOffset := 0;
+				In_pstSysInfo^.stFileHandler.usiCmd := 0;
+				In_pstSysInfo^.stFileHandler.uinState :=cStep_Wait4Job;
+			ELSIF (In_pstSysInfo^.stFileHandler.usiCmd=FileLc.cCMD_FLUSHBUF_NEWFILE) THEN
+				// reset file buffer and add offset
+				In_pstSysInfo^.stFileHandler.udiTmpFileBufferOffset := 0;
+				In_pstSysInfo^.stFileHandler.uinState :=cStep_WriteFooter;
+			END_IF
+		END_IF
+		
+	// write footer to file
+	cStep_WriteFooter:
+		// entry action
+		IF (In_pstSysInfo^.stFileHandler.uinState<>In_pstSysInfo^.stFileHandler.uinState_old) THEN
+			In_pstSysInfo^.stFileHandler.strInfo := 'I: cStep_WriteFooter';
+			
+			fbFileHdl.M_Cmd_WriteBuffer(In_p_bytWriteBuff:=In_pstSysInfo^.p_bytFooterText,In_udiWriteLen:=In_pstSysInfo^.udiFooterTextLen);
+			fbFileHdl(); // first call -> set busy flag = TRUE
+			
+			In_pstSysInfo^.stFileHandler.uinState_old := In_pstSysInfo^.stFileHandler.uinState;
+		END_IF
+		
+		fbFileHdl(); // first call -> set busy flag = TRUE
+		
+		// always action
+		IF (fbFileHdl.Out_bolBusy=FALSE) THEN
+			IF (fbFileHdl.Out_udiErrId<>0) THEN
+				In_pstSysInfo^.stFileHandler.uinState :=cStep_CreateNew;
+			ELSE
+				In_pstSysInfo^.stFileHandler.uinState :=cStep_CreateNew;
+			END_IF
+		END_IF
+		
+	// create new file
+	cStep_CreateNew:
+		// entry action
+		IF (In_pstSysInfo^.stFileHandler.uinState<>In_pstSysInfo^.stFileHandler.uinState_old) THEN
+			In_pstSysInfo^.stFileHandler.strInfo := 'I: cStep_CreateNew';
+			
+			fbFileHdl.M_Cmd_NewFile();
+			fbFileHdl(); // first call -> set busy flag = TRUE
+			
+			In_pstSysInfo^.stFileHandler.uinState_old := In_pstSysInfo^.stFileHandler.uinState;
+		END_IF
+		
+		fbFileHdl(); // first call -> set busy flag = TRUE
+		
+		// always action
+		IF (fbFileHdl.Out_bolBusy=FALSE) THEN
+			In_pstSysInfo^.stFileHandler.uinState := cStep_WriteHeader;
+		END_IF
+		
+	// create new file
+	cStep_WriteHeader:
+		// entry action
+		IF (In_pstSysInfo^.stFileHandler.uinState<>In_pstSysInfo^.stFileHandler.uinState_old) THEN
+			In_pstSysInfo^.stFileHandler.strInfo := 'I: cStep_WriteHeader';
+			
+			fbFileHdl.M_Cmd_WriteBuffer(In_p_bytWriteBuff:=In_pstSysInfo^.p_bytHeaderText,In_udiWriteLen:=In_pstSysInfo^.udiHeaderTextLen);
+			fbFileHdl(); // first call -> set busy flag = TRUE
+			
+			In_pstSysInfo^.stFileHandler.uinState_old := In_pstSysInfo^.stFileHandler.uinState;
+		END_IF
+		
+		fbFileHdl(); // first call -> set busy flag = TRUE
+		
+		// always action
+		IF (fbFileHdl.Out_bolBusy=FALSE) THEN
+			In_pstSysInfo^.stFileHandler.usiCmd := 0;
+			In_pstSysInfo^.stFileHandler.uinState := cStep_Wait4Job;
+		END_IF
+END_CASE
+
+fbFileHdl();
+
+M_Cyclic := fbFileHdl.Out_udiErrId; // error number feedback, reset with next job]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Init" Id="{34c34b8a-de8a-4306-ba5a-c4e490010db7}">
+      <Declaration><![CDATA[METHOD PUBLIC M_Init : UDINT
+VAR_INPUT
+	In_pstSysInfo: POINTER TO T_FileLc_SysInfo;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// max file size set higher than defined because of writing footer before create new file -> FileLc manages max file size!!!
+fbFileHdl.M_Init(In_strNetId := In_pstSysInfo^.stConfig.strLogNetId ,IN_strPath:= In_pstSysInfo^.stConfig.strLogPath,IN_strFileName:=In_pstSysInfo^.stConfig.strLogFileNamePraeFix,IN_strFileExt:=In_pstSysInfo^.stConfig.strLogFileNameExt,IN_uinMaxNrOfFilesInFolder:=In_pstSysInfo^.stConfig.uinMaxNbrOfLogFiles,IN_lreMaxFileSize:=(UDINT_TO_REAL(In_pstSysInfo^.stConfig.udiMaxFileSize)*1.2),IN_timFileSupervisionPeriod:=UDINT_TO_TIME(In_pstSysInfo^.stConfig.udiTimeCheckMaxFileNr));
+M_Init := fbFileHdl.Out_udiErrId;]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_DL_LibInfo" Id="{ec6410b5-404b-41a2-8065-983fb7bac63a}">
+    <Declaration><![CDATA[TYPE T_DL_LibInfo :
+STRUCT
+	pstDatLogSysInfo : POINTER TO T_DL_SysInfo; // pointer to DL log system list
+	stStatemachine: T_DL_Statemachine;
+	udiCommonRecIdx: UDINT; // general record idx (because of mutex problematic has to be increased with 2)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

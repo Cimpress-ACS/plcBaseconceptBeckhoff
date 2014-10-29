@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Bl_LibClient" Id="{dcd4e729-5b69-4433-9e03-e6593c63c58f}">
+    <Declaration><![CDATA[TYPE T_Bl_LibClient :
+STRUCT
+	stClient : ARRAY [0..BasLog.cMAX_CLIENTS] OF T_Bl_LibSingleClient; // informationstruct for one client
+	usiClientNr : USINT; // number of declared clients
+	stHandleRow : ARRAY[0..Queue.cMAX_NR_OF_TASKS]OF T_Bl_LibHandleRow; // handle for access Buffer
+	p_fbTimeStamp: POINTER TO FB_TimeStamp; // pointer to FB_TimeStamp 
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

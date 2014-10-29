@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="callAllCtrlInit" Id="{c28eb34e-263a-45f4-be86-577a25584c06}">
+    <Declaration><![CDATA[FUNCTION callAllCtrlInit : BOOL
+VAR_INPUT
+	pCtrlInst			: POINTER TO POINTER TO FB_CtrlBase;
+	uinCtrlInstLength	: UINT;
+END_VAR
+VAR
+	uinIdx	: UINT;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR uinIdx := 0 TO uinCtrlInstLength DO
+	IF pCtrlInst[uinIdx] <> 0 THEN
+		pCtrlInst[uinIdx]^.CtrlInit(); // init ctrl and add childs
+	END_IF
+END_FOR
+]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

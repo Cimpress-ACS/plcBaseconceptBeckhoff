@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_BasLogTest_Client" Id="{69aa4d5f-10db-48ae-8018-36816aa558ff}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_BasLogTest_Client
+VAR_INPUT
+	In_p_fbBasLog: POINTER TO FB_BasLog; // only one central FB_BasLog instance allowed per PLC!!!
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	stData : T_Bl_BaseStruc;
+	bolInit : BOOL := FALSE;
+	pReadHandle : POINTER TO POINTER TO T_Queue_Info;
+	uinInitStatus : UINT;
+	uinChangeMaskStatus :UINT;
+	uinReadStatus : UINT;
+	bolChangeMask : BOOL;
+	bolRead : BOOL;
+	fbTimeStamp: FB_TimeStamp;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Example and test programm for testing the base log system - read data from base log
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.07.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+// system init onetime after start up
+IF (bolInit=FALSE) THEN
+	// init timer system
+	fbTimeStamp.In_strNetId := ''; // use local system time
+	fbTimeStamp.In_t_CycleTimeRefreshTimeZone := T#15M; // cyclic check time zone settings
+	//init baselog system, one time should be called per baslog system
+	In_p_fbBasLog^.M_ClientInit(In_strClientName:='BaseLog',In_udiMask := 16#FFFFFFFF, In_uinNrOfElement:= 128,In_p_fbTimeStamp:=ADR(fbTimeStamp),In_bolUseLocalTimeStamp:=TRUE,Out_pHandle=>pReadHandle,Out_uinStatus=>uinInitStatus);
+	
+	bolInit := TRUE;
+END_IF
+
+fbTimeStamp(); // cyclic call needed for valid time stamp / synchronisation
+	
+(* change mak on runtime *)
+IF (bolRead = TRUE) THEN
+	(* cyclically read out of data*)
+	uinReadStatus:= In_p_fbBasLog^.M_Read(In_pHandle:=pReadHandle,In_pData:=ADR(stData)); 
+END_IF
+
+(* change mak on runtime *)
+IF (bolChangeMask = TRUE) THEN
+	uinChangeMaskStatus := In_p_fbBasLog^.M_ChangeMask(In_strClientName:='BaseLog',In_udiNewMask:= 16#0F0F0F0F);
+	bolChangeMask := FALSE;
+END_IF
+]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

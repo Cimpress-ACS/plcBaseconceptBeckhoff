@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="FileHdl" Id="{935cd96d-40fa-4e03-a7ed-2b4f0040cd6c}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	cFILE_HDL_MAX_NR_OF_FILE_TO_MANAGE: UDINT := 500;
+END_VAR
+]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

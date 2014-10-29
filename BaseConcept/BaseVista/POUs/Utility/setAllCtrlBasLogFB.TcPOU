@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="setAllCtrlBasLogFB" Id="{03f9be0f-9cfa-47fc-a80a-0d3db43eaf4a}">
+    <Declaration><![CDATA[FUNCTION setAllCtrlBasLogFB : BOOL
+VAR_INPUT
+	pCtrlInst			: POINTER TO POINTER TO FB_CtrlBase;
+	pBasLogFB			: POINTER TO FB_BasLog;
+	uinCtrlInstLength	: UINT;
+END_VAR
+VAR
+	uinIdx	: UINT;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR uinIdx := 0 TO uinCtrlInstLength DO
+	IF pCtrlInst[uinIdx] <> 0 THEN
+		pCtrlInst[uinIdx]^.BaseLog := pBasLogFB;
+	END_IF
+END_FOR
+]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

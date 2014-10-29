@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_DatLogTest_Sender" Id="{e96229ed-0929-4113-959a-fde49c9cc1d0}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DatLogTest_Sender
+VAR_INPUT
+	In_p_fbBasLog: POINTER TO FB_BasLog; // only one central FB_BasLog instance allowed per PLC!!!
+	In_a_pData: ARRAY [0..DatLog.cMAX_NR_OF_VAR] OF POINTER TO BYTE;
+	In_strTaskName: STRING(20);
+	In_strValueNameOfData: STRING(20);
+END_VAR
+VAR_OUTPUT
+	Out_bolInit : BOOL := FALSE;
+END_VAR
+VAR
+	bolDone : BOOL;
+	pDL_Handle: POINTER TO T_DL_SysInfo;
+	udiStatusInit :UDINT;
+	udiStatus : UDINT;
+	fbDatLog: FB_DatLog;
+	a_strDataDefinition :ARRAY[0..DatLog.cMAX_NR_OF_VAR] OF STRING(DatLog.cMAX_VAR_NAME_LEN);
+	uinDoLogData : UINT;
+	strTemp: T_MaxString;
+	strTemp2: T_MaxString;
+	ii : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Example and test programm for testing the data logger system - write data to data log
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		02.09.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+// system init onetime after start up
+IF (Out_bolInit=FALSE) THEN
+	
+	// TODO :parse a struct on PLC...
+	FOR ii := 0 TO DatLog.cMAX_NR_OF_VAR DO
+		strTemp := In_strTaskName;
+		strTemp := CONCAT(STR1 := strTemp,'.');
+		strTemp := CONCAT(STR1 := strTemp,In_strValueNameOfData);
+		strTemp := CONCAT(STR1 := strTemp,'.');
+		// fillup variable elements of struct, order is important!!!!!!!!!!!!!!!!!!!!
+		CASE ii OF
+			0:
+				strTemp2 := 'bolOk';
+			1:
+				strTemp2 := 'intCnt';
+			2:
+				strTemp2 := 'strNewText';
+		ELSE
+			EXIT;
+		END_CASE
+		a_strDataDefinition[ii] := CONCAT(STR1 := strTemp,STR2:=strTemp2);
+	END_FOR
+	
+	fbDatLog.M_Init(In_bolExecute := TRUE,In_strDatLogName:= 'DatLog',In_a_strDataDefinition:=a_strDataDefinition,In_Port:=851,In_uinStartId:=100,Out_udiStatus=>udiStatusInit,Out_bolDone=>bolDone);
+	IF (bolDone OR (udiStatusInit<>0)) THEN
+		fbDatLog.M_Init(In_bolExecute := FALSE,In_strDatLogName:= 'DatLog',In_a_strDataDefinition:=a_strDataDefinition,In_Port:=851,In_uinStartId:=100); // reset statemachine
+	
+		IF (udiStatusInit=0) THEN
+			udiStatusInit := fbDatLog.M_GetHandle(In_strDatLogName:='DatLog',In_p_fbBasLog:=In_p_fbBasLog,Out_pHandle=>pDL_Handle,Out_udiStatus=>udiStatusInit);
+		END_IF
+		
+		Out_bolInit := TRUE;
+	END_IF
+
+ELSE
+	fbDatLog.M_Init(In_bolExecute := FALSE,In_strDatLogName:= 'DatLog',In_a_strDataDefinition:=a_strDataDefinition,In_Port:=851,In_uinStartId:=100); // reset statemachine
+	
+END_IF
+
+// write entry data 
+IF ((pDL_Handle<>TC3_MEMMAN.NULL) AND (udiStatusInit=0) AND (Out_bolInit=TRUE)) THEN
+	fbDatLog.M_Log(In_pHandle:=pDL_Handle,In_a_pData:= In_a_pData,Out_udiStatus=>udiStatus);
+END_IF
+
+
+]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

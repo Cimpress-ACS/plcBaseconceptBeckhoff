@@ -1,0 +1,221 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_FileCopy" Id="{a34cb114-81d2-4b6e-9122-82836f9c6640}">
+    <Declaration><![CDATA[FUNCTION_BLOCK PUBLIC FB_FileCopy
+VAR_INPUT
+        srcNetId        : T_AmsNetId;   (* TwinCAT network address of the source file *)
+        srcFileName     : T_MaxString;  (* source file path and name *)
+        destNetId       : T_AmsNetId;   (* TwinCAT network address of the destination file *)
+        destFileName    : T_MaxString;          (* destination file path and name *)
+        bExecute        : BOOL;         (* rising edge starts fb execution *)
+        tAdsTimeOut     : TIME;         (* ads timeout *)
+END_VAR
+VAR_OUTPUT
+        bBusy           :BOOL;
+        bError          :BOOL;
+        nErrId          :UDINT;
+END_VAR
+VAR
+        fbFileOpen      :FB_FileOpen;
+        fbFileClose     :FB_FileClose;
+        fbFileRead      :FB_FileRead;
+        fbFileWrite     :FB_FileWrite;
+
+        hSrcFile                :UINT   := 0;(* file handle of the source file *)
+        hDestFile               :UINT   := 0;(* file handle of the destination file *)
+
+        Step            :DWORD;
+        RisingEdge      :R_TRIG;
+
+        buffRead        :ARRAY[1..10000] OF BYTE;(* buffer *)
+        cbReadLength    :UDINT:=0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+	Copy functionality 
+	!!!!!!direct source copy from example from Beckhoff -> not Vistaprint notation!!!!
+		
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		14.05.2014		AVME/KVO	Start history
+___________________________________________________________________________________________________*)
+
+
+
+RisingEdge(CLK:=bExecute);
+IF RisingEdge.Q THEN
+        IF NOT bBusy THEN
+                bBusy := TRUE;
+                bError:= FALSE;
+                nErrId:=0;
+                Step := 1;
+                cbReadLength:=0;
+                hSrcFile:=0;
+                hDestFile:=0;
+        END_IF
+END_IF
+
+
+CASE Step OF
+        0:(* do nothing *)
+        ;
+
+        1:(* open source file *)
+        fbFileOpen(  bExecute := FALSE  );
+        fbFileOpen(     sNetId := srcNetId,
+                sPathName := srcFileName,
+                nMode := FOPEN_MODEREAD OR FOPEN_MODEBINARY,
+                ePath := PATH_GENERIC,
+                tTimeout := tAdsTimeout,
+                bExecute := TRUE );
+                Step := Step + 1;
+
+        2:
+        fbFileOpen( bExecute := FALSE );
+        IF ( NOT fbFileOpen.bBusy ) THEN
+                IF ( fbFileOpen.bError ) THEN
+                        nErrId := fbFileOpen.nErrId;
+                        bError := TRUE;
+                        Step := 50;
+                ELSE
+                        hSrcFile := fbFileOpen.hFile;
+                        Step := Step + 1;
+                END_IF
+        END_IF
+
+        3:(* open destination file *)
+        fbFileOpen(  bExecute := FALSE  );
+        fbFileOpen(     sNetId := destNetId,
+                        sPathName := destFileName,
+                        nMode := FOPEN_MODEWRITE OR FOPEN_MODEBINARY,
+                        ePath := PATH_GENERIC,
+                        tTimeout := tAdsTimeout,
+                        bExecute := TRUE );
+        Step := Step+1;
+
+        4:
+        fbFileOpen(  bExecute := FALSE  );
+        IF ( NOT fbFileOpen.bBusy ) THEN
+                IF ( fbFileOpen.bError ) THEN
+                        nErrId := fbFileOpen.nErrId;
+                        bError := TRUE;
+                        Step := 50;
+                ELSE
+                        hDestFile := fbFileOpen.hFile;
+                        Step := Step + 1;
+                END_IF
+        END_IF
+
+        5:(*read data from source file*)
+        cbReadLength := 0;
+        fbFileRead( bExecute:= FALSE );
+        fbFileRead(     sNetId:=SrcNetId,
+                        hFile:=hSrcFile,
+                        pReadBuff:= ADR(buffRead),
+                        cbReadLen:= SIZEOF(buffRead),
+                        bExecute:=TRUE,
+                        tTimeout:=tAdsTimeOut );
+        Step := Step + 1;
+
+        6:
+        fbFileRead( bExecute:= FALSE );
+        IF ( NOT fbFileRead.bBusy ) THEN
+                IF ( fbFileRead.bError ) THEN
+                        nErrId := fbFileRead.nErrId;
+                        bError := TRUE;
+                        Step := 50;
+                ELSE
+                        cbReadLength := fbFileRead.cbRead;
+                        Step := Step + 1;
+                END_IF
+        END_IF
+
+        7:(*write data to destination file*)
+        fbFileWrite( bExecute := FALSE );
+        fbFileWrite(    sNetId:=DestNetId,
+                        hFile:=hDestFile,
+                        pWriteBuff:= ADR(buffRead),
+                        cbWriteLen:= cbReadLength,
+                        bExecute:=TRUE,
+                        tTimeout:=tAdsTimeOut );
+        Step := Step + 1;
+
+        8:
+        fbFileWrite( bExecute := FALSE );
+        IF ( NOT fbFileWrite.bBusy ) THEN
+                IF ( fbFileWrite.bError ) THEN
+                        nErrId := fbFileWrite.nErrId;
+                        bError := TRUE;
+                        Step := 50;
+                ELSE
+                        IF fbFileRead.bEOF THEN (*Check if the EOF flag ist set *)
+                                Step := 50;(*cleanup: close the destination and source files *)
+                        ELSE
+                                Step := 5; (* repeat reading *)
+                        END_IF
+                END_IF
+        END_IF
+
+        30:(* close the destination file *)
+        fbFileClose( bExecute := FALSE );
+        fbFileClose(    sNetId:=destNetId,
+                        hFile:=hDestFile,
+                        bExecute:=TRUE,
+                        tTimeout:=tAdsTimeOut );
+        Step := Step + 1;
+
+        31:
+        fbFileClose( bExecute := FALSE );
+        IF ( NOT fbFileClose.bBusy ) THEN
+                IF ( fbFileClose.bError ) THEN
+                        nErrId := fbFileClose.nErrId;
+                        bError := TRUE;
+                END_IF
+                Step := 50;
+                hDestFile := 0;
+        END_IF
+
+        40: (* close source file *)
+        fbFileClose( bExecute := FALSE );
+        fbFileClose(    sNetId:=srcNetId,
+                        hFile:=hSrcFile,
+                        bExecute:=TRUE,
+                        tTimeout:=tAdsTimeOut );
+        Step := Step + 1;
+
+        41:
+        fbFileClose( bExecute := FALSE );
+        IF ( NOT fbFileClose.bBusy ) THEN
+                IF ( fbFileClose.bError ) THEN
+                        nErrId := fbFileClose.nErrId;
+                        bError := TRUE;
+                END_IF
+                Step := 50;
+                hSrcFile := 0;
+        END_IF
+
+        50: (*error or ready => cleanup*)
+        IF ( hDestFile <> 0 ) THEN
+                Step := 30; (* close the destination file*)
+        ELSIF (hSrcFile <> 0 ) THEN
+                Step := 40; (* close the source file *)
+        ELSE
+                Step := 0;      (* ready *)
+                bBusy := FALSE;
+        END_IF
+
+END_CASE]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

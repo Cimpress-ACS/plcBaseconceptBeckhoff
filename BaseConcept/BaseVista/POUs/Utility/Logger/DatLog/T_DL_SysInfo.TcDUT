@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_DL_SysInfo" Id="{9afa3bdf-faed-4500-bfcf-2441a7d1e1eb}">
+    <Declaration><![CDATA[TYPE T_DL_SysInfo :
+STRUCT
+	strDatLogName : STRING(DatLog.cMAX_SYS_NAME_LENGTH);
+	usiInitOk : USINT; // initalisation successfully finished
+	uinNbrOfItems : UINT; // number of items
+	uinStartId : UINT; // StartId
+	pBaseLogHandle : POINTER TO POINTER TO T_Queue_Info; // handle from BaseLog Init
+	p_fbBasLog: POINTER TO FB_BasLog;
+	pstItems: POINTER TO T_DL_Item; // itemlist
+	uinCntReadItems : UINT; // read counte
+	uinItemOffset : UINT; // offset calculation
+	pstNextDatLogSystem : POINTER TO T_DL_SysInfo;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

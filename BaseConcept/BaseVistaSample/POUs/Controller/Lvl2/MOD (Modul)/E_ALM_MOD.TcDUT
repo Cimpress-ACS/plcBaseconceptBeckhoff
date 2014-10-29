@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="E_ALM_MOD" Id="{72bc4949-b6e9-4080-941c-8eb828e4123e}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_MOD" Id="{1b222b5f-0693-49ef-b8f4-e49ae0ebf1c3}">
     <Declaration><![CDATA[{attribute 'qualified_only' := ''}
 TYPE E_ALM_MOD :
 (

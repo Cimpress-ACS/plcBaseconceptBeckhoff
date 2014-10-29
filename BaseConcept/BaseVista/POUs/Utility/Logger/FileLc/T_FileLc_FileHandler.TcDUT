@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_FileLc_FileHandler" Id="{16a9810d-4e36-413b-b99b-c85917160f37}">
+    <Declaration><![CDATA[TYPE T_FileLc_FileHandler :
+STRUCT
+	uinState : UINT; (*Status (Statemachine) des Filehandlers*)
+	uinState_old : UINT; (*status old for entry action generation*)
+	usiCmd : USINT; (*Internes Kommando*)
+	usiCmdNewFile : USINT; (*Schliesse aktuelles File ab und erstelle ein neues LogFile*)
+	usiInitDone : USINT; (*Merker für Neustart*)
+	udiWriteTimer : UDINT; (*Zeit seit letztem File Schreibzyklus*)
+	p_bytTmpFileBuffer : POINTER TO BYTE; (*Zeiger auf temporären Filebuffer*)
+	udiTmpFileBufferSize : UDINT; (*Grösse des temporären Filebuffers*)
+	udiTmpFileBufferOffset : UDINT; (*Schreibzeiger des temporären Filebuffers*)
+	udiRecordCnt : UDINT; // actual record count in file
+	FB_FileLc_FileHdl : FB_FileLc_FileHdl; // FUB instance
+	strInfo: Tc2_System.T_MaxString;	// additional debug Info
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_Alm_Man" Id="{1df3d5ca-0fc7-41d6-8e17-a72131e17c96}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Alm_Man
 VAR_INPUT
@@ -30,9 +31,8 @@ VAR
 	/// command interface for UI -> PLC
 	intAlmCmd: INT;
 	///------------------------------------------------------------
-	/// real local variables
-	fbGetLocalTime: NT_GetTime;
-	strActTime: STRING;
+	fbTimeStamp: FB_TimeStamp; // only one central time for time stamps
+
 	jj: UINT;
 	EmptyAlmElement: T_AlmElement;
 	intState: INT;
@@ -44,8 +44,6 @@ VAR
 	eActiveAlmClass: E_AlmClass;
 
 	aCntActiveAlmPerClass: ARRAY[0..(E_AlmClass.Max_E_AlmClass-1)] OF UINT; // count off all active alarms per class, idx=0 all active alarms
-	bolTimeReadDone : BOOL;
-	bolTimeStampValid : BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -77,28 +75,19 @@ Version		Date			Author		Comment
 0.00.4		16.05.2014		AVME/DSC	-> Inserted new "setAlarm" Method from Patrik C. (code review)									
 										-> BugFix, build sum of all active alarms
 0.00.5		07.07.2014		AVME/KVO	-> BugFix Method setAlarm , clr and reset -> also possibel if one entry is zero possibel
+0.00.6		07.10.2014		AVME/KVO	-> BugFix alarm reset first statemachine and then the messages	
+0.00.7		27.10.2014		AVME/KVO	-> delete GETSYSTEMTIME use FB_TimeStamp
+										-> New time properties for easy access of every controller if needed
 ___________________________________________________________________________________________________*)
 
-// read out actual TIME
-fbGetLocalTime.NETID := '';
-fbGetLocalTime.START := NOT bolTimeReadDone;
-fbGetLocalTime.TMOUT := T#5S;
-fbGetLocalTime();
-
-IF (fbGetLocalTime.START=TRUE) THEN
-	IF  ((fbGetLocalTime.Busy=FALSE) AND (fbGetLocalTime.ERR=FALSE)) THEN
-		bolTimeReadDone := TRUE;
-		strActTime := TC2_UTILITIES.SYSTEMTIME_TO_STRING(fbGetLocalTime.TIMESTR); // YYYY-MM-DD-hh:mm:ss.xxx
-		bolTimeStampValid := TRUE; // -> entry alarms with valid time stamp
-	END_IF
-ELSE
-	bolTimeReadDone := FALSE;
-END_IF
-
+// call time stamp asynchronous synchronisation
+fbTimeStamp.In_strNetId := ''; // use system time of log target system
+fbTimeStamp.In_t_CycleTimeRefreshTimeZone := T#0S; // cyclic check time zone settings - not needed using LocalTime_FileTime_BaseWin for log system and local time
+fbTimeStamp();
 
 // interface for UI access
 CASE intState OF
-	
+		
 	0: // reset cmd
 		intAlmCmd := cCMD_DONE; // Ready for new cmd
 		intState := intState + 1;
@@ -108,15 +97,17 @@ CASE intState OF
 			intState := intState + 1;
 		END_IF
 		
-	2: // reset alarms
+	2: // firt reset state machines -> leave Error state
+		bolCtrlRst := TRUE;
+		intState := intState + 1;
+		
+	3: // reset alarms / messages
 		// reset state=RST, reset state CLR
 		THIS^.clearAlarm(((intAlmCmd=cCMD_RESET_ALL) OR (intAlmCmd=cCMD_RESET_RST)), TRUE);
 		intState := intState + 1;
 		
-	3: // reset state machines
-		bolCtrlRst := TRUE;
+	4: 
 		intState := 0; // done
-
 END_CASE
 
 // build sum of all active alarms
@@ -193,6 +184,18 @@ END_FOR
 ]]></ST>
       </Implementation>
     </Method>
+    <Property Name="LocalTime_FileTime_BaseWin" Id="{74c9c069-f829-4ef7-8f83-bf2b25485eab}">
+      <Declaration><![CDATA[PROPERTY PUBLIC LocalTime_FileTime_BaseWin : T_FileTime]]></Declaration>
+      <Get Name="Get" Id="{9e3ad824-c1fe-4c84-843e-204ff419cff4}">
+        <Declaration><![CDATA[VAR
+	fbToLocal : FB_FileTimeToTzSpecificLocalTime;
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[LocalTime_FileTime_BaseWin := fbTimeStamp.LocalTime_FileTime_BaseWin;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Property Name="IsInitDone" Id="{7fbed69f-132f-46cd-9088-e949589753b9}">
       <Declaration><![CDATA[PROPERTY IsInitDone : BOOL]]></Declaration>
       <Get Name="Get" Id="{328f4b2e-2928-43b6-81f0-047d44205740}">
@@ -202,7 +205,45 @@ END_VAR
         <Implementation>
           <ST><![CDATA[// feedback at least one valid time stamp read out 
 //-> check at startup before cyclic call of FB's to avoid alarms without valid timestamp
-IsInitDone := bolTimeStampValid;]]></ST>
+IsInitDone := fbTimeStamp.Out_bolInitOk;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="UTC_FileTime" Id="{7fca9c03-13dc-4072-9492-be2fc7b1b9b7}">
+      <Declaration><![CDATA[PROPERTY PUBLIC UTC_FileTime : T_FileTime
+]]></Declaration>
+      <Get Name="Get" Id="{1029c51b-ce11-4df3-bb75-cf7cf7b862b7}">
+        <Declaration><![CDATA[VAR
+	fbGETSYSTEMTIME : GETSYSTEMTIME;
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[UTC_FileTime := fbTimeStamp.UTC_FileTime;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="UTC_TimeStruct" Id="{c7181e8a-e83c-484b-b4d0-e50decf4c9fe}">
+      <Declaration><![CDATA[PROPERTY PUBLIC UTC_TimeStruct : TIMESTRUCT]]></Declaration>
+      <Get Name="Get" Id="{0acb25b6-30bd-473b-a4fd-3e8acbf86a77}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[UTC_TimeStruct := fbTimeStamp.UTC_TimeStruct;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="LocalTime_TimeStruct_BaseWin" Id="{ef17aabd-2a81-4dbf-a943-44b889824fdc}">
+      <Declaration><![CDATA[PROPERTY PUBLIC LocalTime_TimeStruct_BaseWin : TIMESTRUCT]]></Declaration>
+      <Get Name="Get" Id="{f76c6c20-d00e-4548-82d3-55a06f5d912a}">
+        <Declaration><![CDATA[VAR
+
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[LocalTime_TimeStruct_BaseWin :=fbTimeStamp.LocalTime_TimeStruct_BaseWin;
+
+]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -247,7 +288,8 @@ InAlmElement.udiNr := 100000*InAlmElement.udiMachineNr + INT_TO_UDINT(100*InAlmE
 InAlmElement.dinInfo := dinInfo;
 InAlmElement.eClass := e_LocAlmClass;
 InAlmElement.intState := intState;
-InAlmElement.strDTEntry := strActTime;
+// YYYY-MM-DD-hh:mm:ss.xxx
+InAlmElement.strDTEntry := TC2_UTILITIES.SYSTEMTIME_TO_STRING(fbTimeStamp.LocalTime_TimeStruct_BaseWin);
 InAlmElement.strText := p_Ctrl_Alm[udiAlarmNr-1].strText;
 
 ii := 0;

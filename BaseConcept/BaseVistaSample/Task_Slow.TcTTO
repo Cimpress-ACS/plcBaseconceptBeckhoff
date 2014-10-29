@@ -1,7 +1,8 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <Task Name="Task_Slow" Id="{f9548ca7-e3d7-41a2-bac2-84077c881800}">
     <!--CycleTime in micro seconds.-->
-    <CycleTime>100000</CycleTime>
+    <CycleTime>80000</CycleTime>
     <Priority>20</Priority>
     <PouCall>
       <Name>SlowPRG_1</Name>

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_DL_Statemachine" Id="{cd52c20a-3b90-4952-872a-3fe97518b5aa}">
+    <Declaration><![CDATA[TYPE T_DL_Statemachine :
+STRUCT
+	uinState : UINT; (*Status (Statemachine) des Filehandlers*)
+	uinState_old : UINT; (*status old for entry action generation*)
+	bolExecute_old : BOOL;
+	usiInitDone : USINT; (*Merker für Neustart*)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

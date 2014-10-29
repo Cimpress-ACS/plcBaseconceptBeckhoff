@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <GVL Name="Global" Id="{118a3a19-d9ae-43fa-9370-0480fd6e4d03}">
     <Declaration><![CDATA[VAR_GLOBAL
 	g_a_pCtrlInst: ARRAY[0..E_CtrlId.E_CtrlIdMax] OF POINTER TO fb_CtrlBase; // instance array of all controller instances
@@ -6,7 +7,12 @@
 	g_p_fbAlm_Man: POINTER TO FB_Alm_Man; // common access variabel for UI
 
 	g_uinStartProzess : UINT; // For StartUp order
-  	
+  	// global base log
+	g_fbBasLog: FB_BasLog; // only one central FB_BasLog instance/system allowed per PLC!!!
+	// global file client
+	g_fbFileLC: FB_FileLc; // only one central FB_FileLc instance allowed per PLC!!!
+	g_bolLogEnableState : BOOL := TRUE; // EnableState log
+	
 END_VAR
 
 VAR_GLOBAL CONSTANT
