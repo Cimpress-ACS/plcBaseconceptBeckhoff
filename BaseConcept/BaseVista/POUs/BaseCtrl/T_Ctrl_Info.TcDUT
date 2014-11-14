@@ -19,6 +19,8 @@ STRUCT
 	p_aCIf				: ARRAY[0..Base_Const.cMaxNrOfChilds] OF POINTER TO T_Ctrl_CIf;
 	// Child Count
 	uinChildNbr			: UINT;
+	// Absolut path to the controller
+	strInstancePath		: STRING;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

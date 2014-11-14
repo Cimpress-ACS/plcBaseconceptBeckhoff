@@ -5,18 +5,18 @@
 FUNCTION_BLOCK FB_CtrlBase IMPLEMENTS I_CtrlBase
 VAR
 	// common interface struct for public access
-	CIf				: T_Ctrl_CIf;
+	CIf						: T_Ctrl_CIf;
 
-	// pointer to global alarm handler function block 
-	pfbAlarmCtrl	: POINTER TO FB_Alm_Man;
- 
-	// basic local controller class struct
-	me	: T_Ctrl_Class;
-	fbSimulationTimer		: TON;
-	
 	{attribute 'noinit'}
 	{attribute 'instance-path'}
 	strMyInstancePath: STRING;
+
+	// pointer to global alarm handler function block 
+	pfbAlarmCtrl			: POINTER TO FB_Alm_Man;
+	
+	// basic local controller class struct
+	me						: T_Ctrl_Class;
+	fbSimulationTimer		: TON;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -525,7 +525,7 @@ CIf.SwCfg.bolEnStateLogger := TRUE;
 
 //------------------------------------------------------------------------------------------------------------------------
 CIf.Info.strName := getStrInstanceName(strMyInstancePath); // get name of instance
-
+CIf.Info.strInstancePath := strMyInstancePath;
 CIf.Info.uinChildNbr := 0;]]></ST>
       </Implementation>
     </Method>
@@ -1037,6 +1037,17 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="InstancePath" Id="{e3d54fb1-6342-4e02-aa48-7cc80034ac8a}">
+      <Declaration><![CDATA[PROPERTY PUBLIC InstancePath : STRING]]></Declaration>
+      <Get Name="Get" Id="{eb2a5413-8127-449d-a10c-fae2b6d673da}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[InstancePath := strMyInstancePath;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="CheckParentAlmClass" Id="{ec1be44d-8050-49b4-a7d6-f8a2a0151732}">
       <Declaration><![CDATA[METHOD PROTECTED CheckParentAlmClass : BOOL
 ]]></Declaration>

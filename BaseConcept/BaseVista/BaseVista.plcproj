@@ -15,10 +15,13 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.5.2</ProjectVersion>
+    <ProjectVersion>0.3.5.3</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.5.2 
-	- CtrlInit() uses internal variable again, in cyclic call of FB at first caclic call and init not done - only init is executed
+    <Description>0.3.5.3 	- Compiled with 3.1 4016.6
+	- Added InstancePath to CIf.Info
+	- Added a property for InstancePath
+	- Fill CIf.Info.InstancePath in FB_init
+0.3.5.2 - CtrlInit() uses internal variable again, in cyclic call of FB at first caclic call and init not done - only init is executed
 	- Alarmhandler works now with time stamp FB, properties for timestamp usage in controller
 	- Add new functions strstr, initAllCtrl, callAllCtrlInit
 	- Integrate in BaseCtrl state logging
@@ -370,7 +373,7 @@ Automatic Substate handling.
     <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Standard</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_System,3.3.8.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_System,3.3.8.1,Beckhoff Automation GmbH">
       <Namespace>Tc2_System</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Utilities,3.3.7.0,Beckhoff Automation GmbH">
