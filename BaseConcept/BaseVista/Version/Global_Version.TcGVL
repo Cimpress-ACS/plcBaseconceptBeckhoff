@@ -5,8 +5,7 @@
 VAR_GLOBAL CONSTANT
 	{attribute 'const_non_replaced'}
 	stLibVersion_Base_PLC : ST_LibVersion := (iMajor := 0, iMinor := 3, iBuild := 5, iRevision := 3, sVersion := '0.3.5.3');
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>
 </TcPlcObject>

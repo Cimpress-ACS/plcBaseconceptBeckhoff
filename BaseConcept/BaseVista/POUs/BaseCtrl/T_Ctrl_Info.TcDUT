@@ -5,6 +5,8 @@
 STRUCT
 	///name of controller instance
 	strName				: STRING(80);
+	///full name of controller instance
+	strFullName			: STRING(80);
 	///class of controller
 	strType				: STRING(80);
 	///unique controller instance identification number
@@ -22,8 +24,7 @@ STRUCT
 	// Absolut path to the controller
 	strInstancePath		: STRING;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>
