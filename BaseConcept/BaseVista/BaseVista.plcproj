@@ -15,9 +15,13 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.5.4</ProjectVersion>
+    <ProjectVersion>0.3.5.5</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.5.4 	- added Full Name to CIf
+    <Description>0.3.5.5 	- TwinCAT 3.1 4016.12
+	- Added a Simulate all to the CIf.Info. This propagates the simulation comand down
+	- Added disable variables to the me for the EOff &amp; Off Alarm and Comand
+	- Added new versions of Tc2_System &amp; Tc2_Utilities
+0.3.5.4 	- added Full Name to CIf
 0.3.5.3 	- Compiled with 3.1 4016.6
 	- Added InstancePath to CIf.Info
 	- Added a property for InstancePath
@@ -377,7 +381,7 @@ Automatic Substate handling.
     <LibraryReference Include="Tc2_System,3.3.8.1,Beckhoff Automation GmbH">
       <Namespace>Tc2_System</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_Utilities,3.3.7.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_Utilities,3.3.8.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
@@ -386,7 +390,7 @@ Automatic Substate handling.
     <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_MemMan</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc3_Module,3.3.5.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc3_Module,3.3.6.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_Module</Namespace>
     </LibraryReference>
   </ItemGroup>

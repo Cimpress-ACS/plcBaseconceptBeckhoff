@@ -136,16 +136,16 @@
     <Folder Include="POUs\Utility Functions\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.5.2,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.5,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Standard</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_System,3.3.8.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_System,3.3.8.1,Beckhoff Automation GmbH">
       <Namespace>Tc2_System</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_Utilities,3.3.7.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_Utilities,3.3.8.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
@@ -154,7 +154,7 @@
     <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_MemMan</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc3_Module,3.3.5.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc3_Module,3.3.6.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_Module</Namespace>
     </LibraryReference>
   </ItemGroup>

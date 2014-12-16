@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_Ctrl_Class" Id="{9c20edf1-e3b3-43ce-9c8c-f14d4afb36c0}">
     <Declaration><![CDATA[TYPE T_Ctrl_Class :
 STRUCT
@@ -16,6 +16,16 @@ STRUCT
 	FUBInfo						: T_fbInfo;
 	// StateLogger infos
 	stStateLogger : T_StateLogger;
+	// Simulate All Executed
+	bolSimulateAllExecuted			: BOOL;
+	// Disable the OFF Alarm transition
+	bolOffAlarmTransitionDisable	: BOOL;
+	// Disable the EOFF Alarm Transition
+	bolEOffAlarmTransitionDisable	: BOOL;
+	// Disable to Off Command Transition 
+	bolOffCmdTransitionDisable		: BOOL;
+	// Disable the EOffCommandTransition
+	bolEOffCmdTransition			: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
