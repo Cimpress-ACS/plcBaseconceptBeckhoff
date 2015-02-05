@@ -399,15 +399,13 @@ END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_ERRORQuit" Id="{723cb042-1b57-4b76-b123-9f9bd89cfe75}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
 	END_IF
 
 
@@ -415,20 +413,17 @@ END_IF]]></ST>
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		;
-		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
-			CIf.Job.bolAlmReset := FALSE;
-		END_IF
+		CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+		CIf.Job.bolAlmReset := FALSE;
 		
 		// State Change Condition
-		IF (CIf.Job.bolAlmReset = FALSE) OR (me.StateMachine.intStateHistory<=cSTA_PON) THEN
+		IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
 			me.StateMachine.intStateNext := cSTA_PONBusy;
+		ELSE
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
 		END_IF
+		
 	END_IF
-
-
 
 
 //--------------------------------------------------------------------------------------
