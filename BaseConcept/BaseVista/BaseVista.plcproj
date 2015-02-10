@@ -15,9 +15,10 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.5.6</ProjectVersion>
+    <ProjectVersion>0.3.5.7</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.5.6 	- fixed ERRORQuit
+    <Description>0.3.5.7 	- Added two actions to disable the EOFF and OFF Alarm transition
+0.3.5.6 	- fixed ERRORQuit
 0.3.5.5 	- TwinCAT 3.1 4016.12
 	- Added a Simulate all to the CIf.Info. This propagates the simulation comand down
 	- Added disable variables to the me for the EOff &amp; Off Alarm and Comand

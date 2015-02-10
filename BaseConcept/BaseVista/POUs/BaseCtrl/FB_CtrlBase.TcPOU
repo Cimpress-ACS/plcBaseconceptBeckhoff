@@ -433,6 +433,12 @@ END_IF]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Action Name="DisableOFFAlarmTransition" Id="{751f90c4-40c2-4068-be53-c4b0ca4168c9}">
+      <Implementation>
+        <ST><![CDATA[me.bolOffAlarmTransitionDisable := TRUE;
+]]></ST>
+      </Implementation>
+    </Action>
     <Method Name="CtrlInit" Id="{82ace724-adec-4b08-9e9f-389661fc0c1a}">
       <Declaration><![CDATA[METHOD PUBLIC CtrlInit : BOOL
 VAR
@@ -558,6 +564,12 @@ me.stStateLogger.pHandle:=TC3_MEMMAN.NULL; // reset handle]]></ST>
         </Implementation>
       </Set>
     </Property>
+    <Action Name="DeactivateEOFFAlarmTransition" Id="{9ad317e7-4610-4de0-9780-67bfa41f7c5e}">
+      <Implementation>
+        <ST><![CDATA[me.bolEOffAlarmTransitionDisable := TRUE;
+]]></ST>
+      </Implementation>
+    </Action>
     <Method Name="EOFF_EntryAction" Id="{9fbbb54b-f3b4-4753-b5d8-6ed9ad4532a5}">
       <Declaration><![CDATA[METHOD PROTECTED EOFF_EntryAction : BOOL
 VAR_INPUT
