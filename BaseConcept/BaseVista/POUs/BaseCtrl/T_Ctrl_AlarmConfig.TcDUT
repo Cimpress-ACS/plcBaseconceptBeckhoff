@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_AlarmConfig" Id="{aabd6e21-ed42-472e-a4fd-8e8bcbdc4f67}">
+    <Declaration><![CDATA[TYPE T_Ctrl_AlarmConfig :
+STRUCT
+	// Disable the OFF Alarm transition
+	bolOffAlarmTransitionDisable	: BOOL;
+	// Disable the EOFF Alarm Transition
+	bolEOffAlarmTransitionDisable	: BOOL;
+	// Disable to Off Command Transition 
+	bolOffCmdTransitionDisable		: BOOL;
+	// Disable the EOffCommandTransition
+	bolEOffCmdTransitionDisable		: BOOL;
+	// Enable Alarm Propagation to Children
+	bolChildrenAlarmPropagation		: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

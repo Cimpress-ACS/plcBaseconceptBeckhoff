@@ -14,18 +14,11 @@ STRUCT
 	SubStateMachine				: T_Ctrl_Class_StateMachine;
 	Alarm						: T_Ctrl_Class_Alm;
 	FUBInfo						: T_fbInfo;
+	AlarmConfig					: T_Ctrl_AlarmConfig;
 	// StateLogger infos
 	stStateLogger : T_StateLogger;
 	// Simulate All Executed
 	bolSimulateAllExecuted			: BOOL;
-	// Disable the OFF Alarm transition
-	bolOffAlarmTransitionDisable	: BOOL;
-	// Disable the EOFF Alarm Transition
-	bolEOffAlarmTransitionDisable	: BOOL;
-	// Disable to Off Command Transition 
-	bolOffCmdTransitionDisable		: BOOL;
-	// Disable the EOffCommandTransition
-	bolEOffCmdTransition			: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

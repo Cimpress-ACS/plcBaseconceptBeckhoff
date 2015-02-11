@@ -433,12 +433,6 @@ END_IF]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Action Name="DisableOFFAlarmTransition" Id="{751f90c4-40c2-4068-be53-c4b0ca4168c9}">
-      <Implementation>
-        <ST><![CDATA[me.bolOffAlarmTransitionDisable := TRUE;
-]]></ST>
-      </Implementation>
-    </Action>
     <Method Name="CtrlInit" Id="{82ace724-adec-4b08-9e9f-389661fc0c1a}">
       <Declaration><![CDATA[METHOD PUBLIC CtrlInit : BOOL
 VAR
@@ -546,10 +540,11 @@ CIf.Info.strName := getStrInstanceName(strMyInstancePath); // get name of instan
 CIf.Info.strInstancePath := strMyInstancePath;
 CIf.Info.uinChildNbr := 0;
 me.bolSimulateAllExecuted := FALSE;
-me.bolEOffAlarmTransitionDisable := FALSE;
-me.bolEOffCmdTransition := FALSE;
-me.bolOffAlarmTransitionDisable := FALSE;
-me.bolOffCmdTransitionDisable := FALSE;]]></ST>
+me.AlarmConfig.bolEOffAlarmTransitionDisable := FALSE;
+me.AlarmConfig.bolEOffCmdTransitionDisable := FALSE;
+me.AlarmConfig.bolOffAlarmTransitionDisable := FALSE;
+me.AlarmConfig.bolOffCmdTransitionDisable := FALSE;
+me.AlarmConfig.bolChildrenAlarmPropagation := FALSE;]]></ST>
       </Implementation>
     </Method>
     <Property Name="BaseLog" Id="{93f38b5a-bd28-4b6a-92ed-01698752b5bd}">
@@ -564,12 +559,25 @@ me.stStateLogger.pHandle:=TC3_MEMMAN.NULL; // reset handle]]></ST>
         </Implementation>
       </Set>
     </Property>
-    <Action Name="DeactivateEOFFAlarmTransition" Id="{9ad317e7-4610-4de0-9780-67bfa41f7c5e}">
-      <Implementation>
-        <ST><![CDATA[me.bolEOffAlarmTransitionDisable := TRUE;
-]]></ST>
-      </Implementation>
-    </Action>
+    <Property Name="OffAlarmTransition" Id="{986eb6dd-f171-46d0-9d47-ac0778c265d5}">
+      <Declaration><![CDATA[PROPERTY PUBLIC OffAlarmTransition : BOOL]]></Declaration>
+      <Set Name="Set" Id="{253333cc-8989-4302-a91a-baeb7bc23cb8}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[me.AlarmConfig.bolOffAlarmTransitionDisable := NOT OffAlarmTransition;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{35f011f2-e35a-4d4b-9ecd-90f8b605865e}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[OffAlarmTransition := NOT me.AlarmConfig.bolOffAlarmTransitionDisable;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="EOFF_EntryAction" Id="{9fbbb54b-f3b4-4753-b5d8-6ed9ad4532a5}">
       <Declaration><![CDATA[METHOD PROTECTED EOFF_EntryAction : BOOL
 VAR_INPUT
@@ -695,6 +703,25 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
+    <Property Name="ChildrenAlarmPropagation" Id="{a8d28d81-f6bb-4d53-b3e4-4f3daf2d1596}">
+      <Declaration><![CDATA[PROPERTY PUBLIC ChildrenAlarmPropagation : BOOL]]></Declaration>
+      <Set Name="Set" Id="{11d9de72-3bbb-4169-b0fd-0898165596b5}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[me.AlarmConfig.bolChildrenAlarmPropagation := ChildrenAlarmPropagation;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{fde9450a-f44d-4313-ad85-56c681793668}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ChildrenAlarmPropagation := me.AlarmConfig.bolChildrenAlarmPropagation;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="CheckChildAlmClass" Id="{aeb1fc9a-452c-4e20-b12f-e2232cb09e5e}">
       <Declaration><![CDATA[METHOD CheckChildAlmClass : BOOL
 VAR_INPUT
@@ -725,14 +752,17 @@ END_IF
 
 //------------------------------------------------------------------------------------------------------
 // set alarm class parent of childs in the case of a parent or me=OFF or EOFF or STOP
-IF (CIf.Job.eParent_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eParent_ActivAlmClass=E_AlmClass.OFF) OR (CIf.Job.eParent_ActivAlmClass=E_AlmClass.STOP) THEN
-	SetAllChildAlmClass(CIf.Job.eParent_ActivAlmClass);
-ELSIF(CIf.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.OFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.STOP) THEN
-	SetAllChildAlmClass(CIf.Job.eMe_ActivAlmClass);
-ELSE
-	// no important alarm for child active
-	SetAllChildAlmClass(E_AlmClass.NONE);
-END_IF]]></ST>
+IF me.AlarmConfig.bolChildrenAlarmPropagation THEN
+	IF (CIf.Job.eParent_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eParent_ActivAlmClass=E_AlmClass.OFF) OR (CIf.Job.eParent_ActivAlmClass=E_AlmClass.STOP) THEN
+		SetAllChildAlmClass(CIf.Job.eParent_ActivAlmClass);
+	ELSIF(CIf.Job.eMe_ActivAlmClass=E_AlmClass.EOFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.OFF) OR (CIf.Job.eMe_ActivAlmClass=E_AlmClass.STOP) THEN
+		SetAllChildAlmClass(CIf.Job.eMe_ActivAlmClass);
+	ELSE
+		// no important alarm for child active
+		SetAllChildAlmClass(E_AlmClass.NONE);
+	END_IF
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_PONBusy" Id="{b0f25ef0-7497-4069-a2fe-4d79633781d2}">
@@ -1028,13 +1058,13 @@ ELSE
 		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN // switch after startup to PONBusy
 		me.StateMachine.intStateNext := cSTA_PONBusy;
 		
-	ELSIF ((((NOT me.bolEOffAlarmTransitionDisable) AND (me.Alarm.eActivAlmClass=E_AlmClass.EOFF)) OR ((NOT me.bolEOffCmdTransition) AND (me.intCmd=cCMD_EOFF))) 
+	ELSIF ((((NOT me.AlarmConfig.bolEOffAlarmTransitionDisable) AND (me.Alarm.eActivAlmClass=E_AlmClass.EOFF)) OR ((NOT me.AlarmConfig.bolEOffCmdTransitionDisable) AND (me.intCmd=cCMD_EOFF))) 
 		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
 		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
 		AND (me.StateMachine.intState>cSTA_PON)) THEN
 		me.StateMachine.intStateNext := cSTA_EOFFBusy;
 	
-	ELSIF ((((NOT me.bolOffAlarmTransitionDisable) AND (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) OR ((NOT me.bolOffCmdTransitionDisable) AND (me.intCmd=cCMD_OFF)))
+	ELSIF ((((NOT me.AlarmConfig.bolOffAlarmTransitionDisable) AND (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) OR ((NOT me.AlarmConfig.bolOffCmdTransitionDisable) AND (me.intCmd=cCMD_OFF)))
 		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
 		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
 		AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
@@ -1109,25 +1139,47 @@ END_VAR
         <ST><![CDATA[// --------------------------------------------------------------------------
 // check alarm recation class of master													
 // --------------------------------------------------------------------------
-IF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.EOFF) THEN
-	me.Alarm.eParent_ActivAlmClass := E_AlmClass.EOFF;
-	// prevent automatic restart in manual or automatic
-	IF (CIf.job.intACmd<>cCMD_PON) THEN // wait on startup until power on is ok
-		CIf.job.intACmd := cCMD_DONE;
+IF me.AlarmConfig.bolChildrenAlarmPropagation THEN
+	IF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.EOFF) THEN
+		me.Alarm.eParent_ActivAlmClass := E_AlmClass.EOFF;
+		// prevent automatic restart in manual or automatic
+		IF (CIf.job.intACmd<>cCMD_PON) THEN // wait on startup until power on is ok
+			CIf.job.intACmd := cCMD_DONE;
+		END_IF
+		
+		IF (CIf.job.intMCmd<>cCMD_PON) THEN // wait on startup until power on is ok
+			CIf.job.intMCmd := cCMD_DONE;
+		END_IF
+	ELSIF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.OFF) THEN
+		me.Alarm.eParent_ActivAlmClass := E_AlmClass.OFF;
+	ELSIF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.STOP) THEN
+		me.Alarm.eParent_ActivAlmClass := E_AlmClass.STOP;
+	ELSE
+		me.Alarm.eParent_ActivAlmClass := E_AlmClass.NONE;
 	END_IF
-	
-	IF (CIf.job.intMCmd<>cCMD_PON) THEN // wait on startup until power on is ok
-		CIf.job.intMCmd := cCMD_DONE;
-	END_IF
-ELSIF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.OFF) THEN
-	me.Alarm.eParent_ActivAlmClass := E_AlmClass.OFF;
-ELSIF (CIf.Job.eParent_ActivAlmClass = E_AlmClass.STOP) THEN
-	me.Alarm.eParent_ActivAlmClass := E_AlmClass.STOP;
-ELSE
-	me.Alarm.eParent_ActivAlmClass := E_AlmClass.NONE;
-END_IF]]></ST>
+END_IF
+]]></ST>
       </Implementation>
     </Method>
+    <Property Name="EOffAlarmTransition" Id="{f375e13f-8da6-49d3-ae24-67be07200593}">
+      <Declaration><![CDATA[PROPERTY PUBLIC EOffAlarmTransition : BOOL]]></Declaration>
+      <Set Name="Set" Id="{42e0a576-3da9-4aef-a962-ac5b48f893e5}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[me.AlarmConfig.bolEOffAlarmTransitionDisable := NOT EOffAlarmTransition;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{6487eb72-8ef2-4632-8682-c6552d8628e6}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[EOffAlarmTransition := NOT me.AlarmConfig.bolEOffAlarmTransitionDisable;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="sta_OFF" Id="{fb45899b-0d32-4910-9443-acd40fb2d0aa}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
 ]]></Declaration>
