@@ -168,17 +168,13 @@ CIf.SwCfg.bolAllSimulation	:= TRUE;]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_EOFF" Id="{462928ac-6dbf-4aac-8633-d52af2465488}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
 	END_IF
 
 
@@ -186,18 +182,14 @@ END_VAR
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		;
-		
-		
 		// State Change Condition
 		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>cCMD_EOFF) AND (me.intCmd<>cCMD_DONE) THEN
 			IF (TRUE) THEN
-				me.StateMachine.intStateNext := cSTA_OFF;
+				me.StateMachine.intStateNext := cSTA_OFFBusy;
 			END_IF
 		END_IF
+		
 	END_IF
-
-
 
 
 //--------------------------------------------------------------------------------------
@@ -211,8 +203,7 @@ END_VAR
       <Declaration><![CDATA[PROPERTY PUBLIC CtrlCIf : POINTER TO T_Ctrl_CIf]]></Declaration>
       <Get Name="Get" Id="{1c35a505-c9e9-4c16-b2a1-3f6ecfe67a51}">
         <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
         <Implementation>
           <ST><![CDATA[CtrlCIf := ADR(CIf);]]></ST>
         </Implementation>
@@ -585,6 +576,12 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[ // used for special events in EOFF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FurtherReactions" Id="{a0d1f59a-d7b7-4333-a6d7-ae5703b618ed}">
+      <Declaration><![CDATA[METHOD PROTECTED FurtherReactions : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[;]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_PON" Id="{a5415b1f-2cd7-4edc-ac8d-d843adc525dc}">
@@ -1031,15 +1028,16 @@ CIf.SwCfg.bolAllSimulation	:= FALSE;]]></ST>
       </Implementation>
     </Method>
     <Method Name="Always" Id="{d773bf4e-1480-43c6-b1d9-815b7b2800b0}">
-      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// ----------------------------------------------------------------------------------
 // cyclic actions outside of statemachine
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	
-	; // always error supervision
+	// always error supervision
 	// ---------------------------------------------------------------------------------
+	;
+	
 END_IF
 
 // ----------------------------------------------------------------------------------
@@ -1070,6 +1068,8 @@ ELSE
 		AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
 		AND (me.StateMachine.intState>cSTA_PON)) THEN
 		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	ELSE
+		FurtherReactions();
 	END_IF
 
 	IF CIf.SwCfg.bolAllSimulation AND NOT me.bolSimulateAllExecuted THEN
@@ -1080,8 +1080,7 @@ ELSE
 		ClearAllSimulation();
 	END_IF
 
-END_IF
-		]]></ST>
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_ERROR" Id="{d85375e1-5676-4086-9d3e-5d9b445cb21a}">

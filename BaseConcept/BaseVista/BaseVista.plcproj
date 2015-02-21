@@ -15,9 +15,11 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.5.8</ProjectVersion>
+    <ProjectVersion>0.3.5.9</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.5.8 	- Added disable Child Alarm propagation functionality
+    <Description>0.3.5.9	- goes to OFFBusy from EOFF
+	- added FurtherReactions to Always
+0.3.5.8 	- Added disable Child Alarm propagation functionality
 0.3.5.7 	- Added two actions to disable the EOFF and OFF Alarm transition
 0.3.5.6 	- fixed ERRORQuit
 0.3.5.5 	- TwinCAT 3.1 4016.12
