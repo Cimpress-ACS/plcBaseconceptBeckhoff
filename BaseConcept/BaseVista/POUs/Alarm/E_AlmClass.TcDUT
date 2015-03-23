@@ -1,6 +1,8 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="E_AlmClass" Id="{9564e666-48ec-4909-a84d-5c1c0066f49f}">
-    <Declaration><![CDATA[TYPE E_AlmClass :
+    <Declaration><![CDATA[/// Do not change the sequence in this struct, such that the highest number is always the most important alarm!
+TYPE E_AlmClass :
 (
 	///no alarm active
 	NONE := 0,
@@ -18,8 +20,7 @@
 	EOFF,
 	Max_E_AlmClass
 ) INT;
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

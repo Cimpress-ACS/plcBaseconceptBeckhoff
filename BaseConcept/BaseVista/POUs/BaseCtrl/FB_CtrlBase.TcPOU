@@ -252,11 +252,9 @@ END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="CycleEndDuty" Id="{57f49fa2-4066-4912-99d4-5d1d7e5e0228}">
-      <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL]]></Declaration>
       <Implementation>
-        <ST><![CDATA[
-me.eModeHistory := CIf.Job.eMode;				// save mode to detect mode switches
+        <ST><![CDATA[me.eModeHistory := CIf.Job.eMode;				// save mode to detect mode switches
 me.intCmdLast := me.intCmd;
 
 // --------------------------------------------------------------------------
@@ -270,6 +268,10 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 	ELSE
 		CIf.Job.strState :=  TC2_STANDARD.CONCAT(STR1:='SINGLE_ANSWER-',STR2:=THIS^.getCmdState(intCmdState:=CIf.Job.intState,bolState:=TRUE));
 	END_IF
+	
+	// delete SubState
+	//me.SubStateMachine.intState := cSTA_DONE;
+	//me.SubStateMachine.intStateNext := cSTA_DONE;
 	
 	// log state change
 	me.stStateLogger.bolDoLog := TRUE;
@@ -495,8 +497,7 @@ VAR_INPUT
 	bInitRetains: BOOL;
 	///if TRUE, the instance afterwards gets moved into the copy code (online change)
 	bInCopyCode: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // enable cyclic call
@@ -512,7 +513,7 @@ CIf.Job.aCmdList[0].strName := 'Power On';
 CIf.Job.aCmdList[0].bolAvailable := TRUE;
 
 CIf.Job.aCmdList[1].intCmd := cCMD_OFF; // for test simulation single answer
-CIf.Job.aCmdList[1].strName := 'Off';
+CIf.Job.aCmdList[1].strName := 'OFF';
 CIf.Job.aCmdList[1].bolAvailable := TRUE;
 
 CIf.Job.aCmdList[2].intCmd := cCMD_EOFF;
@@ -535,7 +536,7 @@ me.AlarmConfig.bolEOffAlarmTransitionDisable := FALSE;
 me.AlarmConfig.bolEOffCmdTransitionDisable := FALSE;
 me.AlarmConfig.bolOffAlarmTransitionDisable := FALSE;
 me.AlarmConfig.bolOffCmdTransitionDisable := FALSE;
-me.AlarmConfig.bolChildrenAlarmPropagation := FALSE;]]></ST>
+me.AlarmConfig.bolChildrenAlarmPropagation := TRUE;]]></ST>
       </Implementation>
     </Method>
     <Property Name="BaseLog" Id="{93f38b5a-bd28-4b6a-92ed-01698752b5bd}">
@@ -581,7 +582,32 @@ END_VAR
     <Method Name="FurtherReactions" Id="{a0d1f59a-d7b7-4333-a6d7-ae5703b618ed}">
       <Declaration><![CDATA[METHOD PROTECTED FurtherReactions : BOOL]]></Declaration>
       <Implementation>
-        <ST><![CDATA[;]]></ST>
+        <ST><![CDATA[;
+
+// Example Implementation
+(*
+IF (	(NOT me.AlarmConfig.bolOffAlarmTransitionDisable)	AND (me.Alarm.eActivAlmClass=E_AlmClass.STOP)
+	AND (me.StateMachine.intState<>cSTA_ERROR)				AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
+	AND	(me.StateMachine.intState<>cSTA_EOFF)				AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
+	AND	(me.StateMachine.intState<>cSTA_OFF)				AND	(me.StateMachine.intState<>cSTA_OFFBusy)
+	AND (me.StateMachine.intState<>cSTA_STOP)				AND (me.StateMachine.intState<>cSTA_STOPBusy)
+	AND	(me.StateMachine.intState>cSTA_PON)) THEN
+	
+	me.StateMachine.intStateNext := cSTA_STOPBusy;
+	me.StateMachine.intState := cSTA_DONE;
+	
+ELSIF (	(NOT me.AlarmConfig.bolOffAlarmTransitionDisable)	AND (me.Alarm.eActivAlmClass=E_AlmClass.TSTOP)
+	AND (me.StateMachine.intState<>cSTA_ERROR)				AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
+	AND	(me.StateMachine.intState<>cSTA_EOFF)				AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
+	AND	(me.StateMachine.intState<>cSTA_OFF)				AND	(me.StateMachine.intState<>cSTA_OFFBusy)
+	AND (me.StateMachine.intState<>cSTA_STOP)				AND (me.StateMachine.intState<>cSTA_STOPBusy)
+	AND	(me.StateMachine.intState>cSTA_PON)) THEN
+	
+	me.StateMachine.intStateNext := cSTA_STOPBusy;
+	me.StateMachine.intState := cSTA_DONE;
+	
+END_IF
+*)]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_PON" Id="{a5415b1f-2cd7-4edc-ac8d-d843adc525dc}">
@@ -625,8 +651,7 @@ END_VAR
 VAR_INPUT
 	intCmdState: INT;
 	bolState: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// get string cmd/state string information in runtime
 IF (bolState=FALSE) THEN
@@ -652,8 +677,7 @@ IF (bolState=FALSE) THEN
 			getCmdState := 'cCMD_TSTOP';
 	END_CASE;
 ELSE
-
-// cmd's
+	// states
 	CASE intCmdState OF
 		cSTA_DONE: 
 			getCmdState := 'cSTA_DONE';
@@ -687,7 +711,6 @@ ELSE
 			getCmdState := 'cSTA_TSTOPBusy';
 		cSTA_TSTOP: 
 			getCmdState := 'cSTA_TSTOP';
-			
 		cSTA_ERROR: 
 			getCmdState := 'cSTA_ERROR';
 		cSTA_ERRORQuit: 
@@ -695,9 +718,7 @@ ELSE
 		cSTA_SINGLE_ANSWER: 
 			getCmdState := 'cSTA_SINGLE_ANSWER';
 	END_CASE;
-END_IF
-
-]]></ST>
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Property Name="ChildrenAlarmPropagation" Id="{a8d28d81-f6bb-4d53-b3e4-4f3daf2d1596}">
@@ -1061,6 +1082,10 @@ ELSE
 		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
 		AND (me.StateMachine.intState>cSTA_PON)) THEN
 		me.StateMachine.intStateNext := cSTA_EOFFBusy;
+		
+		IF ((NOT me.AlarmConfig.bolEOffAlarmTransitionDisable) AND (me.Alarm.eActivAlmClass=E_AlmClass.EOFF)) THEN
+			me.StateMachine.intState := cSTA_DONE;
+		END_IF
 	
 	ELSIF ((((NOT me.AlarmConfig.bolOffAlarmTransitionDisable) AND (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) OR ((NOT me.AlarmConfig.bolOffCmdTransitionDisable) AND (me.intCmd=cCMD_OFF)))
 		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
@@ -1068,6 +1093,11 @@ ELSE
 		AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
 		AND (me.StateMachine.intState>cSTA_PON)) THEN
 		me.StateMachine.intStateNext := cSTA_OFFBusy;
+		
+		IF ((NOT me.AlarmConfig.bolEOffAlarmTransitionDisable) AND (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) THEN
+			me.StateMachine.intState := cSTA_DONE;
+		END_IF
+		
 	ELSE
 		FurtherReactions();
 	END_IF

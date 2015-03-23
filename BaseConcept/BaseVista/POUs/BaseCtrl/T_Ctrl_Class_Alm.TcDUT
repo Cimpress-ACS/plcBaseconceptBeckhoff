@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_Ctrl_Class_Alm" Id="{48fed453-321c-426a-8baa-13222019be90}">
     <Declaration><![CDATA[TYPE T_Ctrl_Class_Alm :
 STRUCT
@@ -10,8 +11,7 @@ STRUCT
 	///highest local activ alarm class
 	eActivAlmClass: E_AlmClass;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>
