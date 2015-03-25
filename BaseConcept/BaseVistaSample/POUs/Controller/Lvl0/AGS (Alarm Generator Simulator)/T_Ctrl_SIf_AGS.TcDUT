@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_AGS" Id="{c309d799-f881-447c-b4d1-3edabf2f4e72}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_AGS :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_AGS_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_AGS_Par;
+	///current values
+	Cur: T_Ctrl_SIf_AGS_Cur;
+	///io input
+	In: T_Ctrl_SIf_AGS_In;
+	///alarm number used in this controller
+	Alm: ARRAY[1..100] OF T_Ctrl_Alm;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

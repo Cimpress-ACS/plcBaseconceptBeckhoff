@@ -30,6 +30,27 @@
     <Compile Include="GVLs\Test.TcGVL">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl0\AGS %28Alarm Generator Simulator%29\AGS_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\AGS %28Alarm Generator Simulator%29\FB_AGS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\AGS %28Alarm Generator Simulator%29\T_Ctrl_SIf_AGS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\AGS %28Alarm Generator Simulator%29\T_Ctrl_SIf_AGS_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\AGS %28Alarm Generator Simulator%29\T_Ctrl_SIf_AGS_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\AGS %28Alarm Generator Simulator%29\T_Ctrl_SIf_AGS_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\AGS %28Alarm Generator Simulator%29\T_Ctrl_SIf_AGS_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl0\CYL %28Exampel Cylinder use Base_Elements library for cylinders%29\CYL_CmdState.TcGVL">
       <SubType>Code</SubType>
     </Compile>
@@ -124,6 +145,7 @@
     <Folder Include="POUs\" />
     <Folder Include="POUs\Controller\" />
     <Folder Include="POUs\Controller\Lvl0\" />
+    <Folder Include="POUs\Controller\Lvl0\AGS %28Alarm Generator Simulator%29\" />
     <Folder Include="POUs\Controller\Lvl0\CYL %28Exampel Cylinder use Base_Elements library for cylinders%29\" />
     <Folder Include="POUs\Controller\Lvl1\" />
     <Folder Include="POUs\Controller\Lvl2\" />

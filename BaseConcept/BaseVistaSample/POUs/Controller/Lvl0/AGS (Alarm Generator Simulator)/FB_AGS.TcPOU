@@ -1,0 +1,301 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="FB_AGS" Id="{d1a57bcf-7c1b-4c5c-837a-7d62ad3464d4}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_AGS EXTENDS FB_CtrlBase
+VAR_INPUT
+	/// add/remove alarm will use this variable as AlarmId
+	udiAlarmId: UDINT;
+	In_bolAddTestAlarm: BOOL;
+	In_bolRemoveTestAlarm: BOOL;
+END_VAR
+VAR
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_AGS;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Test FB to create and remove Alarms with a custom udiAlarmId (from 1 to 100). 
+Will be used by unit tests (.NET PlcCommunication Library).
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		25.03.2015		VP/RE		Initial
+___________________________________________________________________________________________________*)
+
+
+SUPER^();]]></ST>
+    </Implementation>
+    <Method Name="sta_OFF" Id="{220698da-e656-451d-99af-4eeec97321aa}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
+METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+			IF (me.intCmd=AGS_CmdState.cCMD_ADDALARM OR SIf.In.bolAddTestAlarm.intern) THEN
+				me.StateMachine.intStateNext :=  cSTA_ADDALARM;
+			ELSIF (me.intCmd=AGS_CmdState.cCMD_REMOVEALARM OR SIf.In.bolRemoveTestAlarm.intern) THEN 
+				me.StateMachine.intStateNext := cSTA_REMOVEALARM;
+			END_IF
+		END_IF
+	END_IF
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="FB_init" Id="{2ba591d8-8062-4cd6-8801-6fcd72081e3d}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
+METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
+	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) THEN
+		// found first empty array element
+		EXIT;
+	END_IF
+END_FOR
+
+CIf.Job.aCmdList[ii].intCmd := cCMD_ADDALARM;
+CIf.Job.aCmdList[ii].strName := 'Add Alarm';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := cCMD_REMOVEALARM;
+CIf.Job.aCmdList[ii].strName := 'Remove Alarm';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+
+// set name of class/typ
+CIf.Info.strType := 'FB_AGS'; 
+
+// set alarm class
+
+FOR ii:=1 TO 100 DO
+	SIf.Alm[ii].eAlmClass := E_AlmClass.INFO;
+	SIf.Alm[ii].strText := 'test info alarm';
+END_FOR
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// Configuration defaults of class
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// Parameter defaults of class
+//SIf.Par.udiExtendTime_ms := 10000;
+]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_REMOVEALARM" Id="{76f3911e-3d71-4e95-8f62-365d679b76f2}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_REMOVEALARM'}
+METHOD PROTECTED sta_REMOVEALARM : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		// remove test alarm
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,udiAlarmId,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF (NOT SIf.In.bolRemoveTestAlarm.intern) THEN
+			me.StateMachine.intStateNext :=  cSTA_OFF;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="getCtrlSIf" Id="{80c1389d-8451-4db4-8ff7-9dee25943065}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
+METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_CYL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="StateMachine" Id="{b2b4713a-71f4-43a3-85bc-c9bb5bbd01f1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    AGS_CmdState.cSTA_ADDALARM: 
+        THIS^.sta_ADDALARM();
+    AGS_CmdState.cSTA_REMOVEALARM: 
+        THIS^.sta_REMOVEALARM();
+END_CASE;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="IoInBridge" Id="{c5abef6e-6e02-4990-8f7e-17f9cbc4797c}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
+METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolAddTestAlarm.map := THIS^.In_bolAddTestAlarm;
+SIf.In.bolRemoveTestAlarm.map := THIS^.In_bolRemoveTestAlarm;
+
+getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolAddTestAlarm));
+getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolRemoveTestAlarm));
+]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_ADDALARM" Id="{d862430f-5291-4516-b29d-0cf419978cc5}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ADDALARM'}
+METHOD PROTECTED sta_ADDALARM : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		// add resettable test alarm
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,udiAlarmId,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		
+		SIf.Cur.udiAddedAlarmsCounter := SIf.Cur.udiAddedAlarmsCounter + 1;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF (NOT SIf.In.bolAddTestAlarm.intern) THEN		
+			me.StateMachine.intStateNext :=  cSTA_OFF;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="getCmdState" Id="{ed47e384-2ca8-4b2d-86c0-efeb9ceabb72}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		// cmd's
+		CASE intCmdState OF
+			AGS_CmdState.cCMD_ADDALARM: 
+				getCmdState := 'cCMD_ADDALARM';
+			AGS_CmdState.cCMD_REMOVEALARM: 
+				getCmdState := 'cCMD_REMOVEALARM';
+		ELSE
+			getCmdState := 'Cmd not defined';
+		END_CASE;
+	ELSE
+	
+	// cmd's
+		CASE intCmdState OF
+			AGS_CmdState.cSTA_ADDALARM: 
+				getCmdState := 'cSTA_ADDALARM';
+			AGS_CmdState.cSTA_REMOVEALARM: 
+				getCmdState := 'cSTA_REMOVEALARM';
+		ELSE
+			getCmdState := 'State not defined';
+		END_CASE;
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>
