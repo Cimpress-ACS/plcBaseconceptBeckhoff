@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{D5D058E2-D862-490D-9E1F-19A82A0D2277}" ModifiedGUID="{0A5A9CF0-0B93-4FA9-A9A6-ED7C6D739809}">
+	<Project ProjectGUID="{E8F7F309-3CA1-47D8-84C5-826A21E700BC}" ModifiedGUID="{12617F6D-AB0F-4BBB-8143-321F32A55E03}">
 		<System>
 			<Settings RouterMemory="6291456"/>
 			<Licenses>
