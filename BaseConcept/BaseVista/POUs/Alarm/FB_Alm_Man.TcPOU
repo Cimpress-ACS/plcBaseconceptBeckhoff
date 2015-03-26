@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_Alm_Man" Id="{1df3d5ca-0fc7-41d6-8e17-a72131e17c96}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Alm_Man
 VAR_INPUT
@@ -323,6 +323,12 @@ IF (ii <= c_uinMaxAlmElements) THEN
 				
 				IF (c_uinModeAlarm=1) THEN // no history on PLC
 					aAlm[ii] := EmptyAlmElement; // clear entry
+					
+					// cleanup array (there must not be NULL elements between alarms)
+					IF (ii < c_uinMaxAlmElements) THEN
+						memmove(ADR(aAlm[ii]), ADR(aAlm[ii+1]), (c_uinMaxAlmElements-ii) * SIZEOF(T_Ctrl_Alm));
+					END_IF
+					
 				ELSE
 					aAlm[ii].intState := E_AlmState.CLR; // set clear state -> entry in plc history if needed
 				END_IF

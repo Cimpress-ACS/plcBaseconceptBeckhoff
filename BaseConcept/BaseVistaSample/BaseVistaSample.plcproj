@@ -158,7 +158,7 @@
     <Folder Include="POUs\Utility Functions\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.5.10,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.11,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
