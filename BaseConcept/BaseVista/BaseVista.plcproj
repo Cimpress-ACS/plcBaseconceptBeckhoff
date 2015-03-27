@@ -17,7 +17,8 @@
     <Title>Base_PLC</Title>
     <ProjectVersion>0.3.5.11</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.5.11	- added AGS controller
+    <Description>0.3.5.11	- clean AlarmManager array
+	- added AGS controller
 0.3.5.10	- delete cmd on OFF/EOFF alarm
 	- delete SubState on state change
 	- alarm children propagation set true

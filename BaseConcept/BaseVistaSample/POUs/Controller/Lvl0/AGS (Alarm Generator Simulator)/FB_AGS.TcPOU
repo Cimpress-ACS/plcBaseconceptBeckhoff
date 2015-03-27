@@ -16,10 +16,10 @@ END_VAR
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
 ¦	
-¦	Vistaprint Schweiz GmbH
+¦	Cimpress Schweiz GmbH
 ¦	CH - 8401 Winterthur
 ¦
-¦	www.vistaprint.ch - info@vistaprint.ch
+¦	www.cimpress.ch
 ¦___________________________________________________________________________________________________
 
 Function desription:
@@ -29,7 +29,7 @@ Will be used by unit tests (.NET PlcCommunication Library).
 
 History:
 Version		Date			Author		Comment
-0.00.1		25.03.2015		VP/RE		Initial
+0.00.1		25.03.2015		CM/RE		Initial
 ___________________________________________________________________________________________________*)
 
 
@@ -71,7 +71,6 @@ METHOD PROTECTED sta_OFF : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="FB_init" Id="{2ba591d8-8062-4cd6-8801-6fcd72081e3d}">
       <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
@@ -129,7 +128,6 @@ CIf.SwCfg.bolSimulation := FALSE;
 //SIf.Par.udiExtendTime_ms := 10000;
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_REMOVEALARM" Id="{76f3911e-3d71-4e95-8f62-365d679b76f2}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_REMOVEALARM'}
@@ -170,7 +168,6 @@ METHOD PROTECTED sta_REMOVEALARM : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCtrlSIf" Id="{80c1389d-8451-4db4-8ff7-9dee25943065}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
@@ -179,7 +176,6 @@ METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_CYL
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="StateMachine" Id="{b2b4713a-71f4-43a3-85bc-c9bb5bbd01f1}">
       <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
@@ -196,7 +192,6 @@ CASE me.StateMachine.intState OF
         THIS^.sta_REMOVEALARM();
 END_CASE;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoInBridge" Id="{c5abef6e-6e02-4990-8f7e-17f9cbc4797c}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
@@ -211,7 +206,6 @@ getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolAddTestAlarm));
 getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolRemoveTestAlarm));
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ADDALARM" Id="{d862430f-5291-4516-b29d-0cf419978cc5}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ADDALARM'}
@@ -254,7 +248,6 @@ METHOD PROTECTED sta_ADDALARM : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCmdState" Id="{ed47e384-2ca8-4b2d-86c0-efeb9ceabb72}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
@@ -293,7 +286,6 @@ IF (getCmdState='') THEN // global not defined get local
 END_IF
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <ObjectProperties />
   </POU>
