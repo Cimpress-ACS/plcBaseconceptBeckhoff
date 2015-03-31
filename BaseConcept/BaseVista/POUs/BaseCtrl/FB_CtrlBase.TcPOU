@@ -270,8 +270,8 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 	END_IF
 	
 	// delete SubState
-	//me.SubStateMachine.intState := cSTA_DONE;
-	//me.SubStateMachine.intStateNext := cSTA_DONE;
+	me.SubStateMachine.intState := cSTA_DONE;
+	me.SubStateMachine.intStateNext := cSTA_DONE;
 	
 	// log state change
 	me.stStateLogger.bolDoLog := TRUE;
