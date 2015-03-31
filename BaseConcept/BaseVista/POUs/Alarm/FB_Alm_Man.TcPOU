@@ -162,28 +162,28 @@ VAR
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[FOR ii:= 0 TO INT_TO_UINT(E_AlmClass.Max_E_AlmClass-1) BY 1 DO
-	aCntActiveAlmPerClass[ii] := 0; // reset alarm counter
+        <ST><![CDATA[FOR ii:= 0 TO E_AlmClass.Max_E_AlmClass-1 DO
+	aCntActiveAlmPerClass[INT_TO_UINT(ii)] := 0; // reset alarm counter             TODO: try remove 1 cast
 END_FOR
 
-FOR ii:= 0 TO c_uinMaxAlmElements BY 1 DO
+FOR ii:= 0 TO UINT_TO_INT(c_uinMaxAlmElements) DO
 	
-	IF (aAlm[ii].udiNr>0) THEN 
+	IF (aAlm[INT_TO_UINT(ii)].udiNr>0) THEN 
 		
-		IF (((aAlm[ii].intState=E_AlmState.RST) AND (bolClear_RST)) OR
-			((aAlm[ii].intState=E_AlmState.CLR) AND (bolClear_CLR)))THEN
+		IF (((aAlm[INT_TO_UINT(ii)].intState=E_AlmState.RST) AND (bolClear_RST)) OR
+			((aAlm[INT_TO_UINT(ii)].intState=E_AlmState.CLR) AND (bolClear_CLR)))THEN
 			
-			aAlm[ii] := EmptyAlmElement; // clear entry
-					
+			aAlm[INT_TO_UINT(ii)] := EmptyAlmElement; // clear entry
+
 			// cleanup array (there must not be NULL elements between alarms)
-			IF (ii < c_uinMaxAlmElements) THEN
-				memmove(ADR(aAlm[ii]), ADR(aAlm[ii+1]), (c_uinMaxAlmElements-ii) * SIZEOF(T_Ctrl_Alm));
+			IF (ii < UINT_TO_INT(c_uinMaxAlmElements)) THEN
+				memmove(ADR(aAlm[INT_TO_UINT(ii)]), ADR(aAlm[INT_TO_UINT(ii+1)]), (c_uinMaxAlmElements-INT_TO_UINT(ii)) * SIZEOF(T_Ctrl_Alm));
 				ii := ii - 1;
 			END_IF
 					
 		ELSE
 			//count alarms per class
-			aCntActiveAlmPerClass[aAlm[ii].eClass] := aCntActiveAlmPerClass[aAlm[ii].eClass] + 1; 
+			aCntActiveAlmPerClass[INT_TO_UINT(aAlm[INT_TO_UINT(ii)].eClass)] := aCntActiveAlmPerClass[INT_TO_UINT(aAlm[INT_TO_UINT(ii)].eClass)] + 1;   // TODO: try remove 2 casts
 		END_IF
 		
 	END_IF
