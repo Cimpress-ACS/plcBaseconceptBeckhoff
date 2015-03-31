@@ -1,78 +1,16 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="E_CtrlId" Id="{88c50121-3619-4895-8959-4f208e68a855}">
     <Declaration><![CDATA[TYPE E_CtrlId :
 (
 	///not defined after startup...
 	NONE,
-	ROT,
-	RMT,
-	///-- Positions ------------------------------------------------------------------------------------------
-	ShirtLoadStation,
-	PaperLoadStation,
-	POS3,
-	POS4,
-	POS5,
-	ShirtUnloadStation,
-	///-- Shirt Loading Station ------------------------------------------------------------------------------------------
-	SLS,
-	CYL_SLS_MAIN,
-	CYL_SLS_SUB,
-	GRP_SLS,
-	PRS_SLS,
-	///-- Shirt Unloading Station ------------------------------------------------------------------------------------------
-	SUS,
-	CYL_SUS_MAIN,
-	CYL_SUS_SUB,
-	GRP_SUS,
-	///-- Table Module 1 ------------------------------------------------------------------------------------------
-	TBL1,
-	CYL_VER1,
-	CYL_HOR1,
-	PRE1,
-	HTR1,
-	CYL_PRE1,
-	PRS1,
-	GRP1,
-	///-- Table Module 2 ------------------------------------------------------------------------------------------
+
 	MOD_2,
 	VER_2,
 	HOR_2,
-	///-- Table Module 3 ------------------------------------------------------------------------------------------
-	TBL3,
-	CYL_VER3,
-	CYL_HOR3,
-	PRE3,
-	HTR3,
-	CYL_PRE3,
-	PRS3,
-	GRP3,
-	///-- Table Module 4 ------------------------------------------------------------------------------------------
-	TBL4,
-	CYL_VER4,
-	CYL_HOR4,
-	PRE4,
-	HTR4,
-	CYL_PRE4,
-	PRS4,
-	GRP4,
-	///-- Table Module 5 ------------------------------------------------------------------------------------------
-	TBL5,
-	CYL_VER5,
-	CYL_HOR5,
-	PRE5,
-	HTR5,
-	CYL_PRE5,
-	PRS5,
-	GRP5,
-	///-- Table Module 6 ------------------------------------------------------------------------------------------
-	TBL6,
-	CYL_VER6,
-	CYL_HOR6,
-	PRE6,
-	HTR6,
-	CYL_PRE6,
-	PRS6,
-	GRP6,
+	AGS_1,
+
 	E_CtrlIdMax
 );
 END_TYPE

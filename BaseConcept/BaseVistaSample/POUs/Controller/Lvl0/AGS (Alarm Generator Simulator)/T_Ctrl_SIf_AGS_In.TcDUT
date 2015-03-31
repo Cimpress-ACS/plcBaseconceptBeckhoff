@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_AGS_In" Id="{7e7684a5-dde6-4490-be27-525436635cc8}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_AGS_In :
+STRUCT
+	/// adds a test alarm on positive flank
+	bolAddTestAlarm: T_Ctrl_IoBool;
+	/// removes the test alarm (if available) on positive flank
+	bolRemoveTestAlarm: T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <GVL Name="AGS_CmdState" Id="{f20d22cb-2713-45e8-91f9-9230d2a5ef3c}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	cCMD_ADDALARM: INT := 202;
+	cCMD_REMOVEALARM: INT := 204;
+	///ctrl specific states definitions
+	cSTA_ADDALARM: INT := AGS_CmdState.cCMD_ADDALARM;
+	cSTA_REMOVEALARM: INT := AGS_CmdState.cCMD_REMOVEALARM;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

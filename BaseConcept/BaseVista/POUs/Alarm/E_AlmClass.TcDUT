@@ -20,7 +20,8 @@ TYPE E_AlmClass :
 	EOFF,
 	Max_E_AlmClass
 ) INT;
-END_TYPE]]></Declaration>
+END_TYPE
+]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_AGS_Cur" Id="{cb2c5bce-13bf-4933-9c4b-bcae274dda6e}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_AGS_Cur :
+STRUCT
+	/// number of overall added alarms
+	udiAddedAlarmsCounter: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

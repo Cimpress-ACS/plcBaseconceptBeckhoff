@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="MiddlePRG_1" Id="{fc4c9c72-f24d-4184-a857-29a82ecbaa1c}">
     <Declaration><![CDATA[PROGRAM MiddlePRG_1
 VAR
@@ -7,6 +7,8 @@ VAR
 	fbMOD_2: FB_MOD;
 	fbVER_2: FB_CYL;
 	fbHOR_2: FB_CYL;
+	
+	fbAGS_1: FB_AGS;
 	
 	fbDLL_1: BASE_PLC.FB_DLL(In_bDoDataWipe:=FALSE);
 	
@@ -40,10 +42,12 @@ IF (g_uinStartProzess=(uinTaskNbr-1)) THEN
 	// init
 	//Driver
 	
-	//Lvl1
+	//Lvl0
 	fbHOR_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.HOR_2); // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
 	fbVER_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VER_2); // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
 
+	fbAGS_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.AGS_1);
+	
 	//Lvl2
 	fbMOD_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.MOD_2);  // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
 	// add childs
@@ -99,6 +103,8 @@ IF (g_uinStartProzess>=(20+c_uinCntTaskClass)) THEN
 	fbHOR_2();
 	Out_bolHOR_2_Retract := fbHOR_2.Out_bolRetract;
 	Out_bolHOR_2_Extend := fbHOR_2.Out_bolExtend;
+	
+	fbAGS_1();
 
 END_IF
 // -----------------------------------------------------------------------------------------------
