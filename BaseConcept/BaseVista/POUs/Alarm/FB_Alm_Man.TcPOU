@@ -163,7 +163,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[FOR ii:= 0 TO E_AlmClass.Max_E_AlmClass-1 DO
-	aCntActiveAlmPerClass[INT_TO_UINT(ii)] := 0; // reset alarm counter             TODO: try remove 1 cast
+	aCntActiveAlmPerClass[INT_TO_UINT(ii)] := 0; // reset alarm counter
 END_FOR
 
 FOR ii:= 0 TO UINT_TO_INT(c_uinMaxAlmElements) DO
@@ -183,7 +183,7 @@ FOR ii:= 0 TO UINT_TO_INT(c_uinMaxAlmElements) DO
 					
 		ELSE
 			//count alarms per class
-			aCntActiveAlmPerClass[INT_TO_UINT(aAlm[INT_TO_UINT(ii)].eClass)] := aCntActiveAlmPerClass[INT_TO_UINT(aAlm[INT_TO_UINT(ii)].eClass)] + 1;   // TODO: try remove 2 casts
+			aCntActiveAlmPerClass[INT_TO_UINT(aAlm[INT_TO_UINT(ii)].eClass)] := aCntActiveAlmPerClass[INT_TO_UINT(aAlm[INT_TO_UINT(ii)].eClass)] + 1;
 		END_IF
 		
 	END_IF
