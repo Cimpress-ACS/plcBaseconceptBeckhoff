@@ -8,7 +8,9 @@ VAR
 	fbVER_2: FB_CYL;
 	fbHOR_2: FB_CYL;
 	
+	stTest : T_PointerTest;
 	fbAGS_1: FB_AGS;
+	fbAGS_2: FB_AGS;
 	
 	fbDLL_1: BASE_PLC.FB_DLL(In_bDoDataWipe:=FALSE);
 	
@@ -47,6 +49,13 @@ IF (g_uinStartProzess=(uinTaskNbr-1)) THEN
 	fbVER_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VER_2); // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays
 
 	fbAGS_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.AGS_1);
+	fbAGS_1.ptrPointerTest := ADR(stTest);
+	fbAGS_1.ptrCircularPointerTest := ADR(fbAGS_2);
+	stTest.bolPrintOk := TRUE;
+	stTest.lreActTrayPos_mm := 10;
+	
+	fbAGS_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.AGS_2);
+	fbAGS_2.ptrCircularPointerTest := ADR(fbAGS_1);
 	
 	//Lvl2
 	fbMOD_2.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.MOD_2);  // init and entry fb_instance and adr of ctrl interface struct in global pointer arrays

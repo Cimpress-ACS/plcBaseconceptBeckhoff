@@ -7,10 +7,21 @@ VAR_INPUT
 	udiAlarmId: UDINT;
 	In_bolAddTestAlarm: BOOL;
 	In_bolRemoveTestAlarm: BOOL;
+	
+	/// needed for .NET unit testing {readptr}
+	ptrPointerTest: POINTER TO T_PointerTest;
+	
+	/// needed for .NET unit testing
+	ptrPointer2Test: POINTER TO T_PointerTest;
+	
+	/// needed for .NET unit testing {readptr}
+	ptrCircularPointerTest: POINTER TO FB_AGS;
 END_VAR
 VAR
 	/// Specific interface struct for public access
 	SIf: T_Ctrl_SIf_AGS;
+	
+	MetadataTest : T_MetadataTest;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -126,7 +137,11 @@ CIf.SwCfg.bolSimulation := FALSE;
 
 // Parameter defaults of class
 //SIf.Par.udiExtendTime_ms := 10000;
-]]></ST>
+
+MetadataTest.strCommentMetadataTest := 'strCommentMetadataTest test';
+MetadataTest.strCommentMetadataTestMixed_m := 'strCommentMetadataTest test';
+MetadataTest.strMultiCommentTest := 'strMultiCommentTest test';
+MetadataTest.strSingleCommentTest := 'strSingleCommentTest test';]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_REMOVEALARM" Id="{76f3911e-3d71-4e95-8f62-365d679b76f2}">
