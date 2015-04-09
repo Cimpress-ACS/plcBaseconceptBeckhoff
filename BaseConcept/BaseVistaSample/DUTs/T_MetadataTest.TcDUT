@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_MetadataTest" Id="{26e7847c-f936-47c8-bc8d-96044103fe4f}">
+    <Declaration><![CDATA[///
+/// THIS STUCTURE IS USED FOR INTEGRATION TESTS
+/// DO NOT CHANGE ANY VARIABLE OR COMMENT!
+///
+
+TYPE T_MetadataTest :
+STRUCT
+	/// a useful comment for the user (strSingleCommentTest)
+	strSingleCommentTest: STRING;
+	
+	(*
+		a useful comment for the user (strMultiCommentTest)
+		with more details
+	*)
+	strMultiCommentTest: STRING;
+	
+	/// a useful comment for the user (strCommentMetadataTest) {hidden}{simulation}
+	strCommentMetadataTest: STRING;
+	
+	(*
+		a useful comment for the user (strCommentMetadataTestMixed_m)
+		
+		{unit:ms}
+		defines the unit for UI. The unit in PLC might be different, in this case a conversion is necessary
+		
+		{range:0-999}
+		limits the range in UI. User cannot enter values exceeding the range.
+		
+		{offset:5.8}
+		shifts the value by an offset in UI
+		
+		{hidden}
+		hides the Parameter/Configuration in UI except for the "saber" user who can see everything
+		
+		{readptr}
+		tells the TagImporter to follow a pointer/reference and read out the de-referenced type. can be recursive. must be smart enough to detect cyclic pointers and break
+		
+		{simulation}
+		Tag is only useful when controller is in simulation mode
+	*)
+	strCommentMetadataTestMixed_m: STRING;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{E8F7F309-3CA1-47D8-84C5-826A21E700BC}" ModifiedGUID="{12617F6D-AB0F-4BBB-8143-321F32A55E03}">
+	<Project ProjectGUID="{E8F7F309-3CA1-47D8-84C5-826A21E700BC}" ModifiedGUID="{E7E48EC7-498A-4B6C-A183-8F3BE8FB1ACC}" Target64Bit="true">
 		<System>
-			<Settings RouterMemory="6291456"/>
+			<Settings RouterMemory="8388608"/>
 			<Licenses>
 				<Target>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>

@@ -21,6 +21,15 @@
     <Compile Include="DUTs\E_CtrlId.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\E_Test.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\T_MetadataTest.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\T_PointerTest.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GVLs\Global.TcGVL">
       <SubType>Code</SubType>
     </Compile>

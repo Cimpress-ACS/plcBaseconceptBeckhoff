@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_PointerTest" Id="{01e8530e-46c9-471b-b78b-6c8a303c30f5}">
+    <Declaration><![CDATA[TYPE T_PointerTest :
+STRUCT
+	bolPrintOk: BOOL;
+	lreActTrayPos_mm : LREAL;
+	eState: E_Test;	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

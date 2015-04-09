@@ -10,6 +10,7 @@
 	VER_2,
 	HOR_2,
 	AGS_1,
+	AGS_2,
 
 	E_CtrlIdMax
 );
