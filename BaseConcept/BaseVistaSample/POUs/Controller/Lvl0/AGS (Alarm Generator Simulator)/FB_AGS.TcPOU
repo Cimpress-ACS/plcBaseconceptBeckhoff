@@ -16,6 +16,10 @@ VAR_INPUT
 	
 	/// needed for .NET unit testing {readptr}
 	ptrCircularPointerTest: POINTER TO FB_AGS;
+	
+	/// needed for .NET unit testing
+	aTestArray: ARRAY[0..10] OF DINT;
+	
 END_VAR
 VAR
 	/// Specific interface struct for public access
