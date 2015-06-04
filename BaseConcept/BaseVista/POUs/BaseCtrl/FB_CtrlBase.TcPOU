@@ -17,8 +17,7 @@ VAR
 	// basic local controller class struct
 	me						: T_Ctrl_Class;
 	fbSimulationTimer		: TON;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
 ¦	
@@ -535,7 +534,7 @@ me.AlarmConfig.bolEOffAlarmTransitionDisable := FALSE;
 me.AlarmConfig.bolEOffCmdTransitionDisable := FALSE;
 me.AlarmConfig.bolOffAlarmTransitionDisable := FALSE;
 me.AlarmConfig.bolOffCmdTransitionDisable := FALSE;
-me.AlarmConfig.bolChildrenAlarmPropagation := TRUE;]]></ST>
+me.AlarmConfig.bolChildrenAlarmPropagation := FALSE;]]></ST>
       </Implementation>
     </Method>
     <Property Name="BaseLog" Id="{93f38b5a-bd28-4b6a-92ed-01698752b5bd}">
