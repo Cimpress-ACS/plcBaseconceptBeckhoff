@@ -51,7 +51,14 @@ STRUCT
 	*)
 	eEnumTest : E_Test;
 	
-	// a useful comment for the user (eEnumWithNegativesTest)
+	(*
+		a useful comment for the user (eEnumWithNegativesTest)
+		
+		{enum
+			-1=Negative;
+			0=Zero;
+			1=One}
+	*)
 	eEnumWithNegativesTest : E_TestWithNegatives;
 END_STRUCT
 END_TYPE
