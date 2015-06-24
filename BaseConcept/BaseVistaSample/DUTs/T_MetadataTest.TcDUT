@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="T_MetadataTest" Id="{26e7847c-f936-47c8-bc8d-96044103fe4f}">
     <Declaration><![CDATA[///
 /// THIS STUCTURE IS USED FOR INTEGRATION TESTS
@@ -42,9 +42,19 @@ STRUCT
 		Tag is only useful when controller is in simulation mode
 	*)
 	strCommentMetadataTestMixed_m: STRING;
+	
+	(*
+		a useful comment for the user (eEnumTest)
+		
+		{enum 0=Empty;1=Stop;2=Load;3=Pick;4=Print}
+		enum maps a useful text to the enumeration value. Useful for UI
+	*)
+	eEnumTest : E_Test;
+	
+	// a useful comment for the user (eEnumWithNegativesTest)
+	eEnumWithNegativesTest : E_TestWithNegatives;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

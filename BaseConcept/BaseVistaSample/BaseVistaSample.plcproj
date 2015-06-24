@@ -24,6 +24,10 @@
     <Compile Include="DUTs\E_Test.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\E_TestWithNegatives.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="DUTs\T_MetadataTest.TcDUT">
       <SubType>Code</SubType>
     </Compile>
