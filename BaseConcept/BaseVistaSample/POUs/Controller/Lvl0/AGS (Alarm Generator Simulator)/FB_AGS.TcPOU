@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_AGS" Id="{d1a57bcf-7c1b-4c5c-837a-7d62ad3464d4}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_AGS" Id="{d1a57bcf-7c1b-4c5c-837a-7d62ad3464d4}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_AGS EXTENDS FB_CtrlBase
 VAR_INPUT
 	/// add/remove alarm will use this variable as AlarmId
@@ -145,7 +145,9 @@ CIf.SwCfg.bolSimulation := FALSE;
 MetadataTest.strCommentMetadataTest := 'strCommentMetadataTest test';
 MetadataTest.strCommentMetadataTestMixed_m := 'strCommentMetadataTest test';
 MetadataTest.strMultiCommentTest := 'strMultiCommentTest test';
-MetadataTest.strSingleCommentTest := 'strSingleCommentTest test';]]></ST>
+MetadataTest.strSingleCommentTest := 'strSingleCommentTest test';
+MetadataTest.eEnumTest := E_Test.LOAD;
+MetadataTest.eEnumWithNegativesTest := E_TestWithNegatives.Negative;]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_REMOVEALARM" Id="{76f3911e-3d71-4e95-8f62-365d679b76f2}">
@@ -306,6 +308,5 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

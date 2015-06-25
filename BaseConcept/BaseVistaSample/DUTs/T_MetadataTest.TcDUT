@@ -37,9 +37,6 @@ STRUCT
 		
 		{readptr}
 		tells the TagImporter to follow a pointer/reference and read out the de-referenced type. can be recursive. must be smart enough to detect cyclic pointers and break
-		
-		{simulation}
-		Tag is only useful when controller is in simulation mode
 	*)
 	strCommentMetadataTestMixed_m: STRING;
 	
