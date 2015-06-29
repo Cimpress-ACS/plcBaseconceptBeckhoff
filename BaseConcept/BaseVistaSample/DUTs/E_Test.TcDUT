@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="E_Test" Id="{54fb43fa-ef24-460d-864d-245870c953ce}">
-    <Declaration><![CDATA[TYPE E_Test :
+    <Declaration><![CDATA[// das ist ein test, kommentar ist direkt am ENUM typ, nicht an der instanz
+TYPE E_Test :
 (
 	Empty := 0,
 	STOP,
@@ -9,8 +10,6 @@
 	PICK,
 	PRINT
 );
-END_TYPE
-]]></Declaration>
-    <ObjectProperties />
+END_TYPE]]></Declaration>
   </DUT>
 </TcPlcObject>

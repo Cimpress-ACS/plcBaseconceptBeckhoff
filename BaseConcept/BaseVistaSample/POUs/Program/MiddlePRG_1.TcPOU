@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="MiddlePRG_1" Id="{fc4c9c72-f24d-4184-a857-29a82ecbaa1c}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="MiddlePRG_1" Id="{fc4c9c72-f24d-4184-a857-29a82ecbaa1c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM MiddlePRG_1
 VAR
 	uinTaskNbr : UINT := 2; // MiddleTask is Task Nr. 2
@@ -123,6 +123,5 @@ END_IF
 
 	]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
