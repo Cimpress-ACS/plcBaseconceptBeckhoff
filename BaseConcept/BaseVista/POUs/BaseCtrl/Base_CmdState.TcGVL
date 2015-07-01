@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <GVL Name="Base_CmdState" Id="{2af01552-e8d0-4898-99a3-173403f4a47e}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl commands definitions
@@ -12,6 +13,7 @@
 	cCMD_RUN: INT := 10;
 	cCMD_STOP: INT := 12;
 	cCMD_TSTOP: INT := 14;
+	cCMD_STANDBY: INT := 16;
 	///ctrl states definitions
 	cSTA_DONE: INT := cCMD_DONE;
 	cSTA_INITIALIZED: INT := cCMD_INITIALIZED;
@@ -29,11 +31,12 @@
 	cSTA_STOP: INT := cCMD_STOP;
 	cSTA_TSTOPBusy: INT := 13;
 	cSTA_TSTOP: INT := cCMD_TSTOP;
+	cSTA_STANDBYBusy: INT := 15;
+	cSTA_STANDBY: INT := cCMD_STANDBY;
 	///special states without corresponding cmd
 	cSTA_ERROR: INT := 150;
 	cSTA_ERRORQuit: INT := 151;
 	cSTA_SINGLE_ANSWER: INT := 152;
 END_VAR]]></Declaration>
-    <ObjectProperties />
   </GVL>
 </TcPlcObject>

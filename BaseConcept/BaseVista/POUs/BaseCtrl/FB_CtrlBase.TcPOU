@@ -673,8 +673,10 @@ IF (bolState=FALSE) THEN
 			getCmdState := 'cCMD_RUN';
 		cCMD_STOP: 
 			getCmdState := 'cCMD_STOP';
-		cCMD_TSTOP: 
+		cCMD_TSTOP:
 			getCmdState := 'cCMD_TSTOP';
+		cCMD_STANDBY:
+			getCmdState := 'cCMD_STANDBY';
 	END_CASE;
 ELSE
 	// states
@@ -711,6 +713,10 @@ ELSE
 			getCmdState := 'cSTA_TSTOPBusy';
 		cSTA_TSTOP: 
 			getCmdState := 'cSTA_TSTOP';
+		cSTA_STANDBYBusy: 
+			getCmdState := 'cSTA_STANDBYBusy';
+		cSTA_STANDBY: 
+			getCmdState := 'cSTA_STANDBY';
 		cSTA_ERROR: 
 			getCmdState := 'cSTA_ERROR';
 		cSTA_ERRORQuit: 
@@ -1211,8 +1217,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="sta_OFF" Id="{fb45899b-0d32-4910-9443-acd40fb2d0aa}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
