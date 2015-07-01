@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="FB_BasLogTest_Client" Id="{69aa4d5f-10db-48ae-8018-36816aa558ff}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_BasLogTest_Client" Id="{69aa4d5f-10db-48ae-8018-36816aa558ff}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BasLogTest_Client
 VAR_INPUT
 	In_p_fbBasLog: POINTER TO FB_BasLog; // only one central FB_BasLog instance allowed per PLC!!!
@@ -56,13 +56,12 @@ IF (bolRead = TRUE) THEN
 	uinReadStatus:= In_p_fbBasLog^.M_Read(In_pHandle:=pReadHandle,In_pData:=ADR(stData)); 
 END_IF
 
-(* change mak on runtime *)
+(* change mask on runtime *)
 IF (bolChangeMask = TRUE) THEN
 	uinChangeMaskStatus := In_p_fbBasLog^.M_ChangeMask(In_strClientName:='BaseLog',In_udiNewMask:= 16#0F0F0F0F);
 	bolChangeMask := FALSE;
 END_IF
 ]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
