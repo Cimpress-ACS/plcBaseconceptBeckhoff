@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_CFR" Id="{c965383b-6bb6-4b60-9344-058bf2077a06}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CFR
+VAR_INPUT
+	/// CSV source file path and name 
+	sFileName: T_MaxString;
+	/// Rising edge starts program execution 
+	bRead: BOOL := FALSE;
+END_VAR
+VAR_OUTPUT
+	bBusy: BOOL;
+	/// Target PLC database 
+	values: ARRAY[0..(MAX_CSV_ROWS - 1), 0..(MAX_CSV_COLUMNS - 1)] OF STRING(MAX_CSV_FIELD_LENGTH);
+END_VAR
+VAR CONSTANT
+	MAX_CSV_ROWS: UINT := 100;
+	MAX_CSV_COLUMNS: UINT := 2;
+	MAX_CSV_FIELD_LENGTH: UINT := 100;
+END_VAR
+VAR
+	/// TwinCAT system network address 
+	sNetId: T_AmsNetId := '';
+	/// Single CSV text line (row, record), we are using string as record buffer (your are able to see read fields)  
+	sCSVLine: T_MaxString := '';
+	/// Single CSV field value (column, record field) 
+	sCSVField: T_MaxString := '';
+	bError: BOOL;
+	nErrId: UDINT;
+	/// Row number (record) 
+	nRow: UDINT := 0;
+	/// Column number (record field) 
+	nColumn: UDINT := 0;
+	/// File handle of the source file 
+	hFile: UINT := 0;
+	step: DWORD := 0;
+	/// Opens file 
+	fbFileOpen: FB_FileOpen;
+	/// Closes file 
+	fbFileClose: FB_FileClose;
+	/// Reads one record (line) 
+	fbFileGets: FB_FileGets;
+	/// Helper function block used to parse CSV data bytes (single record line) 
+	fbReader: FB_CSVMemBufferReader;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// source: http://infosys.beckhoff.com/content/1033/tcplclibutilities/html/tcplclibutilities_csv_sample.htm 
+
+DEFAULT_CSV_FIELD_SEP := 16#2C;(* Comma ASCII code *)
+//DEFAULT_CSV_FIELD_SEP := 16#3B;(* Semicolon ASCII code *)
+
+CASE step OF
+	0:	(* Wait for rising edge at bRead variable *)
+		IF bRead THEN
+			bRead	:= FALSE;
+			bBusy	:= TRUE;
+			bError	:= FALSE;
+			nErrId	:= 0;
+			hFile	:= 0;
+			nRow	:= 0;
+			nColumn	:= 0;
+			MEMSET( ADR( values ), 0, SIZEOF( values ) );
+			step	:= 1;
+		END_IF
+
+	1:	(* Open source file *)
+		fbFileOpen(bExecute := FALSE);
+		fbFileOpen(sNetId := sNetId, sPathName := sFileName, nMode := FOPEN_MODEREAD OR FOPEN_MODETEXT, ePath := PATH_GENERIC, bExecute := TRUE);
+		step := 2;
+
+	2:(* Wait until open not busy *)
+		fbFileOpen(bExecute := FALSE, bError => bError, nErrID => nErrID, hFile => hFile);
+		IF NOT fbFileOpen.bBusy THEN
+			IF NOT fbFileOpen.bError THEN
+				step := 3;
+			ELSE(* Error: file not found? *)
+				step := 100;
+			END_IF
+		END_IF
+
+	3:	(* Read single line (record) *)
+		fbFileGets(bExecute := FALSE);
+		fbFileGets(sNetId := sNetId, hFile := hFile, bExecute := TRUE);
+		step := 4;
+
+	4:(* Wait until read not busy *)
+		fbFileGets(bExecute := FALSE, bError => bError, nErrID => nErrID, sLine => sCSVLine);
+		IF NOT fbFileGets.bBusy THEN
+			IF NOT fbFileGets.bError THEN
+				IF fbFileGets.bEOF THEN
+					step := 10;(* End of file reached => Close source file *)
+				ELSE
+					(* FB_FileGets returns text line without the CR (carriage return) character.
+					We have to restore the CR character (replace the $L character with $R$L characters) *)
+					IF Tc2_Standard.RIGHT( sCSVLine, 1 ) = '$L' THEN
+						sCSVLine := REPLACE( sCSVLine, '$R$L', 2, LEN( sCSVLine ) );
+					END_IF
+					step := 5;
+				END_IF
+			ELSE(* Error *)
+				step := 100;
+			END_IF
+		END_IF
+
+	5:(* Parse single line (record) *)
+		fbReader.eCmd := eEnumCmd_First; (* Read first field value *)
+		REPEAT
+			fbReader( pBuffer := ADR( sCSVLine ), cbBuffer := SIZEOF( sCSVLine ), getValue =>sCSVField );
+			IF fbReader.bOk THEN
+				fbReader.eCmd := eEnumCmd_Next; (* Read next field value *)
+
+				IF (nRow < MAX_CSV_ROWS) THEN
+					IF (nColumn < MAX_CSV_COLUMNS) THEN
+						values[nRow, nColumn] := CSVFIELD_TO_STRING( sCSVField, FALSE );(* TODO: Save or use the field value in your application *)
+						// remove ' ' from left side
+						WHILE (Tc2_Standard.LEFT(values[nRow, nColumn], 1)=' ') DO
+							values[nRow, nColumn] := Tc2_Standard.DELETE(values[nRow, nColumn],1,1);
+						END_WHILE
+						// remove ' ' from right side
+						WHILE (Tc2_Standard.RIGHT(values[nRow, nColumn], 1)=' ') DO
+							values[nRow, nColumn] := Tc2_Standard.DELETE(values[nRow, nColumn],1,LEN(values[nRow, nColumn]));
+						END_WHILE
+					END_IF
+				END_IF
+
+				nColumn := nColumn + 1; (* Increment number of read columns *)
+				IF fbReader.bCRLF THEN (* CRLF == TRUE => End of reacord reached *)
+					nRow 		:= nRow + 1; (* Increment number of read records *)
+					nColumn 	:= 0; (* Reset number of columns *)
+				END_IF
+
+			ELSE (* Error: End of record reached or all fields read *)
+				step := 3; (* Try to read next line *)
+			END_IF
+		UNTIL NOT fbReader.bOk
+		END_REPEAT
+
+	10:	(* Close source file *)
+		fbFileClose(bExecute := FALSE);
+		fbFileClose(sNetId := sNetId, hFile := hFile, bExecute := TRUE);
+		step := 11;
+
+	11:(* Wait until close not busy *)
+		fbFileClose(bExecute := FALSE, bError => bError, nErrID => nErrID);
+		IF (NOT fbFileClose.bBusy) THEN
+			hFile := 0;
+			step := 100;
+		END_IF
+
+	100: (* Error or ready step => cleanup *)
+		IF (hFile <> 0) THEN
+			step := 10; (* Close the source file *)
+		ELSE
+			bBusy := FALSE;
+			step := 0; (* Ready *)
+		END_IF
+
+END_CASE]]></ST>
+    </Implementation>
+    <Property Name="NumOfRows" Id="{d053e6a5-bb86-49d0-a03b-4dd90630fa76}">
+      <Declaration><![CDATA[PROPERTY NumOfRows : UINT
+]]></Declaration>
+      <Get Name="Get" Id="{fd417942-d42e-4f23-98bb-1963e3e62284}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[NumOfRows := MAX_CSV_ROWS;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="NumOfColumns" Id="{ebc3ebff-09bc-42c7-9f82-f57eedd795d7}">
+      <Declaration><![CDATA[PROPERTY NumOfColumns : UINT
+]]></Declaration>
+      <Get Name="Get" Id="{06137de1-f033-41c1-8a4e-1c25ee98f7f5}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[NumOfColumns := MAX_CSV_COLUMNS;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

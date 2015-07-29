@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <Itf Name="I_DataChannelSend" Id="{ba11857d-aded-48bd-9ca8-81ec39c91d87}">
+    <Declaration><![CDATA[INTERFACE I_DataChannelSend
+]]></Declaration>
+    <Property Name="Error" Id="{0596365b-9078-4f16-a37c-e3d72b101ca8}">
+      <Declaration><![CDATA[PROPERTY Error : INT
+]]></Declaration>
+      <Get Name="Get" Id="{da82ecaf-4a46-419c-b338-9ca804a2f5a9}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{e3dd3de0-20d2-49c7-ae29-85cbd8da5602}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
+    <Property Name="Busy" Id="{07dde533-eefc-456f-9f61-0b3a9a418059}">
+      <Declaration><![CDATA[PROPERTY Busy : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{592a12ee-3933-4ed4-a1b2-4958b73ebe0e}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Method Name="ClearBufferDone" Id="{3f6d1d67-9c86-4bcd-b5fe-a5f60a43c95e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'ClearBufferDone'}
+METHOD ClearBufferDone : BOOL
+]]></Declaration>
+    </Method>
+    <Method Name="SendData" Id="{55e522b9-6316-4438-a637-57c7eebaf8f9}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'SendData'}
+METHOD SendData : BOOL
+VAR_INPUT
+	udiDataSize: UDINT;
+	pData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Property Name="ClearBufferRequest" Id="{58696c55-cbe0-4542-a7ad-cb0972208988}">
+      <Declaration><![CDATA[PROPERTY ClearBufferRequest : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{5a0654cf-7c0e-4742-98bb-435647e2c05d}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="DataSize" Id="{91b302f5-19e6-421e-97d3-bd36d799a160}">
+      <Declaration><![CDATA[PROPERTY DataSize : UDINT
+]]></Declaration>
+      <Get Name="Get" Id="{744a95f8-a45b-49ad-bd5b-b564fb4833dc}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Method Name="InitChannel" Id="{938a3e1e-d8d7-4286-9166-19d4e8777fcf}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'InitChannel'}
+METHOD InitChannel : BOOL
+VAR_INPUT
+	udiDataSize: UDINT;
+	pOutputData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+    </Method>
+  </Itf>
+</TcPlcObject>

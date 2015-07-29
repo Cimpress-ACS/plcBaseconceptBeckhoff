@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_DataChannelRecvFifo" Id="{df3e4527-53f0-4710-9158-aa4780fb5da2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DataChannelRecvFifo EXTENDS FB_ArrayFifo
+VAR
+	m_pDataChannel: POINTER TO FB_DataChannelRecvBase;
+	m_bolEnable: BOOL;
+	m_intMaxFifoSize: INT := 10;
+	m_pItem: POINTER TO BYTE;
+	m_bolResult: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF m_bolEnable AND (m_pItem <> Tc3_MemMan.NULL) THEN
+	IF NOT m_pDataChannel^.Busy THEN
+		m_bolResult := m_pDataChannel^.GetData(
+						udiDataSize := m_pDataChannel^.DataSize,
+						pData		:= m_pItem);
+
+		IF m_uinItemCount < m_uinMaxItemCount THEN
+			Push(m_pItem);
+		ELSE
+			m_pDataChannel^.Error := 1;
+		END_IF 	
+	END_IF
+	
+	m_pDataChannel^();
+END_IF]]></ST>
+    </Implementation>
+    <Property Name="Item" Id="{2ad1ced4-8717-40a7-a67c-474c04794bc6}">
+      <Declaration><![CDATA[PROPERTY Item : POINTER TO BYTE
+]]></Declaration>
+      <Get Name="Get" Id="{45600d03-4bea-4872-936e-b920000257d8}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{c127d49e-7e34-4fbb-8169-248801b04e2a}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_pItem := Item;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="Enable" Id="{ad58ea5f-4fdc-4c0d-9539-b6bc00c09646}">
+      <Declaration><![CDATA[PROPERTY Enable : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{12fcb4b6-ac53-4f4a-929b-c1c40a38e731}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Enable := m_bolEnable;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{39deef12-6c42-4881-b72a-a6288f4056f8}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_bolEnable := Enable;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="MaxFifoSize" Id="{d45af4a2-02a8-4699-8250-fe883089c076}">
+      <Declaration><![CDATA[PROPERTY MaxFifoSize : INT
+]]></Declaration>
+      <Get Name="Get" Id="{202c6cb9-14bc-4c9f-8a62-4fb19c47be23}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[MaxFifoSize := m_intMaxFifoSize;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{2a11508c-a9f7-4e91-9b06-cc1b2b5cc218}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_intMaxFifoSize := MaxFifoSize;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="DataChannel" Id="{f8936c45-1727-46ac-b706-a9cec4d851a8}">
+      <Declaration><![CDATA[PROPERTY DataChannel : POINTER TO FB_DataChannelRecvBase
+]]></Declaration>
+      <Set Name="Set" Id="{c607b92d-1d39-449c-83ca-55ec034eef79}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_pDataChannel := DataChannel;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+  </POU>
+</TcPlcObject>

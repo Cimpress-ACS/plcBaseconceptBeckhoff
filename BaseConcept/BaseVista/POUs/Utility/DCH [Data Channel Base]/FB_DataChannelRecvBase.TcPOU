@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_DataChannelRecvBase" Id="{1b029651-f6b2-4309-b7ef-4aa93fcf6d9f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DataChannelRecvBase IMPLEMENTS I_DataChannelRecv
+VAR_INPUT
+	pOutputDataBuffer: POINTER TO BYTE;
+END_VAR
+VAR CONSTANT
+	cDataState_DONE: INT := -1;
+	cDataState_Ready: INT := 1;
+	cDataState_Retry: INT := -99;
+	cDataState_Error: INT := -100;
+	cMAX_RETRY: INT := 10;
+END_VAR
+VAR
+	/// Saber Inteface Variables
+	/// -----------------------------------------------------------------
+	m_uinDataSize: UDINT;
+	///	m_pInputData				: POINTER TO T_IdBase_DCH;
+	m_iDchConfirm: INT;
+	/// Local Variables
+	/// -----------------------------------------------------------------
+	m_eError: E_DCH_Error;
+	m_eState: E_SaberPlcDHCState := E_SaberPlcDHCState.WaitChannelInit;
+	m_intCountRetry: INT;
+	m_iIdx: UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE m_eState OF
+	E_SaberPlcDHCState.Init:
+		m_intCountRetry := 0;
+		m_eError := E_DCH_Error.None;
+		m_iDchConfirm := cDataState_DONE;
+		m_eState := E_SaberPlcDHCState.WaitForData;
+		
+	E_SaberPlcDHCState.WaitForData:
+		IF m_iDchConfirm = cDataState_Ready THEN
+			m_eState := E_SaberPlcDHCState.DataReady;
+		END_IF
+
+	E_SaberPlcDHCState.DataReady:
+		; // The data can be retrieved
+		
+	E_SaberPlcDHCState.Acknowledge:
+		// Delete all values
+
+		// Acknowledge communication
+		m_iDchConfirm := cDataState_DONE;
+		m_eState := E_SaberPlcDHCState.WaitForData;
+		
+	E_SaberPlcDHCState.Retry:
+		m_iDchConfirm := cDataState_Retry;
+		m_eState := E_SaberPlcDHCState.WaitForData;
+
+		m_eError := E_DCH_Error.Unknown;
+	
+END_CASE
+]]></ST>
+    </Implementation>
+    <Method Name="GetData" Id="{5ecab0ac-ac50-4e84-81d5-a9eb5199af37}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'GetData'}
+METHOD GetData : BOOL
+VAR_INPUT
+	udiDataSize: UDINT;
+	pData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Busy" Id="{86063d8b-9d7e-4d10-8300-6c2f10ce109d}">
+      <Declaration><![CDATA[PROPERTY Busy : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{7bf47d7b-c335-4efc-b5eb-e8759d26d67f}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Busy := m_eState <> E_SaberPlcDHCState.DataReady;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="DataSize" Id="{96b6c175-4adb-4340-a01b-d6b798c9f332}">
+      <Declaration><![CDATA[PROPERTY DataSize : UDINT
+]]></Declaration>
+      <Get Name="Get" Id="{f40df6e6-acdd-4dcf-b0ce-d7fedc6ec22f}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[DataSize := m_uinDataSize;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Error" Id="{c443ae1a-de45-421e-96b4-29aeb2561309}">
+      <Declaration><![CDATA[PROPERTY Error : INT
+]]></Declaration>
+      <Get Name="Get" Id="{349f14b2-192d-4c35-9553-552859e5fb0a}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Error := m_eError;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{f3207b87-ba3e-4e3c-b81c-b4d44ebfb8c9}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_iDchConfirm := cDataState_Error;
+m_eState := E_SaberPlcDHCState.Error;
+]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="InitChannel" Id="{dde3b73d-7a81-4688-83f4-d56deb5fdb9d}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'InitChannel'}
+METHOD InitChannel : BOOL
+VAR_INPUT
+	udiDataSize: UDINT;
+	pInputData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

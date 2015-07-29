@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_QueueBase" Id="{6ee9d71e-9e02-47f2-8ade-fc13102bcfa0}">
+    <Declaration><![CDATA[///{attribute 'pack_mode' := '1'}
+{attribute 'enable_dynamic_creation' := ''}
+TYPE T_QueueBase :
+STRUCT
+	pData: POINTER TO BYTE;
+	pNext: POINTER TO T_QueueBase;
+	pPrevious: POINTER TO T_QueueBase;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

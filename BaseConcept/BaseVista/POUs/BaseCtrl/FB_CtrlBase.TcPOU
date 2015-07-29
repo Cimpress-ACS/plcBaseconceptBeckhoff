@@ -17,6 +17,8 @@ VAR
 	// basic local controller class struct
 	me						: T_Ctrl_Class;
 	fbSimulationTimer		: TON;
+	
+	_pSaberLogger			: POINTER TO T_LoggerSendData   := Tc3_MemMan.NULL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
@@ -149,6 +151,28 @@ END_VAR
         </Implementation>
       </Get>
     </Property>
+    <Method Name="SendSaberLog" Id="{430fc3f8-376d-42b5-8c53-8491393fc6f4}">
+      <Declaration><![CDATA[METHOD PUBLIC SendSaberLog : BOOL
+VAR_INPUT
+	eLevel			: E_SabberLoggerLevel;
+	strController	: STRING;
+	strMessage		: STRING;
+END_VAR
+VAR
+	pItem		: POINTER TO T_Logger_DCH;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF _pSaberLogger <> Tc3_MemMan.NULL THEN
+	pItem := __NEW(T_Logger_DCH);
+	pItem^.eLevel := eLevel;
+	pItem^.strController := strController;
+	pItem^.strMessage := strMessage;
+	pItem^.strTimeStamp := '';
+	_pSaberLogger^.fbFifo.Push(pItem);					
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="SetAllSimulation" Id="{450190ff-62ad-4bb9-8d3b-17bf76bba50f}">
       <Declaration><![CDATA[METHOD PUBLIC SetAllSimulation : BOOL
 VAR
@@ -537,6 +561,25 @@ me.AlarmConfig.bolOffCmdTransitionDisable := FALSE;
 me.AlarmConfig.bolChildrenAlarmPropagation := TRUE;]]></ST>
       </Implementation>
     </Method>
+    <Property Name="SaberLogger" Id="{8edb4ce3-81b8-46f3-baf8-24bcab522c3b}">
+      <Declaration><![CDATA[PROPERTY PUBLIC SaberLogger : POINTER TO T_LoggerSendData]]></Declaration>
+      <Get Name="Get" Id="{0d23adff-1c6c-4e90-ba75-7bdeffa1d34d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SaberLogger := _pSaberLogger;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{c7f9aa6b-d4da-4c6c-b34c-90f38afc32e3}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_pSaberLogger := SaberLogger;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Property Name="BaseLog" Id="{93f38b5a-bd28-4b6a-92ed-01698752b5bd}">
       <Declaration><![CDATA[PROPERTY PUBLIC BaseLog : POINTER TO FB_BasLog]]></Declaration>
       <Set Name="Set" Id="{0319d840-3181-47d6-a1db-61fc01c10380}">

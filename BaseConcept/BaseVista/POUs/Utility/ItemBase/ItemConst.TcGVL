@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <GVL Name="ItemConst" Id="{8025eb46-6a05-4afa-808e-c8866e1a697d}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	MAX_OVEN_SEGMENTS: UINT := 7;
+	MAX_PRINT_HEAD_COUNT: UINT := 5;
+	MAX_PRINT_MODULE_COUNT: UINT := 2;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>
