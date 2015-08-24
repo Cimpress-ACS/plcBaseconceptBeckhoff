@@ -15,9 +15,10 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.5.17</ProjectVersion>
+    <ProjectVersion>0.3.6.0</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.5.17	- add Standby state
+    <Description>0.3.6.0	- [RP-1797] - Added the SaberLogger
+0.3.5.17	- add Standby state
 0.3.5.16	- revert last change
 0.3.5.15	- change alarm propagation default
 0.3.5.14	- fix Always and FurtherReactions
