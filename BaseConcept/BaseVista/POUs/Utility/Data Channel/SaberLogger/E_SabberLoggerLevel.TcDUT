@@ -6,7 +6,7 @@
 	Info,
 	Warning,
 	Error
-);
+)INT;
 END_TYPE
 ]]></Declaration>
   </DUT>

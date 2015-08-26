@@ -63,6 +63,24 @@ IF (me.bolActivate) THEN // cyclic call enabled
 	END_IF
 END_IF;]]></ST>
     </Implementation>
+    <Method Name="SetAllChildLogger" Id="{0b76fb23-862b-4134-990e-a741afe92ac1}">
+      <Declaration><![CDATA[METHOD PUBLIC SetAllChildLogger : BOOL
+VAR_INPUT
+	pSaberLogger		: POINTER TO T_LoggerSendData;
+END_VAR
+VAR
+	iIdx						: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_pSaberLogger := pSaberLogger;
+
+FOR iIdx := 0 TO UINT_TO_INT(Base_Const.cMaxNrOfChilds) DO
+	IF CIf.Info.p_afbChild[iIdx] <> NULL THEN
+		CIf.Info.p_afbChild[iIdx]^.SetAllChildLogger(pSaberLogger);
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="ResetSubState" Id="{15b5f617-b264-4ae6-b9d1-2d95226c638a}">
       <Declaration><![CDATA[METHOD PROTECTED ResetSubState : BOOL
 VAR_INPUT
@@ -458,7 +476,6 @@ END_VAR
       <Implementation>
         <ST><![CDATA[IF (CIf.Info.bolInitDone=FALSE) THEN
 	//automatic read out infos about FUB
-	udiTaskCnt := TwinCAT_SystemInfoVarList._AppInfo.TaskCnt;
 	fbGETCURTASKINDEX();
 	udiTaskCnt := fbGETCURTASKINDEX.index;
 	me.FUBInfo.udiSample_us := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10; //[ms] X[100ns]/10 -> [us]

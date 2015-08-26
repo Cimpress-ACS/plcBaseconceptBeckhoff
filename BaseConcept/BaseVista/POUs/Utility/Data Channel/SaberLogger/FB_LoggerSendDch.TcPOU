@@ -5,7 +5,7 @@
 VAR
 	/// Saber Inteface Variables
 	/// -----------------------------------------------------------------
-	m_pOutputData: POINTER TO T_LoggerSendData;
+	m_pOutputData: POINTER TO T_Logger_DCH;
 END_VAR
 ]]></Declaration>
     <Implementation>
