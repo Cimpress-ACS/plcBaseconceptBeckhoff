@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_ArrayFifo" Id="{373b87b0-6b87-4c9f-9585-d005f0c4c3b9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ArrayFifo
+VAR
+	/// Internal buffer
+	m_pItemBuffer: POINTER TO BYTE;
+	m_uinItemSize: UINT;
+	/// Actual Count of the elements in the buffer
+	m_uinItemCount: UINT;
+	/// Index of the first added element
+	m_iFirstElement: INT;
+	/// Index of the last added element
+	m_iLastElement: INT;
+	m_uinBufferSize: UINT := 0;
+	m_uinMaxItemCount: UINT := 0;
+	m_bolFreePointer: BOOL := FALSE;
+	fbFifo: Tc2_Utilities.FB_MemRingBuffer;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Property Name="FreePointer" Id="{0cc83465-6dd4-4ded-a3be-d999efb06da8}">
+      <Declaration><![CDATA[PROPERTY FreePointer : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{4bd1bb9f-7a2d-4178-b1d5-2d89b4333d4b}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[FreePointer := m_bolFreePointer;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{e672e3eb-1991-47f3-b98d-f619a6084e4d}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_bolFreePointer := FreePointer;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="Pop" Id="{2a36a645-4ce4-4898-bac0-0c10de75831a}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Pop'}
+METHOD Pop : BOOL
+VAR_INPUT
+	pData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Pop := FALSE;
+
+IF fbFifo.nCount > 0 THEN
+	fbFifo.cbRead := m_uinItemSize;
+	fbFifo.pRead := pData;
+	fbFifo.A_RemoveHead();
+	m_uinItemCount := UDINT_TO_UINT(fbFifo.nCount);
+	
+	Pop := fbFifo.bOk;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Peek" Id="{3843cebf-138d-43fc-8f7b-8451d4b8abd6}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Peek'}
+METHOD Peek : BOOL
+VAR_INPUT
+	pData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Peek := FALSE;
+
+IF fbFifo.nCount > 0 THEN
+	fbFifo.cbRead := m_uinItemSize;
+	fbFifo.pRead := pData;
+	fbFifo.A_GetHead();
+	
+	Peek := fbFifo.bOk;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="Reset" Id="{3cb12c99-3f61-404c-8eaa-84574995c089}">
+      <Implementation>
+        <ST><![CDATA[fbFifo.A_Reset();
+m_uinItemCount := 0;]]></ST>
+      </Implementation>
+    </Action>
+    <Property Name="ItemCount" Id="{6456a844-987c-429f-a6ff-693a44c31550}">
+      <Declaration><![CDATA[PROPERTY ItemCount : UINT
+]]></Declaration>
+      <Get Name="Get" Id="{4f1957b7-787f-4d81-9648-dcf8bdc9465c}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ItemCount := UDINT_TO_UINT(fbFifo.nCount);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Initialize" Id="{8347f683-a9d4-4610-bbab-59800dffb764}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Initialize'}
+METHOD Initialize : BOOL
+VAR_INPUT
+	/// Size of one item [byte]
+	uinItemSize: UINT;
+	/// Buffer for the items to be stored in.
+	pBuffer: POINTER TO BYTE;
+	/// Buffer Size in [byte]
+	uinBufferSize: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Initialize := FALSE;
+
+IF (pBuffer <> Tc3_MemMan.NULL) AND (uinItemSize > 0) AND (uinBufferSize > 0) THEN
+	m_pItemBuffer := pBuffer;
+	m_uinBufferSize := uinBufferSize;
+	m_uinItemSize := uinItemSize;
+	m_uinMaxItemCount := uinBufferSize / uinItemSize;
+	
+	fbFifo.cbBuffer 	:= uinBufferSize;
+	fbFifo.pBuffer  	:= pBuffer;
+	
+	Initialize := TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="MaxBufferSize" Id="{a3cedd08-0b4a-43a2-a894-dcaeda83b125}">
+      <Declaration><![CDATA[PROPERTY MaxBufferSize : INT
+]]></Declaration>
+      <Get Name="Get" Id="{a5f0dca9-e528-467f-b893-3f7581c7d424}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[MaxBufferSize := UINT_TO_INT(m_uinBufferSize);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Push" Id="{ba7a60e5-713b-4699-a17d-5d10b6ef67aa}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Push'}
+METHOD Push : INT
+VAR_INPUT
+	pData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Push := -1;
+
+IF fbFifo.nCount < m_uinBufferSize THEN
+	fbFifo.cbWrite := m_uinItemSize;
+	fbFifo.pWrite  := pData;
+	fbFifo.A_AddTail();
+	m_uinItemCount := UDINT_TO_UINT(fbFifo.nCount);
+
+	IF fbFifo.bOk THEN
+		IF m_bolFreePointer THEN
+			__DELETE(pData);
+		END_IF
+		
+		Push := UINT_TO_INT(m_uinItemCount);
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

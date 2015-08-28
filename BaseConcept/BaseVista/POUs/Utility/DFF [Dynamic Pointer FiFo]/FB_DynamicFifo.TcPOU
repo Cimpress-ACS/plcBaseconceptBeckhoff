@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_DynamicFifo" Id="{775546da-d62a-4095-8834-9f828c0de9e5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DynamicFifo
+VAR
+	/// Configuration
+	m_bFreeDataPointer: BOOL;
+	/// Actual Count of the elements in the buffer
+	m_uinItemCount: UINT;
+	/// Index of the first added element
+	m_pFirstElement: POINTER TO T_QueueBase;
+	/// Index of the last added element
+	m_pLastElement: POINTER TO T_QueueBase;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Pop" Id="{24f665ed-39ef-4d05-a514-5b6e703f4f04}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Pop'}
+METHOD Pop : POINTER TO BYTE
+VAR
+	pItem: POINTER TO T_QueueBase;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Pop := TC3_MEMMAN.NULL;
+
+IF m_uinItemCount > 0 THEN
+	pItem := m_pFirstElement;
+	
+	m_pFirstElement := m_pFirstElement^.pNext;
+
+	IF m_pFirstElement <> TC3_MEMMAN.NULL THEN
+		m_pFirstElement^.pPrevious := TC3_MEMMAN.NULL;
+	ELSE
+		m_pLastElement := TC3_MEMMAN.NULL;
+	END_IF
+
+	m_uinItemCount := m_uinItemCount - 1;
+
+	Pop := pItem^.pData;
+	__DELETE(pItem);
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Push" Id="{4ba242b0-7aec-4445-afd7-55552d74cb37}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Push'}
+METHOD Push : INT
+VAR_INPUT
+	pData: POINTER TO BYTE;
+END_VAR
+VAR
+	pItem: POINTER TO T_QueueBase;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pItem := __NEW(T_QueueBase);
+pItem^.pData := pData;
+
+IF m_uinItemCount = 0 THEN
+	m_pFirstElement := pItem;
+	m_pLastElement  := pItem;
+	pItem^.pNext := TC3_MEMMAN.NULL;
+	pItem^.pPrevious := TC3_MEMMAN.NULL;
+ELSE
+	m_pLastElement^.pNext:= pItem;
+	pItem^.pPrevious := m_pLastElement;
+	pItem^.pNext := TC3_MEMMAN.NULL;
+	m_pLastElement  := pItem;
+END_IF
+
+m_uinItemCount := m_uinItemCount + 1;
+
+Push := UINT_TO_INT(m_uinItemCount);
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Peek" Id="{855cb792-2fef-4a6a-97bb-b0c19f8c9d0b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Peek'}
+METHOD Peek : POINTER TO BYTE
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Peek := TC3_MEMMAN.NULL;
+
+IF m_uinItemCount > 0 THEN
+	Peek := m_pFirstElement^.pData;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="FreeDataPointer" Id="{d8615c9c-cc4e-4f68-8683-8ec365a63b21}">
+      <Declaration><![CDATA[PROPERTY FreeDataPointer : BOOL
+]]></Declaration>
+      <Set Name="Set" Id="{ea585a2d-3864-4fdf-a45a-885e837a622b}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_bFreeDataPointer := FreeDataPointer;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{ee2e23ab-c3ed-494b-8059-3ca4a2b48bcf}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[FreeDataPointer := m_bFreeDataPointer;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="ClearFifo" Id="{de691d59-86b0-441f-ac72-0cd22129d7cb}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'ClearFifo'}
+METHOD ClearFifo : BOOL
+VAR
+	pItem: POINTER TO T_QueueBase;
+	pNextItem: POINTER TO T_QueueBase;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pItem := m_pFirstElement;
+m_pFirstElement := NULL;
+
+WHILE pItem <> TC3_MEMMAN.NULL DO
+	pNextItem := pItem^.pNext;
+	
+	IF m_bFreeDataPointer THEN
+		__DELETE(pItem^.pData);
+	END_IF
+	
+	__DELETE(pItem);
+	pItem := pNextItem;
+END_WHILE
+
+m_pLastElement := NULL;
+m_uinItemCount := 0;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="ItemCount" Id="{fddbec3a-ffce-4ec3-b578-25480543f3b1}">
+      <Declaration><![CDATA[PROPERTY ItemCount : UINT
+]]></Declaration>
+      <Get Name="Get" Id="{8e08995b-a44b-4e75-94a2-9ed99ad89545}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ItemCount := m_uinItemCount;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

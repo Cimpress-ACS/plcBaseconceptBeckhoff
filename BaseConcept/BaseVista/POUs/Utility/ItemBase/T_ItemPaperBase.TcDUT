@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_ItemPaperBase" Id="{aa509bd1-bbc7-4e1d-8ef0-b4a3ed4fc336}">
+    <Declaration><![CDATA[///{attribute 'pack_mode' := '1'}
+{attribute 'enable_dynamic_creation' := ''}
+TYPE T_ItemPaperBase EXTENDS T_ItemBase :
+STRUCT
+	/// Paper ID
+	udiPaperIdProcess: UDINT;
+	/// Paper ID
+	udiPaperIdSet: UDINT;
+	/// true if this is the paper is the last of a stack. After this paper is placed the stack is ejected.
+	bolLastPaperOfStackBatch: UINT;
+	/// [ms] Time difference to the previous Paper
+	udiDifferenceToPrevious_ms: UDINT;
+	/// [ms] Time difference to the next paper
+	udiDifferenceToNext_ms: UDINT;
+	/// Paper Stream Destination
+	eDestination: E_Destination;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="cycle_Logger" Id="{12d75f6a-b747-419a-858a-a56959f7e0d5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION cycle_Logger : BOOL
+VAR_INPUT
+	pLogger			: POINTER TO T_LoggerSendData;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pLogger^.fbFifo();]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

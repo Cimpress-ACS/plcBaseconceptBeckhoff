@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="E_PlcSaberDHCState" Id="{ec6aec98-4c23-45cd-8506-d720d2c0eac6}">
+    <Declaration><![CDATA[TYPE E_PlcSaberDHCState :
+(
+	/// 0
+	Init,
+	/// 1
+	WaitForJob,
+	/// 2
+	SendData,
+	/// 3
+	Acknowledge,
+	/// 4
+	Retry,
+	/// 5
+	Error,
+	/// 6
+	WaitChannelInit,
+	/// 7
+	ClearBufferBusy,
+	/// 8
+	ClearBufferDone,
+	MAX_E_PlcSaberDHCStat
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

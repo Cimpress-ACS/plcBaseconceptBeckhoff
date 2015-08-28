@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="E_SabberLoggerLevel" Id="{90469d56-8c4e-4d5a-844e-f98202bff660}">
+    <Declaration><![CDATA[TYPE E_SabberLoggerLevel :
+(
+	Info,
+	Warning,
+	Error
+)INT;
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

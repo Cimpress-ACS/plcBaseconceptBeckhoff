@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="init_Logger" Id="{ec666466-e630-4260-8002-d9fa42e8db88}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION init_Logger : BOOL
+VAR_INPUT
+	pLogger			: POINTER TO T_LoggerSendData;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pLogger^.fbDataChannel.InitChannel(SIZEOF(pLogger^.rDataChannelItem), ADR(pLogger^.rDataChannelItem));
+pLogger^.fbFifo.DataChannel := ADR(pLogger^.fbDataChannel);
+pLogger^.fbFifo.FreeDataPointer := TRUE;
+pLogger^.fbFifo.Enable := TRUE;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
