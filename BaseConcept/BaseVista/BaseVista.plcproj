@@ -15,9 +15,9 @@
     <LibraryReferences>{c7446d31-1207-4253-9624-0e38d2904514}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
-    <ProjectVersion>0.3.6.0</ProjectVersion>
     <Released>True</Released>
-    <Description>0.3.6.0	- [RP-1797] - Added the SaberLogger
+    <Description>0.3.6.1	- [RP-2057] - Moved some Utilities back to the Base Elements
+0.3.6.0	- [RP-1797] - Added the SaberLogger
 0.3.5.17	- add Standby state
 0.3.5.16	- revert last change
 0.3.5.15	- change alarm propagation default
@@ -86,6 +86,7 @@ Automatic Substate handling.
 0.2.2 - Added the UInt for IO. T_CTRL_IOUint, setInUint(), setOutUint()
 0.2.1 - Added the property CtrlCIf to FB_CtrlBase
 </Description>
+    <ProjectVersion>0.3.6.1</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -177,26 +178,6 @@ Automatic Substate handling.
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Utility\CFR [Csv File Reader]\FB_CFR.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\IdBase\FB_IdBaseRecvDch.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\IdBase\FB_IdBaseSendDch.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\IdBase\IdBaseConst.TcGVL">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\IdBase\T_IdBaseRecvData.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\IdBase\T_IdBaseSendData.TcDUT">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
@@ -302,46 +283,6 @@ Automatic Substate handling.
     </Compile>
     <Compile Include="POUs\Utility\getStrInstanceName.TcPOU">
       <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\Utility\GHT [Generic Hash Table]\FB_GHT.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\GHT [Generic Hash Table]\IGHT.TcIO">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\GHT [Generic Hash Table]\T_GHTHashTableBuffer.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\ItemBase\E_Destination.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\ItemBase\E_ItemHealth.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\ItemBase\E_PrintSelection.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\ItemBase\ItemConst.TcGVL">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\ItemBase\T_IdBase_DCH.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\ItemBase\T_ItemBase.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\ItemBase\T_ItemPaperBase.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Utility\ItemBase\T_QueueBase.TcDUT">
       <SubType>Code</SubType>
@@ -512,14 +453,12 @@ Automatic Substate handling.
     <Folder Include="POUs\Utility\AFF [Array Fifo]" />
     <Folder Include="POUs\Utility\CFR [Csv File Reader]" />
     <Folder Include="POUs\Utility\Data Channel" />
-    <Folder Include="POUs\Utility\Data Channel\IdBase" />
     <Folder Include="POUs\Utility\Data Channel\SaberLogger" />
     <Folder Include="POUs\Utility\Data Channel\SaberLogger\helper" />
     <Folder Include="POUs\Utility\DCH [Data Channel Base]" />
     <Folder Include="POUs\Utility\DFF [Dynamic Pointer FiFo]" />
     <Folder Include="POUs\Utility\DLL %28Double Linked List%29" />
     <Folder Include="POUs\Utility\FileFolder" />
-    <Folder Include="POUs\Utility\GHT [Generic Hash Table]" />
     <Folder Include="POUs\Utility\ItemBase" />
     <Folder Include="POUs\Utility\Logger" />
     <Folder Include="POUs\Utility\Logger\BasLog" />
