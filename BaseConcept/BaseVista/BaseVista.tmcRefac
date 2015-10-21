@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Refactors>
+  <Renames>
+    <RenamedSymbol>
+      <Type guid="775546da-d62a-4095-8834-9f828c0de9e5">FB_DynamicFifo</Type>
+      <From>m_bFreeDataPointer</From>
+      <To>_bFreeDataPointer</To>
+    </RenamedSymbol>
+    <RenamedSymbol>
+      <Type guid="775546da-d62a-4095-8834-9f828c0de9e5">FB_DynamicFifo</Type>
+      <From>m_uinItemCount</From>
+      <To>_uinItemCount</To>
+    </RenamedSymbol>
+    <RenamedSymbol>
+      <Type guid="775546da-d62a-4095-8834-9f828c0de9e5">FB_DynamicFifo</Type>
+      <From>m_pFirstElement</From>
+      <To>_pFirstElement</To>
+    </RenamedSymbol>
+    <RenamedSymbol>
+      <Type guid="775546da-d62a-4095-8834-9f828c0de9e5">FB_DynamicFifo</Type>
+      <From>m_pLastElement</From>
+      <To>_pLastElement</To>
+    </RenamedSymbol>
+    <RenamedSymbol>
+      <Type guid="775546da-d62a-4095-8834-9f828c0de9e5">FB_DynamicFifo</Type>
+      <From>_uintQueueLimit</From>
+      <To>_uinQueueLimit</To>
+    </RenamedSymbol>
+  </Renames>
+</Refactors>

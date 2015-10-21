@@ -11,7 +11,7 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF (m_uinItemCount > 0) AND NOT m_pDataChannel^.Busy THEN
+      <ST><![CDATA[IF (_uinItemCount > 0) AND NOT m_pDataChannel^.Busy THEN
 	m_pItem := Pop();
 
 	IF m_bolEnable THEN
@@ -20,7 +20,7 @@ END_VAR
 						udiDataSize := m_pDataChannel^.DataSize);
 	END_IF;
 	
-	IF m_bFreeDataPointer THEN
+	IF _bFreeDataPointer THEN
 		__DELETE(m_pItem);
 	END_IF
 END_IF
