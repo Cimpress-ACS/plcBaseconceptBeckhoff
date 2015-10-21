@@ -181,30 +181,6 @@ Automatic Substate handling.
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
-    <Compile Include="POUs\Utility\Data Channel\SaberLogger\E_SabberLoggerLevel.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\SaberLogger\FB_LoggerSendDch.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\SaberLogger\helper\cycle_Logger.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\SaberLogger\helper\init_Logger.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\SaberLogger\T_LoggerSendData.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Utility\Data Channel\SaberLogger\T_Logger_DCH.TcDUT">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
     <Compile Include="POUs\Utility\DCH [Data Channel Base]\E_DCH_Error.TcDUT">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
@@ -411,6 +387,30 @@ Automatic Substate handling.
     <Compile Include="POUs\Utility\Queue\T_Queue_TestData.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Utility\SaberLogger\E_SabberLoggerLevel.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\SaberLogger\FB_LoggerSendDch.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\SaberLogger\helper\cycle_Logger.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\SaberLogger\helper\init_Logger.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\SaberLogger\T_LoggerSendData.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\SaberLogger\T_Logger_DCH.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="POUs\Utility\setAllCtrlAlarmFB.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -452,9 +452,6 @@ Automatic Substate handling.
     <Folder Include="POUs\Utility" />
     <Folder Include="POUs\Utility\AFF [Array Fifo]" />
     <Folder Include="POUs\Utility\CFR [Csv File Reader]" />
-    <Folder Include="POUs\Utility\Data Channel" />
-    <Folder Include="POUs\Utility\Data Channel\SaberLogger" />
-    <Folder Include="POUs\Utility\Data Channel\SaberLogger\helper" />
     <Folder Include="POUs\Utility\DCH [Data Channel Base]" />
     <Folder Include="POUs\Utility\DFF [Dynamic Pointer FiFo]" />
     <Folder Include="POUs\Utility\DLL %28Double Linked List%29" />
@@ -465,6 +462,8 @@ Automatic Substate handling.
     <Folder Include="POUs\Utility\Logger\DatLog" />
     <Folder Include="POUs\Utility\Logger\FileLc" />
     <Folder Include="POUs\Utility\Queue" />
+    <Folder Include="POUs\Utility\SaberLogger" />
+    <Folder Include="POUs\Utility\SaberLogger\helper" />
     <Folder Include="Version" />
   </ItemGroup>
   <ItemGroup>

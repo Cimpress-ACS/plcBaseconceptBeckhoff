@@ -26,5 +26,30 @@
       <From>_uintQueueLimit</From>
       <To>_uinQueueLimit</To>
     </RenamedSymbol>
+    <RenamedSymbol>
+      <Type guid="769bdb3a-8394-443d-ba53-688afb6f2f4a">FB_DataChannelSenderFifo</Type>
+      <From>m_pDataChannel</From>
+      <To>_pDataChannel</To>
+    </RenamedSymbol>
+    <RenamedSymbol>
+      <Type guid="769bdb3a-8394-443d-ba53-688afb6f2f4a">FB_DataChannelSenderFifo</Type>
+      <From>m_pItem</From>
+      <To>_pItem</To>
+    </RenamedSymbol>
+    <RenamedSymbol>
+      <Type guid="769bdb3a-8394-443d-ba53-688afb6f2f4a">FB_DataChannelSenderFifo</Type>
+      <From>m_bolEnable</From>
+      <To>_bolEnable</To>
+    </RenamedSymbol>
+    <RenamedSymbol>
+      <Type guid="769bdb3a-8394-443d-ba53-688afb6f2f4a">FB_DataChannelSenderFifo</Type>
+      <From>m_intMaxFifoSize</From>
+      <To>_intMaxFifoSize</To>
+    </RenamedSymbol>
+    <RenamedSymbol>
+      <Type guid="769bdb3a-8394-443d-ba53-688afb6f2f4a">FB_DataChannelSenderFifo</Type>
+      <From>bResult</From>
+      <To>_bResult</To>
+    </RenamedSymbol>
   </Renames>
 </Refactors>

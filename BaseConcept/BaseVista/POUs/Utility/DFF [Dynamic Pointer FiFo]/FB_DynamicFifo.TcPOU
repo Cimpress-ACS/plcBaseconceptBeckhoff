@@ -54,16 +54,21 @@ END_IF
       <Declaration><![CDATA[{attribute 'object_name' := 'Push'}
 METHOD Push : INT
 VAR_INPUT
-	pData: POINTER TO BYTE;
+	pData			: POINTER TO BYTE;
 END_VAR
 VAR
-	pItem: POINTER TO T_QueueBase;
+	pDataDel		: POINTER TO BYTE;
+	pItem			: POINTER TO T_QueueBase;
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF (_uinQueueLimit = 0) OR (_uinItemCount < _uinQueueLimit) OR ((_uinItemCount = _uinQueueLimit) AND _bolRingBuffer) THEN
 	IF (_uinItemCount = _uinQueueLimit) AND _bolRingBuffer THEN
-		Pop();
+		pDataDel := Pop();
+		
+		IF pDataDel <> NULL THEN
+			__DELETE(pDataDel);
+		END_IF
 	END_IF	
 
 	AddItem(pData);
