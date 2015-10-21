@@ -16,7 +16,8 @@
     <Company>Vistaprint</Company>
     <Title>Base_PLC</Title>
     <Released>True</Released>
-    <Description>0.3.6.1	- [RP-2057] - Moved some Utilities back to the Base Elements
+    <Description>0.3.6.2	- [RP-2116] - Modified the DFF and Datachannel FIFO to be able to send messages when triggered. 
+0.3.6.1	- [RP-2057] - Moved some Utilities back to the Base Elements
 0.3.6.0	- [RP-1797] - Added the SaberLogger
 0.3.5.17	- add Standby state
 0.3.5.16	- revert last change
@@ -86,7 +87,7 @@ Automatic Substate handling.
 0.2.2 - Added the UInt for IO. T_CTRL_IOUint, setInUint(), setOutUint()
 0.2.1 - Added the property CtrlCIf to FB_CtrlBase
 </Description>
-    <ProjectVersion>0.3.6.1</ProjectVersion>
+    <ProjectVersion>0.3.6.2</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
