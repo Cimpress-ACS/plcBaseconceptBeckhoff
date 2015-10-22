@@ -6,7 +6,6 @@ VAR
 	_pDataChannel					: POINTER TO FB_DataChannelSendBase;	
 	_pItem							: POINTER TO BYTE;                  	
 	_bolEnable						: BOOL;                             	
-	_intMaxFifoSize					: INT := 10;                        	
 	_bResult						: BOOL;                             	
 	_bTriggeredSendMode				: BOOL := FALSE;                    	
 	_uinItemCountWhenTriggered		: UINT := 0;
@@ -90,22 +89,6 @@ END_VAR
 END_IF
 
 _bolEnable := Enable;]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
-    <Property Name="MaxFifoSize" Id="{7ba278e5-a601-4b90-a718-f318011c2fc7}">
-      <Declaration><![CDATA[PROPERTY MaxFifoSize : INT
-]]></Declaration>
-      <Get Name="Get" Id="{6f06efcc-08af-45c0-97a0-42f8525061c9}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[MaxFifoSize := _intMaxFifoSize;]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{aec2ab97-a87a-4854-9dcd-30aec901167e}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[_intMaxFifoSize := MaxFifoSize;]]></ST>
         </Implementation>
       </Set>
     </Property>
