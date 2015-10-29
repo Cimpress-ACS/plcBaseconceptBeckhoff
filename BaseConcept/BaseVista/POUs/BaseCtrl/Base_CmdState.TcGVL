@@ -14,6 +14,8 @@
 	cCMD_STOP: INT := 12;
 	cCMD_TSTOP: INT := 14;
 	cCMD_STANDBY: INT := 16;
+	cCMD_LOGDUMP: INT := 50;
+	
 	///ctrl states definitions
 	cSTA_DONE: INT := cCMD_DONE;
 	cSTA_INITIALIZED: INT := cCMD_INITIALIZED;
