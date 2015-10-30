@@ -4,13 +4,17 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DynamicFifo
 VAR
 	/// Configuration
-	m_bFreeDataPointer: BOOL;
+	_bFreeDataPointer		: BOOL;
 	/// Actual Count of the elements in the buffer
-	m_uinItemCount: UINT;
+	_uinItemCount			: UINT;
 	/// Index of the first added element
-	m_pFirstElement: POINTER TO T_QueueBase;
+	_pFirstElement			: POINTER TO T_QueueBase;
 	/// Index of the last added element
-	m_pLastElement: POINTER TO T_QueueBase;
+	_pLastElement			: POINTER TO T_QueueBase;
+	/// Limit the queue size  0=NO-LIMIT
+	_uinQueueLimit			: UINT := 0;
+	/// Behavior when the queue is full FALSE=Do not add any item if full, TRUE= Delete the oldest one and add the new one.
+	_bolRingBuffer			: BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -26,18 +30,18 @@ END_VAR
       <Implementation>
         <ST><![CDATA[Pop := TC3_MEMMAN.NULL;
 
-IF m_uinItemCount > 0 THEN
-	pItem := m_pFirstElement;
+IF _uinItemCount > 0 THEN
+	pItem := _pFirstElement;
 	
-	m_pFirstElement := m_pFirstElement^.pNext;
+	_pFirstElement := _pFirstElement^.pNext;
 
-	IF m_pFirstElement <> TC3_MEMMAN.NULL THEN
-		m_pFirstElement^.pPrevious := TC3_MEMMAN.NULL;
+	IF _pFirstElement <> TC3_MEMMAN.NULL THEN
+		_pFirstElement^.pPrevious := TC3_MEMMAN.NULL;
 	ELSE
-		m_pLastElement := TC3_MEMMAN.NULL;
+		_pLastElement := TC3_MEMMAN.NULL;
 	END_IF
 
-	m_uinItemCount := m_uinItemCount - 1;
+	_uinItemCount := _uinItemCount - 1;
 
 	Pop := pItem^.pData;
 	__DELETE(pItem);
@@ -50,6 +54,34 @@ END_IF
       <Declaration><![CDATA[{attribute 'object_name' := 'Push'}
 METHOD Push : INT
 VAR_INPUT
+	pData			: POINTER TO BYTE;
+END_VAR
+VAR
+	pDataDel		: POINTER TO BYTE;
+	pItem			: POINTER TO T_QueueBase;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (_uinQueueLimit = 0) OR (_uinItemCount < _uinQueueLimit) OR ((_uinItemCount = _uinQueueLimit) AND _bolRingBuffer) THEN
+	IF (_uinItemCount = _uinQueueLimit) AND _bolRingBuffer THEN
+		pDataDel := Pop();
+		
+		IF pDataDel <> NULL THEN
+			__DELETE(pDataDel);
+		END_IF
+	END_IF	
+
+	AddItem(pData);
+	
+	Push := UINT_TO_INT(_uinItemCount);
+ELSE
+	Push := -1;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="AddItem" Id="{529ad006-3ac5-4bbe-bdc7-de0c2849ba14}">
+      <Declaration><![CDATA[METHOD PROTECTED AddItem : BOOL
+VAR_INPUT
 	pData: POINTER TO BYTE;
 END_VAR
 VAR
@@ -60,24 +92,41 @@ END_VAR
         <ST><![CDATA[pItem := __NEW(T_QueueBase);
 pItem^.pData := pData;
 
-IF m_uinItemCount = 0 THEN
-	m_pFirstElement := pItem;
-	m_pLastElement  := pItem;
+IF _uinItemCount = 0 THEN
+	_pFirstElement := pItem;
+	_pLastElement  := pItem;
 	pItem^.pNext := TC3_MEMMAN.NULL;
 	pItem^.pPrevious := TC3_MEMMAN.NULL;
 ELSE
-	m_pLastElement^.pNext:= pItem;
-	pItem^.pPrevious := m_pLastElement;
+	_pLastElement^.pNext:= pItem;
+	pItem^.pPrevious := _pLastElement;
 	pItem^.pNext := TC3_MEMMAN.NULL;
-	m_pLastElement  := pItem;
+	_pLastElement  := pItem;
 END_IF
 
-m_uinItemCount := m_uinItemCount + 1;
-
-Push := UINT_TO_INT(m_uinItemCount);
+_uinItemCount := _uinItemCount + 1;
 ]]></ST>
       </Implementation>
     </Method>
+    <Property Name="RingBuffer" Id="{73ecdfe2-b156-4280-8a87-46c390548293}">
+      <Declaration><![CDATA[PROPERTY PUBLIC RingBuffer : BOOL]]></Declaration>
+      <Set Name="Set" Id="{295596ed-8e6f-47cd-a98e-73bdfb343ae4}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_bolRingBuffer := RingBuffer;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{ee21db1f-dbf3-4c26-b36d-b04ef9c87e3d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[RingBuffer := _bolRingBuffer;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="Peek" Id="{855cb792-2fef-4a6a-97bb-b0c19f8c9d0b}">
       <Declaration><![CDATA[{attribute 'object_name' := 'Peek'}
 METHOD Peek : POINTER TO BYTE
@@ -85,24 +134,43 @@ METHOD Peek : POINTER TO BYTE
       <Implementation>
         <ST><![CDATA[Peek := TC3_MEMMAN.NULL;
 
-IF m_uinItemCount > 0 THEN
-	Peek := m_pFirstElement^.pData;
+IF _uinItemCount > 0 THEN
+	Peek := _pFirstElement^.pData;
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="QueueLimit" Id="{d3167dbc-b3fb-4bb1-8b60-b962656f7676}">
+      <Declaration><![CDATA[PROPERTY PUBLIC QueueLimit : UINT]]></Declaration>
+      <Get Name="Get" Id="{0b11d454-da29-40b5-9b9c-bd4194a4579d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[QueueLimit := _uinQueueLimit;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{2352dc0c-296a-474f-871e-71385bfca5ed}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_uinQueueLimit := QueueLimit;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Property Name="FreeDataPointer" Id="{d8615c9c-cc4e-4f68-8683-8ec365a63b21}">
       <Declaration><![CDATA[PROPERTY FreeDataPointer : BOOL
 ]]></Declaration>
       <Set Name="Set" Id="{ea585a2d-3864-4fdf-a45a-885e837a622b}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[m_bFreeDataPointer := FreeDataPointer;]]></ST>
+          <ST><![CDATA[_bFreeDataPointer := FreeDataPointer;]]></ST>
         </Implementation>
       </Set>
       <Get Name="Get" Id="{ee2e23ab-c3ed-494b-8059-3ca4a2b48bcf}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[FreeDataPointer := m_bFreeDataPointer;]]></ST>
+          <ST><![CDATA[FreeDataPointer := _bFreeDataPointer;]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -115,13 +183,13 @@ VAR
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[pItem := m_pFirstElement;
-m_pFirstElement := NULL;
+        <ST><![CDATA[pItem := _pFirstElement;
+_pFirstElement := NULL;
 
 WHILE pItem <> TC3_MEMMAN.NULL DO
 	pNextItem := pItem^.pNext;
 	
-	IF m_bFreeDataPointer THEN
+	IF _bFreeDataPointer THEN
 		__DELETE(pItem^.pData);
 	END_IF
 	
@@ -129,8 +197,8 @@ WHILE pItem <> TC3_MEMMAN.NULL DO
 	pItem := pNextItem;
 END_WHILE
 
-m_pLastElement := NULL;
-m_uinItemCount := 0;
+_pLastElement := NULL;
+_uinItemCount := 0;
 ]]></ST>
       </Implementation>
     </Method>
@@ -140,7 +208,7 @@ m_uinItemCount := 0;
       <Get Name="Get" Id="{8e08995b-a44b-4e75-94a2-9ed99ad89545}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[ItemCount := m_uinItemCount;]]></ST>
+          <ST><![CDATA[ItemCount := _uinItemCount;]]></ST>
         </Implementation>
       </Get>
     </Property>

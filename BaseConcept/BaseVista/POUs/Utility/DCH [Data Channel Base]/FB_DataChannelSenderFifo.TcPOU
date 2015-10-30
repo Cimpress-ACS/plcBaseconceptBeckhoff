@@ -3,70 +3,92 @@
   <POU Name="FB_DataChannelSenderFifo" Id="{769bdb3a-8394-443d-ba53-688afb6f2f4a}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DataChannelSenderFifo EXTENDS FB_DynamicFifo
 VAR
-	m_pDataChannel: POINTER TO FB_DataChannelSendBase;
-	m_pItem: POINTER TO BYTE;
-	m_bolEnable: BOOL;
-	m_intMaxFifoSize: INT := 10;
-	bResult: BOOL;
+	_pDataChannel					: POINTER TO FB_DataChannelSendBase;	
+	_pItem							: POINTER TO BYTE;                  	
+	_bolEnable						: BOOL;                             	
+	_bResult						: BOOL;                             	
+	_bTriggeredSendMode				: BOOL := FALSE;                    	
+	_uinItemCountWhenTriggered		: UINT := 0;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF (m_uinItemCount > 0) AND NOT m_pDataChannel^.Busy THEN
-	m_pItem := Pop();
+      <ST><![CDATA[IF (_uinItemCount > 0) AND NOT _pDataChannel^.Busy THEN
+	_pItem := NULL;
+	
+	IF NOT _bTriggeredSendMode OR (_bTriggeredSendMode AND (_uinItemCountWhenTriggered > 0)) THEN
+		_pItem := Pop();
+		
+		IF _uinItemCountWhenTriggered > 0 THEN
+			_uinItemCountWhenTriggered := _uinItemCountWhenTriggered - 1;
+		END_IF
+	END_IF
 
-	IF m_bolEnable THEN
-		bResult := m_pDataChannel^.SendData(
-						pData       := m_pItem,
-						udiDataSize := m_pDataChannel^.DataSize);
+	IF _bolEnable THEN
+		_bResult := _pDataChannel^.SendData(
+						pData       := _pItem,
+						udiDataSize := _pDataChannel^.DataSize);
 	END_IF;
 	
-	IF m_bFreeDataPointer THEN
-		__DELETE(m_pItem);
+	IF _bFreeDataPointer AND (_pItem <> NULL) THEN
+		__DELETE(_pItem);
+	END_IF
+ELSE
+	IF _uinItemCount = 0 THEN
+		_uinItemCountWhenTriggered := 0;
 	END_IF
 END_IF
 
-IF m_pDataChannel^.ClearBufferRequest THEN
+IF _pDataChannel^.ClearBufferRequest THEN
 	THIS^.ClearFifo();
-	m_pDataChannel^.ClearBufferDone();
+	_pDataChannel^.ClearBufferDone();
 END_IF
 
-m_pDataChannel^();
+_pDataChannel^();
 
 ]]></ST>
     </Implementation>
+    <Property Name="TriggeredSendMode" Id="{34664d4b-a8c8-4e7c-aa3c-a4562a4225fb}">
+      <Declaration><![CDATA[PROPERTY PUBLIC TriggeredSendMode : BOOL]]></Declaration>
+      <Set Name="Set" Id="{1ec843c8-fcb7-42d4-97ec-96e38f99b51f}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_bTriggeredSendMode := TriggeredSendMode;
+_bolRingBuffer := TriggeredSendMode;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{4e138de1-5a06-4ad0-9041-4ba968ec7502}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[TriggeredSendMode := _bTriggeredSendMode;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Action Name="TriggerSend" Id="{3b588562-9d5a-499f-9aec-311768689ffb}">
+      <Implementation>
+        <ST><![CDATA[_uinItemCountWhenTriggered := _uinItemCount;]]></ST>
+      </Implementation>
+    </Action>
     <Property Name="Enable" Id="{7207176a-5187-4e94-9baa-a27cf9245e1b}">
       <Declaration><![CDATA[PROPERTY Enable : BOOL
 ]]></Declaration>
       <Get Name="Get" Id="{6e3c909e-f628-4869-9a66-97ae5753c258}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[Enable := m_bolEnable;]]></ST>
+          <ST><![CDATA[Enable := _bolEnable;]]></ST>
         </Implementation>
       </Get>
       <Set Name="Set" Id="{ffdd52be-bddb-4c30-bf0f-a708552c0478}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[IF m_bolEnable AND NOT Enable THEN
+          <ST><![CDATA[IF _bolEnable AND NOT Enable THEN
 	THIS^.ClearFifo();
 END_IF
 
-m_bolEnable := Enable;]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
-    <Property Name="MaxFifoSize" Id="{7ba278e5-a601-4b90-a718-f318011c2fc7}">
-      <Declaration><![CDATA[PROPERTY MaxFifoSize : INT
-]]></Declaration>
-      <Get Name="Get" Id="{6f06efcc-08af-45c0-97a0-42f8525061c9}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[MaxFifoSize := m_intMaxFifoSize;]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{aec2ab97-a87a-4854-9dcd-30aec901167e}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[m_intMaxFifoSize := MaxFifoSize;]]></ST>
+_bolEnable := Enable;]]></ST>
         </Implementation>
       </Set>
     </Property>
@@ -76,7 +98,7 @@ m_bolEnable := Enable;]]></ST>
       <Set Name="Set" Id="{ecc601d9-77f3-4324-97f6-5320b67e0c0b}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[m_pDataChannel := DataChannel;]]></ST>
+          <ST><![CDATA[_pDataChannel := DataChannel;]]></ST>
         </Implementation>
       </Set>
     </Property>

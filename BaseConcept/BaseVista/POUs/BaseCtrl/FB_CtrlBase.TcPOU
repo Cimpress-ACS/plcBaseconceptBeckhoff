@@ -186,7 +186,7 @@ END_VAR
 	pItem^.eLevel := eLevel;
 	pItem^.strController := strController;
 	pItem^.strMessage := strMessage;
-	pItem^.strTimeStamp := '';
+	pItem^.strTimeStamp := TC2_UTILITIES.SYSTEMTIME_TO_STRING(pfbAlarmCtrl^.LocalTime_TimeStruct_BaseWin);;
 	_pSaberLogger^.fbFifo.Push(pItem);					
 END_IF]]></ST>
       </Implementation>
@@ -737,6 +737,8 @@ IF (bolState=FALSE) THEN
 			getCmdState := 'cCMD_TSTOP';
 		cCMD_STANDBY:
 			getCmdState := 'cCMD_STANDBY';
+		cCMD_LOGDUMP:
+			getCmdState := 'cCMD_LOGDUMP';
 	END_CASE;
 ELSE
 	// states
@@ -891,44 +893,56 @@ END_IF
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[
-	// --------------------------------------------------------------------------
-	// input bridge
-	// --------------------------------------------------------------------------
-	THIS^.IoInBridge(); // digitale and analoge inputs read from hardware or forcing
+// --------------------------------------------------------------------------
+// input bridge
+// --------------------------------------------------------------------------
+THIS^.IoInBridge(); // digitale and analoge inputs read from hardware or forcing
 
-	// --------------------------------------------------------------------------
-	// check alarm recation class of master													
-	// --------------------------------------------------------------------------
-	THIS^.CheckParentAlmClass();
-	
-	// ----------------------------------------------------------------------------------
-	// check the highest active alarm -> set local class
-	// ----------------------------------------------------------------------------------
-	IF (me.Alarm.eParent_ActivAlmClass>CIf.job.eMe_ActivAlmClass) THEN
-		me.Alarm.eActivAlmClass := me.Alarm.eParent_ActivAlmClass;
-	ELSE
-		me.Alarm.eActivAlmClass := CIf.job.eMe_ActivAlmClass;
+// --------------------------------------------------------------------------
+// check alarm recation class of master													
+// --------------------------------------------------------------------------
+THIS^.CheckParentAlmClass();
+
+// ----------------------------------------------------------------------------------
+// check the highest active alarm -> set local class
+// ----------------------------------------------------------------------------------
+IF (me.Alarm.eParent_ActivAlmClass>CIf.job.eMe_ActivAlmClass) THEN
+	me.Alarm.eActivAlmClass := me.Alarm.eParent_ActivAlmClass;
+ELSE
+	me.Alarm.eActivAlmClass := CIf.job.eMe_ActivAlmClass;
+END_IF
+
+// ----------------------------------------------------------------------------------
+// check child me and set parent alarm class
+// ----------------------------------------------------------------------------------
+CheckChildAlmClass();
+
+// --------------------------------------------------------------------------
+// get command											
+// --------------------------------------------------------------------------
+IF (CIf.Job.eMode = E_Mode.MANU) THEN
+	me.intCmd := CIf.Job.intMCmd;  
+ELSE
+	IF (me.eModeHistory <> E_MODE.AUTO) THEN
+		CIf.Job.intMCmd:= cCMD_DONE;	// reset manual command
+		me.bolChangeBackToAUTO := TRUE;	// switch off  or .....
 	END_IF
-	
-	// ----------------------------------------------------------------------------------
-	// check child me and set parent alarm class
-	// ----------------------------------------------------------------------------------
-	CheckChildAlmClass();
-	
-	// --------------------------------------------------------------------------
-	// get command											
-	// --------------------------------------------------------------------------
-	IF (CIf.Job.eMode = E_Mode.MANU) THEN
-		me.intCmd := CIf.Job.intMCmd;  
-	ELSE
-		IF (me.eModeHistory <> E_MODE.AUTO) THEN
-			CIf.Job.intMCmd:= cCMD_DONE;	// reset manual command
-			me.bolChangeBackToAUTO := TRUE;	// switch off  or .....
-		END_IF
-		CIf.Job.eMode := E_MODE.AUTO;
-		me.intCmd := CIf.Job.intACmd;
-	END_IF
+	CIf.Job.eMode := E_MODE.AUTO;
+	me.intCmd := CIf.Job.intACmd;
+END_IF
 	CIf.Job.strCmd := THIS^.getCmdState(intCmdState:=me.intCmd,bolState:=FALSE);
+
+// Trigger a logdump from the saber logger
+// ---------------------------------------------------------------------------- 
+IF me.intCmd = cCMD_LOGDUMP THEN
+	IF _pSaberLogger <> NULL THEN
+		_pSaberLogger^.fbFifo.TriggerSend();	
+	END_IF
+	
+	CIf.Job.intACmd := cCMD_DONE;
+	CIf.Job.intMCmd := cCMD_DONE;
+END_IF
+
 	]]></ST>
       </Implementation>
     </Method>
@@ -1215,6 +1229,31 @@ END_IF]]></ST>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="LogStateChange" Id="{dcf92df9-f468-4ad9-ab4d-68e0b1a2e93f}">
+      <Declaration><![CDATA[METHOD PROTECTED LogStateChange : BOOL
+VAR
+	strMessage		: STRING;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	// Logging
+	strMessage := CONCAT('Statechange: ', getCmdState(me.StateMachine.intState, TRUE));
+	strMessage := CONCAT(strMessage, ' -> ');
+	strMessage := CONCAT(strMessage, getCmdState(me.StateMachine.intStateNext, TRUE));
+	SendSaberLog(E_SabberLoggerLevel.Info, CIf.Info.strName, strMessage);
+END_IF
+
+IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateNext) THEN
+	// Logging
+	strMessage := CONCAT('SubStatechange: ', getCmdState(me.SubStateMachine.intState, TRUE));
+	strMessage := CONCAT(strMessage, ' -> ');
+	strMessage := CONCAT(strMessage, getCmdState(me.SubStateMachine.intStateNext, TRUE));
+	SendSaberLog(E_SabberLoggerLevel.Info, CIf.Info.strName, strMessage);
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <Property Name="InstancePath" Id="{e3d54fb1-6342-4e02-aa48-7cc80034ac8a}">
