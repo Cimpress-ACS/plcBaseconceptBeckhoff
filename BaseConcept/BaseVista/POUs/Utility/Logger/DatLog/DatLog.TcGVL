@@ -1,7 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
   <GVL Name="DatLog" Id="{9e64d1ce-eb5d-4741-ad5a-feec77a8073a}">
-    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+    <Declaration><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+VAR_GLOBAL CONSTANT
 	// internal
 	cVAR_TYPE_BOOL : USINT := 1; (*Variable hat den Datentyp BOOL*)
 	cVAR_TYPE_SINT : USINT := 2; (*Variable hat den Datentyp SINT*)
@@ -31,6 +45,5 @@
 	cERR_UNSUPPORTED_TYPE_STRING_TOO_LONG : UINT := 53006; // defined string in base log shorter then log string
 END_VAR
 ]]></Declaration>
-    <ObjectProperties />
   </GVL>
 </TcPlcObject>

@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <POU Name="getInUint" Id="{d475b944-8df7-4335-9a88-bf0929b960fc}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <POU Name="getInUint" Id="{d475b944-8df7-4335-9a88-bf0929b960fc}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION getInUint : UINT
 VAR_INPUT
 	bol_GlobalEnableForce		: BOOL;
@@ -9,7 +10,21 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[p_Input^.state := p_Input^.map;
+      <ST><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+p_Input^.state := p_Input^.map;
 
 IF (p_Input^.EnForce AND bol_GlobalEnableForce) THEN
 	p_Input^.intern := p_Input^.force;
@@ -19,6 +34,5 @@ END_IF;
 
 getInUint := p_Input^.intern;]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

@@ -1,6 +1,21 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
   <DUT Name="E_AlmCmd" Id="{f7db89ab-8f06-4067-ac37-ded4a58b9a71}">
-    <Declaration><![CDATA[TYPE E_AlmCmd :
+    <Declaration><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+TYPE E_AlmCmd :
 (
 	DONE := -1,
 	INITIALIZED := 0,
@@ -11,6 +26,5 @@
 );
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

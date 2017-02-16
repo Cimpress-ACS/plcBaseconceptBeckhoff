@@ -1,15 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
   <POU Name="FB_LoggerSendDch" Id="{8da49359-090a-43b1-a1c7-b3cc1f337639}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_LoggerSendDch EXTENDS FB_DataChannelSendBase IMPLEMENTS I_DataChannelSend
 VAR
-	/// Saber Inteface Variables
+	/// Mosaic Inteface Variables
 	/// -----------------------------------------------------------------
 	m_pOutputData: POINTER TO T_Logger_DCH;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[SUPER^();]]></ST>
+      <ST><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+SUPER^();]]></ST>
     </Implementation>
     <Method Name="InitChannel" Id="{64c9bc2e-6a85-4abb-832f-8db35bb50d57}">
       <Declaration><![CDATA[{attribute 'object_name' := 'InitChannel'}

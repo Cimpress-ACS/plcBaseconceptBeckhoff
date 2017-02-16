@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_Alm_Man" Id="{1df3d5ca-0fc7-41d6-8e17-a72131e17c96}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <POU Name="FB_Alm_Man" Id="{1df3d5ca-0fc7-41d6-8e17-a72131e17c96}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Alm_Man
 VAR_INPUT
 	;
@@ -47,14 +47,21 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[(*__________________________________________________________________________________________________
-¦	
-¦	Vistaprint Schweiz GmbH
-¦	CH - 8401 Winterthur
-¦
-¦	www.vistaprint.ch - info@vistaprint.ch
-¦___________________________________________________________________________________________________
+      <ST><![CDATA[(* Copyright 2017 Cimpress
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+(* 
 Function desription:
 The alarm manager sets and clears alarms from the internal array. In the internal array all active 
 alarms of a machine are listed. The list has no order. A new entry will be inserted at the next 
@@ -360,6 +367,5 @@ IF (ii <= c_uinMaxAlmElements) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

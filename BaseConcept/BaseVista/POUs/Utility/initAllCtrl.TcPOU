@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="initAllCtrl" Id="{7ea86c8b-b986-49cb-8fe3-aa950ed3c848}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <POU Name="initAllCtrl" Id="{7ea86c8b-b986-49cb-8fe3-aa950ed3c848}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION initAllCtrl : BOOL
 VAR_INPUT
 	pCtrlInst			: POINTER TO POINTER TO FB_CtrlBase;
@@ -14,7 +14,21 @@ END_VAR
 
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[FOR uinIdx := 0 TO uinCtrlInstLength DO
+      <ST><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+FOR uinIdx := 0 TO uinCtrlInstLength DO
 	IF pCtrlInst[uinIdx] <> 0 THEN
 		IF (pAlarmCtrl<>0) THEN
 			pCtrlInst[uinIdx]^.AlarmCtrl := pAlarmCtrl; // add alarm manager interface/pointer
@@ -27,6 +41,5 @@ END_VAR
 END_FOR
 ]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

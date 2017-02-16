@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <POU Name="getInBolDebounced" Id="{bfc9701f-c020-475a-8a42-2ecab51c9483}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <POU Name="getInBolDebounced" Id="{bfc9701f-c020-475a-8a42-2ecab51c9483}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION getInBolDebounced : BOOL
 VAR_INPUT
 	bol_GlobalEnableForce: BOOL;
@@ -9,7 +10,21 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// The input is accepted only after the debounce time (udiDebounceTime_ms)
+      <ST><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+// The input is accepted only after the debounce time (udiDebounceTime_ms)
 // If the signal changes during this time, the timer will be restarted
 
 IF (p_Input^.EnForce AND bol_GlobalEnableForce) THEN	// Forced signal, no debouncing neccessary
@@ -29,6 +44,5 @@ p_Input^.state := p_Input^.map;
 
 getInBolDebounced := p_Input^.intern;]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{E8F7F309-3CA1-47D8-84C5-826A21E700BC}" ModifiedGUID="{E7E48EC7-498A-4B6C-A183-8F3BE8FB1ACC}" Target64Bit="true">
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4020.0">
+	<Project ProjectGUID="{E8F7F309-3CA1-47D8-84C5-826A21E700BC}" Target64Bit="true" ShowHideConfigurations="#x6">
 		<System>
 			<Settings RouterMemory="8388608"/>
 			<Licenses>
@@ -25,6 +25,45 @@
 				<Instance Id="#x01010010" TcSmClass="TComPlcObjDef">
 					<Name>BaseVistaSample Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<Vars VarGrpType="1">
+						<Name>Task_Middle Inputs</Name>
+						<Var>
+							<Name>Io.In_bolHOR_2_Retracted_NO</Name>
+							<Comment>
+								<![CDATA[input fb instance Cyl_AB position retract normally open]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.In_bolHOR_2_Extended_NC</Name>
+							<Comment>
+								<![CDATA[input fb instance Cyl_AB position extend normally closed]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+					</Vars>
+					<Vars VarGrpType="2">
+						<Name>Task_Middle Outputs</Name>
+						<Var>
+							<Name>Io.Out_bolHOR_2_Retract</Name>
+							<Comment>
+								<![CDATA[output fb instance Cyl_AB valve retract]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.Out_bolHOR_2_Extend</Name>
+							<Comment>
+								<![CDATA[output fb instance Cyl_AB valve extend]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+					</Vars>
+					<TaskPouOids>
+						<TaskPouOid Prio="5" OTCID="#x01010011"/>
+						<TaskPouOid Prio="10" OTCID="#x01010012"/>
+						<TaskPouOid Prio="20" OTCID="#x01010013"/>
+					</TaskPouOids>
 				</Instance>
 			</Project>
 			<Project GUID="{BEA43F75-96A6-4F54-AD09-F559F9B95FA9}" Name="BaseVista" PrjFilePath="BaseVista\BaseVista.plcproj" TmcFilePath="BaseVista\BaseVista.tmc" ReloadTmc="true" AmsPort="852">

@@ -1,7 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
   <DUT Name="T_StateLogger" Id="{6f473df8-4e2b-404c-833a-c28561ae606c}">
-    <Declaration><![CDATA[TYPE T_StateLogger :
+    <Declaration><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+TYPE T_StateLogger :
 STRUCT
 	pfbBaseLog : POINTER TO FB_BasLog; // should be set from outside over property
 	uinStatus_Handle : UINT; // =0 handle ok or not allready requested 
@@ -17,6 +31,5 @@ STRUCT
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

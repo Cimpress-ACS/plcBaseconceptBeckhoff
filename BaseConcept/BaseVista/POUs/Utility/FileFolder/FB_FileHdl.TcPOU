@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="FB_FileHdl" Id="{bf5ec1be-b2e5-4305-b976-03c722eb8396}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <POU Name="FB_FileHdl" Id="{bf5ec1be-b2e5-4305-b976-03c722eb8396}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_FileHdl
 
 VAR_OUTPUT
@@ -74,7 +74,21 @@ VAR CONSTANT
 	cFILE_HDL_CMD_FILE_DELETE : INT := 5;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[(*__________________________________________________________________________________________________
+      <ST><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+(*__________________________________________________________________________________________________
 ¦	
 ¦	Vistaprint Schweiz GmbH
 ¦	CH - 8401 Winterthur
@@ -777,6 +791,5 @@ END_VAR
         </Implementation>
       </Get>
     </Property>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

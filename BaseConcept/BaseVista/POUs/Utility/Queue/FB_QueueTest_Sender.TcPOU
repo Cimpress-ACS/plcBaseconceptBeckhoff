@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="FB_QueueTest_Sender" Id="{5725e57b-db86-4053-9786-64b01f71d77a}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <POU Name="FB_QueueTest_Sender" Id="{5725e57b-db86-4053-9786-64b01f71d77a}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_QueueTest_Sender
 VAR_INPUT
 	In_p_fbQueue: POINTER TO FB_Queue; // only one central FB_QUEUE instance allowed per PLC!!!
@@ -17,7 +17,21 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[(*__________________________________________________________________________________________________
+      <ST><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+(*__________________________________________________________________________________________________
 ¦	
 ¦	Vistaprint Schweiz GmbH
 ¦	CH - 8401 Winterthur
@@ -54,6 +68,5 @@ IF (uinDoWrite>0) THEN
 	stData.udiAdress := stData.udiAdress + 1;
 END_IF]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
